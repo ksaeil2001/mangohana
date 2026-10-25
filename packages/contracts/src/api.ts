@@ -1,0 +1,11 @@
+import type {AccountView,WorkspaceView,OperationView,RequestView,CommandReply,AuthAttempt} from './wire.generated.js';
+export type Capabilities={synthetic:boolean;realProviderEnabled:boolean;paidEnabled:boolean;purchaseEnabled:boolean;modelId:string;modelContract:string;reasoningLevels:('LOW'|'MEDIUM'|'HIGH')[];authMethods:('GOOGLE'|'EMAIL_OTP')[];profileVersion:string;fonts:{fontAssetId:string;family:string;language:string;fontVersion:string;licenseAssetId:string}[];pendingPolicies:{batchFailure:boolean;paintInclusion:boolean};serverTime:string};
+export type SessionView={authenticated:false}|{authenticated:true;account:AccountView;bindings:Bindings};
+export type Bindings={revision:string;items:{bindingId:string;method:string;isCurrent:boolean}[]};
+export type WorkspaceProjection=WorkspaceView&{title:string;isOwnerSession:boolean;connectionGeneration:string;lastAcceptedHeartbeatSeq:string;libraryStores:{storeOperationId:string;pageId:string;resultRevision:string;state:string;reasonCode:string;layoutQaHold:boolean}[];batches:{batchId:string;state:string;pauseReason:string|null;currentRequestId:string|null;completedTargets:number;totalTargets:number;revision:string}[]};
+export type ExportProjection=OperationView&{delivered:boolean;layoutQaHold:boolean;newCaptureRequired:boolean};
+export type AuthStart={reply:CommandReply;attemptId:string;authorizeUrl:string|null};
+export type AuthVerified={reply:CommandReply;proofId?:string};
+export type AuthReturn={attemptId:string;purpose:AuthAttempt['purpose'];state:'PENDING'|'VERIFIED';proofId?:string;expiresAt:string;serverTime:string};
+export type RequestProjection=RequestView;
+export type ServerError={code:string;reasonCode:string;message:string;nextAction:string;serverTime:string};

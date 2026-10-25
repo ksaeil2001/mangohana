@@ -1,0 +1,253 @@
+{
+  "date": "2026-10-15",
+  "taskType": "원인 분석·공개 구현 전체 비교·사용자 선택 자료",
+  "source": {
+    "repository": "https://github.com/ucx0204/CarrotMangaTranslator",
+    "commit": "721e709d3706f15ed1ef62270460d4b8ab5d5312",
+    "version": "3.3.7",
+    "trackedFiles": 6118,
+    "textFiles": 5841,
+    "binaryFiles": 277,
+    "textLines": 1584794
+  },
+  "reviewLevel": "전체 파일 분류/UTF-8 본문 정적 색인 + 핵심 호출 경로/계약 상세 확인; 전체 분기의 정확성·실행 검증이 아님",
+  "criteria": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05"
+  ],
+  "userSelectionCount": 33,
+  "userDecisions": [
+    {
+      "id": "D01",
+      "title": "웹서비스의 실행 구조",
+      "userChoice": "미선택",
+      "recommendation": "유지"
+    },
+    {
+      "id": "D02",
+      "title": "입력 파일 종류",
+      "userChoice": "미선택",
+      "recommendation": "선택적 추가"
+    },
+    {
+      "id": "D03",
+      "title": "글자·말풍선 탐지와 그룹화",
+      "userChoice": "미선택",
+      "recommendation": "개선 후보"
+    },
+    {
+      "id": "D04",
+      "title": "문자 인식 엔진",
+      "userChoice": "미선택",
+      "recommendation": "비교 후 선택"
+    },
+    {
+      "id": "D05",
+      "title": "원문 언어 자동 판별",
+      "userChoice": "미선택",
+      "recommendation": "선택적 추가"
+    },
+    {
+      "id": "D06",
+      "title": "읽기 순서·후리가나·영역 관계",
+      "userChoice": "미선택",
+      "recommendation": "개선 후보"
+    },
+    {
+      "id": "D07",
+      "title": "페이지·장면·작품 문맥",
+      "userChoice": "미선택",
+      "recommendation": "개선 후보"
+    },
+    {
+      "id": "D08",
+      "title": "번역 제공자와 프롬프트",
+      "userChoice": "미선택",
+      "recommendation": "기반 유지·연결 개선"
+    },
+    {
+      "id": "D09",
+      "title": "원문 제거용 글자 마스크",
+      "userChoice": "미선택",
+      "recommendation": "개선 후보"
+    },
+    {
+      "id": "D10",
+      "title": "원문 제거·복원 엔진",
+      "userChoice": "미선택",
+      "recommendation": "선택적 비교"
+    },
+    {
+      "id": "D11",
+      "title": "그림 보호·제거 범위·부분 실패",
+      "userChoice": "미선택",
+      "recommendation": "보존·개선"
+    },
+    {
+      "id": "D12",
+      "title": "자동 폰트·글자 크기",
+      "userChoice": "미선택",
+      "recommendation": "선택적 개선"
+    },
+    {
+      "id": "D13",
+      "title": "한국어 줄바꿈·말풍선 맞춤",
+      "userChoice": "미선택",
+      "recommendation": "개선 후보"
+    },
+    {
+      "id": "D14",
+      "title": "회전·세로쓰기·강조·서식",
+      "userChoice": "미선택",
+      "recommendation": "선택적 추가"
+    },
+    {
+      "id": "D15",
+      "title": "효과음 처리·이미지 식자",
+      "userChoice": "미선택",
+      "recommendation": "보류 권고"
+    },
+    {
+      "id": "D16",
+      "title": "검수·수정값 보호·재번역",
+      "userChoice": "미선택",
+      "recommendation": "유지·연결 개선"
+    },
+    {
+      "id": "D17",
+      "title": "보관함·작품·챕터·페이지 관리",
+      "userChoice": "미선택",
+      "recommendation": "유지·선택적 개선"
+    },
+    {
+      "id": "D18",
+      "title": "프로젝트 저장·공유·호환성",
+      "userChoice": "미선택",
+      "recommendation": "유지"
+    },
+    {
+      "id": "D19",
+      "title": "완성 이미지·ZIP 출력",
+      "userChoice": "미선택",
+      "recommendation": "유지·검증 강화"
+    },
+    {
+      "id": "D20",
+      "title": "PSD·편집 가능한 레이어 출력",
+      "userChoice": "미선택",
+      "recommendation": "선택적 추가"
+    },
+    {
+      "id": "D21",
+      "title": "중단·취소·재시도·재개·복구",
+      "userChoice": "미선택",
+      "recommendation": "유지·연결 개선"
+    },
+    {
+      "id": "D22",
+      "title": "계정·권한·무료 시작·비용",
+      "userChoice": "미선택",
+      "recommendation": "유지"
+    },
+    {
+      "id": "D23",
+      "title": "서버 모델·GPU·동시 처리",
+      "userChoice": "미선택",
+      "recommendation": "운영 방식 별도 선택"
+    },
+    {
+      "id": "D24",
+      "title": "성능·캐시·모델 자원 회수",
+      "userChoice": "미선택",
+      "recommendation": "보존·선택적 개선"
+    },
+    {
+      "id": "D25",
+      "title": "모델 설치·버전·무결성",
+      "userChoice": "미선택",
+      "recommendation": "선택적 개선"
+    },
+    {
+      "id": "D26",
+      "title": "비밀정보·외부 전송·보안",
+      "userChoice": "미선택",
+      "recommendation": "유지"
+    },
+    {
+      "id": "D27",
+      "title": "빌드·CI·배포·업데이트",
+      "userChoice": "미선택",
+      "recommendation": "별도 선택"
+    },
+    {
+      "id": "D28",
+      "title": "앱 내 AI 채팅·MCP 조작",
+      "userChoice": "미선택",
+      "recommendation": "보류 권고"
+    },
+    {
+      "id": "D29",
+      "title": "AI 식자·이미지 생성 흐름",
+      "userChoice": "미선택",
+      "recommendation": "보류 권고"
+    },
+    {
+      "id": "D30",
+      "title": "다국어·설정 프리셋·연동 편집",
+      "userChoice": "미선택",
+      "recommendation": "선택적 추가"
+    },
+    {
+      "id": "D31",
+      "title": "품질 검증·자동 검사",
+      "userChoice": "미선택",
+      "recommendation": "기존 기반 유지·단계별 확장"
+    },
+    {
+      "id": "D32",
+      "title": "GPL 코드 활용 방식",
+      "userChoice": "미선택",
+      "recommendation": "사용자 결정 필요"
+    },
+    {
+      "id": "D33",
+      "title": "작품 정보 인터넷 조사",
+      "userChoice": "미선택",
+      "recommendation": "보류·선택적 추가"
+    }
+  ],
+  "execution": {
+    "product": "NOT RUN",
+    "models": "NOT RUN",
+    "tests": "NOT RUN",
+    "processingProviderApis": "NOT RUN",
+    "qualityComparison": "미검증",
+    "speedAndCost": "미측정",
+    "newImages": "미검증",
+    "install": 0,
+    "commitPushDeploy": 0
+  },
+  "verification": {
+    "independentContentReview": "GO",
+    "reviewText": "**GO — 지정된 초안과 하네스에서 출판을 막을 중대한 문제는 발견하지 못했습니다.** 이번 판정은 비교·선택 자료의 내용 검토에 한정합니다.\n\n- **선택과 구현 경계:** D01~D33 모두 미선택이며 권고를 채택으로 처리하지 않습니다. 사용자 선택 전 제품 변경 금지와 선택 후 별도 설계·승인 조건이 명시돼 있습니다.\n- **조사 범위와 근거:** 6,118개 파일 분류·5,841개 텍스트 정적 색인과 핵심 경로 상세 검토를 구분합니다. 전체 코드의 정확성·보안·실행 검증 완료로 확대하지 않습니다.\n- **현재 구현의 차이:** 웹의 첫 activation 차단, 이후 worker 조립·API native 연결 누락은 관련 코드와 일치합니다. Electron의 OCR·문맥·저장 기능을 웹 기능으로 합산하지 않으며, Carrot의 저장 원문 재사용과 문맥 전달도 확인한 코드와 부합합니다.\n- **품질·재사용 한계:** 과거 부분 실행과 이번 `NOT RUN`을 구분하고 품질·속도·비용 우위를 단정하지 않습니다. RF-DETR의 현재 카드와 고정 revision 차이 및 재사용 미승인도 명시돼 있습니다.\n\n**남은 완료 확인은 최종 출판 후 보존 검증입니다.** 예정한 최종 해시 검증에서 제품 코드·테스트·설정·의존성 변경 0, 허용 문서 외 변경 없음, 기존 플랜의 앞부분 보존과 append만 수행됨을 확인하고 출판 경로의 문서·CSV 링크를 점검해야 합니다. 이 검토에서 해당 최종 검증까지 완료했다고 판정하지는 않았습니다.\n\n파일 변경, 테스트·앱·모델·제품 API 실행, 설치, commit/push는 수행하지 않았습니다. 역할 TOML·모델·추론 강도는 변경하지 않았고 추가 위임도 하지 않았습니다.",
+    "finalPreservation": "PASS: 기존 782개 중 하네스 외 변경0·제품 변경0, 기존 플랜 prefix 보존; final-verification.json 참조"
+  },
+  "roots": {
+    "web": "C:\\Users\\ksaei\\Documents\\Codex\\trio-manga-web",
+    "electron": "C:\\Users\\ksaei\\OneDrive\\문서\\trio-main"
+  },
+  "artifacts": [
+    "2026-10-15-carrot-trio-comparison.md",
+    "2026-10-15-carrot-trio-user-selections.md",
+    "2026-10-15-carrot-trio-source-coverage.md",
+    "2026-10-15-carrot-trio-reviewed-files.md",
+    "2026-10-15-trio-current-evidence.md",
+    "2026-10-15-carrot-text-pipeline-evidence.md",
+    "2026-10-15-carrot-source-inventory.csv",
+    "2026-10-15-trio-source-before.json"
+  ],
+  "evidenceTempRoot": "C:\\Users\\ksaei\\AppData\\Local\\Temp\\trio-carrot-comparison-20261015-dcd56e984e944484a82042e785bd60af"
+}

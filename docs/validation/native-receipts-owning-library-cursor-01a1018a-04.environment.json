@@ -1,0 +1,12 @@
+{
+  "version": "postgres (PostgreSQL) 18.6",
+  "isolatedData": "E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-wOmqew",
+  "loopback": true,
+  "credentials": "random ephemeral test credential; omitted",
+  "files": [
+    "tests/postgres/native-receipts.test.ts"
+  ],
+  "testNamePattern": "registers a Library cache PUT gap|keeps the earlier original Library user PUT deadline|paginates 17 Library candidates",
+  "exitCode": 0,
+  "realProviderCalls": 0
+}

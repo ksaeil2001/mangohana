@@ -1,0 +1,29 @@
+{
+  "source": "docs/manga-translation-domain-story.md#5924",
+  "date": "2026-10-03",
+  "authority": "DIRECT_USER_REPLY",
+  "originalQuestionNumbers": "These implementation questions were unnumbered; Q20-Q57 and delegated D01-D20 are unchanged.",
+  "decisions": [
+    {
+      "questionItemId": "[\"request_user_input_async\",\"call_mpQ9jczz8qzSD9xpnnA3jnzS\",0]",
+      "question": "문서는 자동 축소의 최소 글자 크기는 정했지만, 사용자가 그보다 작은 크기를 직접 입력할 때의 동작은 정하지 않았습니다. 수동 크기 입력은 어떻게 처리할까요?",
+      "answer": "사용자가 입력한 작은 크기를 허용하고 그대로 적용 (권장)",
+      "policy": "manualFontBelowMinimum",
+      "value": "ALLOW"
+    },
+    {
+      "questionItemId": "[\"request_user_input_async\",\"call_XjnWVKanT8Us0e5QEz43c7Mh\",0]",
+      "question": "작성한 문서는 배치에서 확인된 실패 뒤의 다음 행동을 확정하지 않았습니다. 성공 페이지를 보존한 상태에서 어떻게 진행할까요?",
+      "answer": "일시정지하고 사용자가 재시도·다음 페이지 진행을 선택 (권장)",
+      "policy": "batchFailureAction",
+      "value": "WAIT"
+    },
+    {
+      "questionItemId": "[\"request_user_input_async\",\"call_XjnWVKanT8Us0e5QEz43c7Mh\",1]",
+      "question": "칠한 영역이 텍스트 영역의 일부만 겹칠 때, 재번역 대상을 어떻게 정할까요? 이 포함 기준은 기존 문서에 명시되지 않았습니다.",
+      "answer": "칠한 영역과 조금이라도 겹치면 해당 텍스트 전체 처리 (권장)",
+      "policy": "paintInclusion",
+      "value": "ANY_OVERLAP"
+    }
+  ]
+}

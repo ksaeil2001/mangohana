@@ -1,0 +1,12 @@
+{
+  "version": "postgres (PostgreSQL) 18.6",
+  "isolatedData": "E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-dISkGA",
+  "loopback": true,
+  "credentials": "random ephemeral test credential; omitted",
+  "files": [
+    "tests/postgres/execution.test.ts"
+  ],
+  "testNamePattern": "^PG request lifecycle and exactly-once facts with two fake stages checks the login binding again when the session row still exists$",
+  "exitCode": 0,
+  "realProviderCalls": 0
+}

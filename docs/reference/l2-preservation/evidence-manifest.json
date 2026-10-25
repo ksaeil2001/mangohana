@@ -1,0 +1,1096 @@
+{
+  "artifacts": {
+    "approved-design.md": {
+      "bytes": 32339,
+      "sha256": "bd2f1b27fd9e1350086fb82f1525063bdbc83a5d90e0affb23cbf7515709c3fd"
+    },
+    "audit-reuse.mjs": {
+      "bytes": 1808,
+      "sha256": "fff0c5cf0d257c54355d7dee7d069ec7eab9754602400500a76a39b621aa24b3"
+    },
+    "audit-source9-settlement.mjs": {
+      "bytes": 4312,
+      "sha256": "cfee72bf30ee691d2d15dc2185534ab0251aa755ee76ae47d7fbaebf7e7f1ef2"
+    },
+    "audit-source9-sync.mjs": {
+      "bytes": 4312,
+      "sha256": "6857416c07da621daace0f61313a5991f1625c7f43857a52616dad2dab9bebfc"
+    },
+    "audit-source9.mjs": {
+      "bytes": 4312,
+      "sha256": "3560690f65d6677da65d5a4c4bb382aed191fcd8c23a505313229070712e8008"
+    },
+    "before/windows-pipe-client.test.ts": {
+      "bytes": 31474,
+      "sha256": "b574ef1519c17e3d7ef0d77dcbba9b16a2b4b7c168cac86745add7923a2c49c8"
+    },
+    "before/windows-pipe-client.ts": {
+      "bytes": 27621,
+      "sha256": "9ecaa8998a91b4b3acea34cbd71bbe753425a1ff70daf12454bc49022bccf0ef"
+    },
+    "binding-test.ts": {
+      "bytes": 18149,
+      "sha256": "b5cecca91ced9fd877510d762071bbbf6d23ed1a69846385ffce889eb2779e63"
+    },
+    "budget-observation-tests.ts": {
+      "bytes": 2030,
+      "sha256": "19c209026711522237afd4588c3d941b10d04d9a9ab01108f078b178eb4f6347"
+    },
+    "build-run-v3.ts": {
+      "bytes": 13865,
+      "sha256": "20956906506f73e30cdb0a0839d66acd1a0c1c073d6d23d8ea2c0640ffa76057"
+    },
+    "build-windows-pipe-client.ts": {
+      "bytes": 19219,
+      "sha256": "22573d26a50fcbfa228f54a55a4106eb5101cd1e82894c833ae0445920a7a397"
+    },
+    "canonical-before.md": {
+      "bytes": 2073433,
+      "sha256": "922993674fc278cfce1ebc9e9fa2b46f8346b1edb2be09b59c084510cd3f5a90"
+    },
+    "canonical-final-append.md": {
+      "bytes": 5023,
+      "sha256": "53c06f615a42c7097c72b2f86a2eeb9b4889ca2470756ed42885a90ad83839bc"
+    },
+    "collect-input-package-02.mjs": {
+      "bytes": 4753,
+      "sha256": "670f4ff9b4d35efb3cd289ae25a4346de840bba232fc66887825425d3ba10b2b"
+    },
+    "collect-input-package-03.mjs": {
+      "bytes": 4753,
+      "sha256": "e09dc124d700808816b6c7f69b32619ee4851d0398d1cdc2134deedf66071534"
+    },
+    "collect-input-package-error-01.mjs": {
+      "bytes": 4691,
+      "sha256": "2bf11d6d2127d30ac028d7468558e7c22d809cb02da156e796553062bbb716d2"
+    },
+    "collect-input-package-final-02.mjs": {
+      "bytes": 4759,
+      "sha256": "26faba694ed154791f8925b09fd73b9d68c5073ef9103bc23a779b505062e727"
+    },
+    "collect-input-package-final.mjs": {
+      "bytes": 4756,
+      "sha256": "daebe7230b215e16b2da0031bd39abe927fa3696a2af150d330745ffa6829730"
+    },
+    "collect-input-package.mjs": {
+      "bytes": 4726,
+      "sha256": "c75ec1f1d511e8c06935c15a863a6e69a4e0a2d07111ffe8ef80b005b4b9354f"
+    },
+    "completion-audit.json": {
+      "bytes": 57019,
+      "sha256": "e28c828077e3edd391a679c6df8ab0583d195cf34f8f3cd88155b378c576c629"
+    },
+    "completion-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "completion-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "completion-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "completion-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7990,
+      "sha256": "2d631b635c4695ca92573cc43cba6641833b702539175dc61bed527512d20419"
+    },
+    "completion-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 47513,
+      "sha256": "a21ace5b29b6c097a41e755283766d67a35d0738d42680ccde3eef07b0f8ab2c"
+    },
+    "completion-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "completion-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39194,
+      "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+    },
+    "completion-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "completion-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 26820,
+      "sha256": "c0d61bcd4a477d52b195a89472c4582300d7aef326b890dae5394a28c9d2f981"
+    },
+    "completion-source9.json": {
+      "bytes": 1433,
+      "sha256": "541caec09068b03702a216a5d16e045280a0870aef2774d91ef15ffbebaadb32"
+    },
+    "cpp-architect-final.md": {
+      "bytes": 1786,
+      "sha256": "d88ce397a758ce9486389d9f6bad9717f80d8a3db9240eb3d33f86958148b1cf"
+    },
+    "cpp-architect-initial.md": {
+      "bytes": 6255,
+      "sha256": "be359b894d3975a38236fd26b78d93b93fe2c2edb83358aca370da0339318bc9"
+    },
+    "cpp-before-ref-fix-client-core.h": {
+      "bytes": 7284,
+      "sha256": "d4578cce16736d8989f547fddeccb6eebe0e9f8ec5d45bd5930556152a4e7126"
+    },
+    "cpp-before-ref-fix-client-win32.cc": {
+      "bytes": 45758,
+      "sha256": "e50184454733d7660d59e92db9bbed9de402ad8944818e18238861129ab685fa"
+    },
+    "cpp-before-ref-fix-windows_pipe_client_test.cc": {
+      "bytes": 22443,
+      "sha256": "8fddc20a8626ced1ed1d58cc9e353f0092d64984c3983620076236ca8c1c2b35"
+    },
+    "cpp-before-settlement-client-core.h": {
+      "bytes": 7552,
+      "sha256": "d9396f7f0b089c05c5d6549cda514c4deb59a58a286feb556c61bc8b159ff845"
+    },
+    "cpp-before-settlement-client-win32.cc": {
+      "bytes": 45893,
+      "sha256": "0aa68b5b7bbad1980ae6d8fdfcda87100275ea536f1a8b86b0e90fee9f14dc4b"
+    },
+    "cpp-before-settlement-windows_pipe_client_test.cc": {
+      "bytes": 23477,
+      "sha256": "12ee24fdebd72b96fe35e12f5a569fb4f380de782b74a2bc3ea915fb2419d882"
+    },
+    "cpp-before-slot-type-fix.cc": {
+      "bytes": 26793,
+      "sha256": "7e2c909e01ab2f488d9e51de59d6149b65211e4b6ac263b2ec8323e410d6e1b1"
+    },
+    "cpp-before-sync-rejection-client-core.h": {
+      "bytes": 7842,
+      "sha256": "25b046dbef4e99836748c2d59e241ce86ac80878a80b74ce50476a9e390c8b9c"
+    },
+    "cpp-before-sync-rejection-client-win32.cc": {
+      "bytes": 46786,
+      "sha256": "63884697221d1f0c1b3a85d1ccf591bc2d3b95823b42dff3d3f99403dedbfde7"
+    },
+    "cpp-before-sync-rejection-windows_pipe_client_test.cc": {
+      "bytes": 25292,
+      "sha256": "debf03db2ad84d0885f242e44afafb7661ba87672b6e5ad331083fc80549ba58"
+    },
+    "cpp-client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "cpp-client-core.h": {
+      "bytes": 7284,
+      "sha256": "d4578cce16736d8989f547fddeccb6eebe0e9f8ec5d45bd5930556152a4e7126"
+    },
+    "cpp-client-win32.cc": {
+      "bytes": 45758,
+      "sha256": "e50184454733d7660d59e92db9bbed9de402ad8944818e18238861129ab685fa"
+    },
+    "cpp-deliver-ref-order.cc": {
+      "bytes": 3944,
+      "sha256": "00f270823507be114fc85df7479e5e4cc74228f419be581de38a2a47214b2bfc"
+    },
+    "cpp-ref-settlement-test.cc": {
+      "bytes": 1725,
+      "sha256": "93077939433649a3c9114ba2bce895c103b4d514ec1b670f26cfcd67f58c01f2"
+    },
+    "cpp-ref-slot-tests.cc": {
+      "bytes": 991,
+      "sha256": "8fbb30636c0e0e025609bc310bedc22ab961ec9c29b58110ff22b3ff39e67268"
+    },
+    "cpp-report.md": {
+      "bytes": 6569,
+      "sha256": "f66dc7dafc523768511a5c12696238bfd16d308203d6e0cf8a568697082911fc"
+    },
+    "cpp-review-fix-source4.json": {
+      "bytes": 666,
+      "sha256": "0cdb3ad611739d87ca75be3804697383a453835f80dcfc27e01f71b04791e105"
+    },
+    "cpp-source-final.json": {
+      "bytes": 974,
+      "sha256": "b738c896cd81b58f4c38c1acbd5daa8d77b8a39f3ffefe444da1a62e2e45bc72"
+    },
+    "cpp-static-audit.json": {
+      "bytes": 1994,
+      "sha256": "82964e67204d2f9144ec525c97cf519a4e27398ecd23a127a5741151a8e207cc"
+    },
+    "cpp-static-final-02.json": {
+      "bytes": 1873,
+      "sha256": "cf05fe8861d54cdd4f416952000d8597192e0585a7f64ca7d2983d06e7ea3b4b"
+    },
+    "cpp-static-final-02.mjs": {
+      "bytes": 1945,
+      "sha256": "ee7be1fa1bcb38e72d7a1c439365afc42eea03637ad1f434ba43d82bd85c8b68"
+    },
+    "cpp-static-final.json": {
+      "bytes": 1817,
+      "sha256": "34702fcf460339bbea679e59842d1e5b4dd0c343330b9e4a8714cf44fa59a74a"
+    },
+    "cpp-static-final.mjs": {
+      "bytes": 1942,
+      "sha256": "99caff6c4b522bbc814d07f1c396f3fe8bf45890c9168359318a2e516549d63a"
+    },
+    "cpp-sync-rejection-regression.cc": {
+      "bytes": 1423,
+      "sha256": "ed394647ad581f8986687be9307d2dbb55198241b987c2dbf772fce1a3441794"
+    },
+    "cpp-windows_pipe_client_test.cc": {
+      "bytes": 22443,
+      "sha256": "8fddc20a8626ced1ed1d58cc9e353f0092d64984c3983620076236ca8c1c2b35"
+    },
+    "fake-executor-v3.ts": {
+      "bytes": 3329,
+      "sha256": "dea668a858d07dd67d7455830b15e6721a78dd86eca26b18dc56b440a1c25a80"
+    },
+    "final-audit.json": {
+      "bytes": 4845,
+      "sha256": "5d921b301908637ab8ae7ee706aa0b6239b66dc0b693d9e672f4a0b68c5d20b8"
+    },
+    "final-check-audit.json": {
+      "bytes": 57019,
+      "sha256": "01781619867cc6f40887a36623fb57955e00b3dc50c39e437b52f6741ab57bd0"
+    },
+    "final-check-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "final-check-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "final-check-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "final-check-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7552,
+      "sha256": "d9396f7f0b089c05c5d6549cda514c4deb59a58a286feb556c61bc8b159ff845"
+    },
+    "final-check-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 45893,
+      "sha256": "0aa68b5b7bbad1980ae6d8fdfcda87100275ea536f1a8b86b0e90fee9f14dc4b"
+    },
+    "final-check-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "final-check-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39194,
+      "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+    },
+    "final-check-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "final-check-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 23477,
+      "sha256": "12ee24fdebd72b96fe35e12f5a569fb4f380de782b74a2bc3ea915fb2419d882"
+    },
+    "final-check-source9.json": {
+      "bytes": 1433,
+      "sha256": "57f4a82e449f0493821df1ad528e898ed7120fb6a8edbaf60fbb4669a90ac803"
+    },
+    "final-run-after-audit.json": {
+      "bytes": 57019,
+      "sha256": "ed2e5d11dd9a10b11dc7441304988e7aa920928b7782edf4b14979273e764755"
+    },
+    "final-run-after-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "final-run-after-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "final-run-after-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "final-run-after-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7842,
+      "sha256": "25b046dbef4e99836748c2d59e241ce86ac80878a80b74ce50476a9e390c8b9c"
+    },
+    "final-run-after-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 46786,
+      "sha256": "63884697221d1f0c1b3a85d1ccf591bc2d3b95823b42dff3d3f99403dedbfde7"
+    },
+    "final-run-after-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "final-run-after-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39194,
+      "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+    },
+    "final-run-after-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "final-run-after-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 25292,
+      "sha256": "debf03db2ad84d0885f242e44afafb7661ba87672b6e5ad331083fc80549ba58"
+    },
+    "final-run-after-source9.json": {
+      "bytes": 1433,
+      "sha256": "55308c8ecf23ac5982a0bdaeaa0b8579b046b2c3c3574207101806d847c91ef2"
+    },
+    "final-run-before-audit.json": {
+      "bytes": 57019,
+      "sha256": "ed2e5d11dd9a10b11dc7441304988e7aa920928b7782edf4b14979273e764755"
+    },
+    "final-run-before-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "final-run-before-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "final-run-before-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "final-run-before-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7842,
+      "sha256": "25b046dbef4e99836748c2d59e241ce86ac80878a80b74ce50476a9e390c8b9c"
+    },
+    "final-run-before-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 46786,
+      "sha256": "63884697221d1f0c1b3a85d1ccf591bc2d3b95823b42dff3d3f99403dedbfde7"
+    },
+    "final-run-before-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "final-run-before-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39194,
+      "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+    },
+    "final-run-before-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "final-run-before-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 25292,
+      "sha256": "debf03db2ad84d0885f242e44afafb7661ba87672b6e5ad331083fc80549ba58"
+    },
+    "final-run-before-source9.json": {
+      "bytes": 1433,
+      "sha256": "55308c8ecf23ac5982a0bdaeaa0b8579b046b2c3c3574207101806d847c91ef2"
+    },
+    "final-type-review-audit.json": {
+      "bytes": 57019,
+      "sha256": "e28c828077e3edd391a679c6df8ab0583d195cf34f8f3cd88155b378c576c629"
+    },
+    "final-type-review-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "final-type-review-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "final-type-review-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "final-type-review-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7990,
+      "sha256": "2d631b635c4695ca92573cc43cba6641833b702539175dc61bed527512d20419"
+    },
+    "final-type-review-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 47513,
+      "sha256": "a21ace5b29b6c097a41e755283766d67a35d0738d42680ccde3eef07b0f8ab2c"
+    },
+    "final-type-review-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "final-type-review-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39194,
+      "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+    },
+    "final-type-review-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "final-type-review-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 26820,
+      "sha256": "c0d61bcd4a477d52b195a89472c4582300d7aef326b890dae5394a28c9d2f981"
+    },
+    "final-type-review-source9.json": {
+      "bytes": 1433,
+      "sha256": "541caec09068b03702a216a5d16e045280a0870aef2774d91ef15ffbebaadb32"
+    },
+    "finalize-evidence.mjs": {
+      "bytes": 6744,
+      "sha256": "958229bc5239f06429e38713c3efc7d61f59ae31892beb50c003f1d7b609897d"
+    },
+    "fix-cpp-reference-settlement.mjs": {
+      "bytes": 3253,
+      "sha256": "0916b1c0bf46925bc435d4103bf7e8266aa39d239776b7c4a039079ba0d103f7"
+    },
+    "fix-cpp-reference-slots.ps1": {
+      "bytes": 2653,
+      "sha256": "e171d6d99548d44e0e99f95396108cb49c016099927ead23999cba06604c0f11"
+    },
+    "fix-cpp-sync-rejection.mjs": {
+      "bytes": 5222,
+      "sha256": "d5c796bb04abf31082c8d17dac3ed13c38145aa3a3cc35c57ef820a843f1fa26"
+    },
+    "input-package-inventory-02.json": {
+      "bytes": 15179,
+      "sha256": "aeff43017272b4de1d12cd0482009f9bb5c7ee9dc423c7d39d12be10768fbc5e"
+    },
+    "input-package-inventory-03.json": {
+      "bytes": 15179,
+      "sha256": "f795baea6cf489ad525a07e4e564fcb0ba99f963eaa80a5bed9bfa91e346b36f"
+    },
+    "input-package-inventory-final-02.json": {
+      "bytes": 15179,
+      "sha256": "649a046e7d537e41a7dc48ea382d1d7d1b03195dc7c60f9e3732303108b66353"
+    },
+    "input-package-inventory-final.json": {
+      "bytes": 15179,
+      "sha256": "1bbdda889c761d2cecad76335ad9fea8deeeb48ffb5cbf3f7ceba58183dea0bd"
+    },
+    "input-package-inventory.json": {
+      "bytes": 15150,
+      "sha256": "c5f2b081ccc33c1686e77d7b622ab2f0c41fd1990a08bf5104240d4a63aab43d"
+    },
+    "l2-bounds-red-01-binding.ts": {
+      "bytes": 11611,
+      "sha256": "c314a19256f71abb3c78876e295e5d82e77bfd89fb30910f8ae6acf980058e15"
+    },
+    "l2-bounds-red-01-build.ts": {
+      "bytes": 19229,
+      "sha256": "75c15d5985beb6306cd8c7766d6eb61699404d3e8770444b976b6622da183809"
+    },
+    "l2-bounds-red-01-summary.json": {
+      "bytes": 74,
+      "sha256": "ca0446fa6b4a4cf1a118b233127097ca495cf0ddf655a2b309254a2af1dce935"
+    },
+    "l2-bounds-red-01.log": {
+      "bytes": 17445,
+      "sha256": "1ff0acf3c8895969370c4103e8e961d446429cd5d011f8789c064e151fc2c716"
+    },
+    "l2-bounds-red-01.test.ts": {
+      "bytes": 25832,
+      "sha256": "4bf57b36eb93b2a4df5331c35a88029cbf9df6df79f34f49c91338a6aca05943"
+    },
+    "l2-budget-joint-green-01-source2.json": {
+      "bytes": 329,
+      "sha256": "926fd00b5347a96e61568b8e38ddcaf2ea659b85d41b27f392c27ea72756701c"
+    },
+    "l2-budget-joint-green-01-summary.json": {
+      "bytes": 72,
+      "sha256": "fa9fc20c61d4fef078ae8430dd77cddba0e0ad2c4e134c8d1bd4efc66212937f"
+    },
+    "l2-budget-joint-green-01.log": {
+      "bytes": 370,
+      "sha256": "92b6e49f70d6e21e60f8c44cd80c14cf2ee947890d4de5302ab990d6342a67f4"
+    },
+    "l2-budget-red-01-observed.json": {
+      "bytes": 603,
+      "sha256": "00165a6c1ca545f4684b17e08685dda25b8a1f2bb8c800325958f5f84e9cf4ae"
+    },
+    "l2-budget-red-01-summary.json": {
+      "bytes": 46,
+      "sha256": "0a254a5b8755aaa797c4049819c3016074ccf521f993005b2a4197c9f7adf1ff"
+    },
+    "l2-budget-red-01.test.ts": {
+      "bytes": 33226,
+      "sha256": "504b26c56238c9eeecd8d31f0e6bd4355e33ebe0ba5dcb37ea8f270de60a5fb2"
+    },
+    "l2-factory-red-01-summary.json": {
+      "bytes": 23,
+      "sha256": "c34bc644b4dfc96082e294ccb49ac40bdf34a3c659c956ffef43981ed30b2234"
+    },
+    "l2-factory-red-01.log": {
+      "bytes": 5058,
+      "sha256": "f3dc9300f9f510b65d47cac1c12e1163906d4753dcca3755bd92dd3e0a4521c0"
+    },
+    "l2-factory-red-01.test.ts": {
+      "bytes": 18149,
+      "sha256": "b5cecca91ced9fd877510d762071bbbf6d23ed1a69846385ffce889eb2779e63"
+    },
+    "l2-joint-green-02-summary.json": {
+      "bytes": 71,
+      "sha256": "5fa6fa88223cc707e138eb6a24c165c61f98ef7fe728129b0fb4defaf6f85892"
+    },
+    "l2-joint-green-02.log": {
+      "bytes": 441,
+      "sha256": "13accff8067b4a2884ef0a98d2d0622648913f6cdbf488758715921e22cfc800"
+    },
+    "l2-joint-green-03-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-joint-green-03.log": {
+      "bytes": 442,
+      "sha256": "8292482a41189e5428db92b83105f468f3976f92949ca69753e803591804e404"
+    },
+    "l2-joint-green-04-summary.json": {
+      "bytes": 270,
+      "sha256": "a52bf5a28c5e59c941cb6a51c3f15b1d7ea6feb6f706158ffb7a2e3b60fdbf61"
+    },
+    "l2-joint-green-04.log": {
+      "bytes": 442,
+      "sha256": "039cae70530105909ee052ee33b881ce1895d2f4032434b82dead8a662dcc2b2"
+    },
+    "l2-joint-green-05-summary.json": {
+      "bytes": 295,
+      "sha256": "be5ef68138eeea87abb40948a296fac04f00505fd691a1e534f086fd397e3460"
+    },
+    "l2-joint-green-05.log": {
+      "bytes": 442,
+      "sha256": "8b595f60279e0f4a586979b86051cca22db4170180f49a202d91647894385204"
+    },
+    "l2-joint-green-06-summary.json": {
+      "bytes": 484,
+      "sha256": "f36934a9d49c1cff4562bdcd2ba15502e0507099b57b5c6b4a300d6d19c9a3a4"
+    },
+    "l2-joint-green-06.log": {
+      "bytes": 442,
+      "sha256": "4ca51b11006068344cb81a2a78840dc20aca77160f9ea011ff455b97e264dcc1"
+    },
+    "l2-lint-01-summary.json": {
+      "bytes": 50,
+      "sha256": "2f6d4407972130934e5ba816b4cbf103d425ba424169e29fa07925f7f0caff39"
+    },
+    "l2-lint-01.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-lint-02-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-lint-02.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-lint-03-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-lint-03.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-lint-04-summary.json": {
+      "bytes": 106,
+      "sha256": "87c1df370627d357391d31e24d28ece8220df28b367aeb5f3289fb5a8ed68d8a"
+    },
+    "l2-lint-04.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-lint-05-summary.json": {
+      "bytes": 106,
+      "sha256": "db6f69cc328c6b027201d986f7162dbe537ede53a46cf57996abd196f4ced4c6"
+    },
+    "l2-lint-05.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-lint-06-summary.json": {
+      "bytes": 106,
+      "sha256": "8096c30fd60339b314aa345178b27e34522ef850e2f9f03a1f13b662de5b068a"
+    },
+    "l2-lint-06.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-loader-build-green-01-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-loader-build-green-01.log": {
+      "bytes": 310,
+      "sha256": "fc3d0ef54568d740c7051107f3af05077a81f10c0620f9d6bae7b5d2482c17a1"
+    },
+    "l2-loader-green-01-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-loader-green-01.log": {
+      "bytes": 336,
+      "sha256": "0e370b4b8abbebcc68ef865fc50b8f272cf79215818afaf0bb8a1c8a4a4ee9de"
+    },
+    "l2-review-final-red-01-summary.json": {
+      "bytes": 165,
+      "sha256": "4980e1bbfdcc29ed79a510e0724f787d3aa13b33caba095e977d15cb435da7fe"
+    },
+    "l2-review-final-red-01.log": {
+      "bytes": 8458,
+      "sha256": "e3f1a82a1e4aac66898eb64986a9ccac7de0c889feb431ff27fc46e68db34661"
+    },
+    "l2-review-final-red.test.ts": {
+      "bytes": 39184,
+      "sha256": "77f47ec0aa6af39a70e65658bbea63e71e651abc03f26dde67556ab8ece3857b"
+    },
+    "l2-review-i1-green-01-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-review-i1-green-01.log": {
+      "bytes": 311,
+      "sha256": "763a948aec3b1a191a8941733c5bdcce2ab1e5909fca940dba408b453cd0b9a5"
+    },
+    "l2-review-i1-red-01-summary.json": {
+      "bytes": 23,
+      "sha256": "c34bc644b4dfc96082e294ccb49ac40bdf34a3c659c956ffef43981ed30b2234"
+    },
+    "l2-review-i1-red-01.log": {
+      "bytes": 18555,
+      "sha256": "cf1fa31746111dc40f01d22a4dca329e49e5aa8761f04efc1772d480500e764d"
+    },
+    "l2-review-i1-red-01.test.ts": {
+      "bytes": 27941,
+      "sha256": "96e5f3f24db38b9a2a9661aae5a8c0749cf8543a48ffdbc8e7af820b3a9e5eb8"
+    },
+    "l2-review-i234-green-01-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-review-i234-green-01.log": {
+      "bytes": 313,
+      "sha256": "2986963014859c535ed24f3c5c1da1037c3c0ceb6b2e74b1c63e6b031c42e734"
+    },
+    "l2-review-i234-red-01-build.ts": {
+      "bytes": 19851,
+      "sha256": "5bbec0c9b786ea0e47c2b2df79bd8f8bd08e9b74de04d34e5b20b60c22cbd6ad"
+    },
+    "l2-review-i234-red-01-summary.json": {
+      "bytes": 23,
+      "sha256": "c34bc644b4dfc96082e294ccb49ac40bdf34a3c659c956ffef43981ed30b2234"
+    },
+    "l2-review-i234-red-01.log": {
+      "bytes": 73547,
+      "sha256": "1ebc342b303efb5d91367e9b9c7e8ba11675008f1988c97e772bafceeca6d098"
+    },
+    "l2-review-i234-red-01.test.ts": {
+      "bytes": 34301,
+      "sha256": "066a489c3220619ea4fdcb43d186c5a56247691458ebac79e9e39758586617d7"
+    },
+    "l2-types-01-summary.json": {
+      "bytes": 52,
+      "sha256": "e16a345dc619fb0c7aa010cd059a82f0600b0686544c69f902ff574653fc5c48"
+    },
+    "l2-types-01.log": {
+      "bytes": 1485,
+      "sha256": "893bbb684072175a41a03638e57ed024495b31cdf19ceae4b1e7209eb6bf4e62"
+    },
+    "l2-types-02-summary.json": {
+      "bytes": 23,
+      "sha256": "ea61d7736f0b7ecb9b35158f03de77013db6b100cf1d36c957e78e6c8817c5b6"
+    },
+    "l2-types-02.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-types-03-summary.json": {
+      "bytes": 23,
+      "sha256": "c7eb0654dc3b2dad76ce34561ce020db323a0adce426e939761e942355a9609e"
+    },
+    "l2-types-03.log": {
+      "bytes": 119,
+      "sha256": "708d7059bff71538e0c578de26c98bbf65f644d43a5d3f87b768442670914708"
+    },
+    "l2-types-04-summary.json": {
+      "bytes": 84,
+      "sha256": "05e68878908a767f31b6d190edf260b77f82fc7de3115b9b97b5800a8e9f1325"
+    },
+    "l2-types-04.log": {
+      "bytes": 747,
+      "sha256": "99f8f62add165a2cdab066d3ad41bf137a42d7fa626b6ceeb8995fffcb380c2d"
+    },
+    "l2-types-05-summary.json": {
+      "bytes": 84,
+      "sha256": "204d76b40aa981d683acfeaf55657bd73cfb18140db2d3c4353d107ea87d3fff"
+    },
+    "l2-types-05.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "l2-types-06-summary.json": {
+      "bytes": 84,
+      "sha256": "05e68878908a767f31b6d190edf260b77f82fc7de3115b9b97b5800a8e9f1325"
+    },
+    "l2-types-06.log": {
+      "bytes": 441,
+      "sha256": "8a233fecb223cc87a61536d22bab96da6fd8e0c765677e09932caa19b19dc48a"
+    },
+    "l2-types-07-summary.json": {
+      "bytes": 84,
+      "sha256": "204d76b40aa981d683acfeaf55657bd73cfb18140db2d3c4353d107ea87d3fff"
+    },
+    "l2-types-07.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "minor-observation-tests.ts": {
+      "bytes": 2624,
+      "sha256": "47f387a3f5ecdd4862b85a36872b80b5423b258796543d46c979b88febe390a9"
+    },
+    "pe-fixture-v2.ts": {
+      "bytes": 1955,
+      "sha256": "71dec9ae249ebfca9d537770089997c7e728b0306c95d3b2343fa6a0eb9cb5c8"
+    },
+    "pe-parser-v2.ts": {
+      "bytes": 3961,
+      "sha256": "77ee7a9655dd5f95ae601a4a14fec0c4273c24f3f440bcc4c8924684c3cd8894"
+    },
+    "preflight.json": {
+      "bytes": 190,
+      "sha256": "0d1597d95eeb4b0a779ece5934a33bfe4f017059b09ed958cd0cf07ab16a7737"
+    },
+    "progress-review-fix.md": {
+      "bytes": 2164,
+      "sha256": "9e41bc169bd6a2d78cd521a6b3d16f9e8148969071f98788f2f8ac417c5bf475"
+    },
+    "report.md": {
+      "bytes": 6928,
+      "sha256": "5160caf03a474812fe04fb6e60e2bb4d0d1a4e47dff2929c39d93891c461902b"
+    },
+    "reuse-and-canonical-audit-01.json": {
+      "bytes": 516,
+      "sha256": "5692ae47897c58a009c5f2c17e35f7622ba5783026f0cd632543290d6a71831c"
+    },
+    "review-final-audit.json": {
+      "bytes": 57019,
+      "sha256": "02ff079e28ee1daab5bd5601a1f31e9902c7a34424503bef1c2d3375de07e8e9"
+    },
+    "review-final-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "review-final-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "review-final-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "review-final-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7552,
+      "sha256": "d9396f7f0b089c05c5d6549cda514c4deb59a58a286feb556c61bc8b159ff845"
+    },
+    "review-final-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 45893,
+      "sha256": "0aa68b5b7bbad1980ae6d8fdfcda87100275ea536f1a8b86b0e90fee9f14dc4b"
+    },
+    "review-final-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "review-final-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39184,
+      "sha256": "77f47ec0aa6af39a70e65658bbea63e71e651abc03f26dde67556ab8ece3857b"
+    },
+    "review-final-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "review-final-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 23477,
+      "sha256": "12ee24fdebd72b96fe35e12f5a569fb4f380de782b74a2bc3ea915fb2419d882"
+    },
+    "review-final-source9.json": {
+      "bytes": 1433,
+      "sha256": "6e7f0122bdf5ec1e7488ad402d04394dc3280c0636c039b76977087506021c6c"
+    },
+    "review-i1-tests.ts": {
+      "bytes": 1134,
+      "sha256": "1d5f1eabb0280e0689a847daf414177e299a78b630a71dec065c64a9f5a0d55f"
+    },
+    "review-i234-tests.ts": {
+      "bytes": 6360,
+      "sha256": "8640eb33a7b10f1103547745e5267f3efcd40bea99cbf88ff9a3ea76283bbf35"
+    },
+    "scope-and-criteria.md": {
+      "bytes": 2385,
+      "sha256": "abfad687955606d2fa2b9830866ed0ec2272cf1753b66ac59bd343afeb27d60a"
+    },
+    "scoped-final-audit.json": {
+      "bytes": 57019,
+      "sha256": "d8bbbfbd6eb61eb7bb859a896205d8ac2dc29406f410edab14df3345d03876d9"
+    },
+    "scoped-final-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13062,
+      "sha256": "d39677a9f6b513f6a608e426122dabc60544c397c2059c6a6d74c03a6b5fcde6"
+    },
+    "scoped-final-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "scoped-final-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "scoped-final-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7552,
+      "sha256": "d9396f7f0b089c05c5d6549cda514c4deb59a58a286feb556c61bc8b159ff845"
+    },
+    "scoped-final-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 45893,
+      "sha256": "0aa68b5b7bbad1980ae6d8fdfcda87100275ea536f1a8b86b0e90fee9f14dc4b"
+    },
+    "scoped-final-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 25964,
+      "sha256": "ff6d8e32d359927d50ad31ffa34c9a843e36f5dcdcce0e48f8ef7d2a055853fe"
+    },
+    "scoped-final-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 37179,
+      "sha256": "191291a0ed89166365d4773960e18cf3881a33d9478140a41e5db55d97925261"
+    },
+    "scoped-final-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "scoped-final-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 23477,
+      "sha256": "12ee24fdebd72b96fe35e12f5a569fb4f380de782b74a2bc3ea915fb2419d882"
+    },
+    "scoped-final-source9.json": {
+      "bytes": 1433,
+      "sha256": "189e2c6da418b6d76738dbcf898c4bc78cc331a08a2d616ef348c2a61d75c829"
+    },
+    "settlement-review-audit.json": {
+      "bytes": 57019,
+      "sha256": "ed2e5d11dd9a10b11dc7441304988e7aa920928b7782edf4b14979273e764755"
+    },
+    "settlement-review-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "settlement-review-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "settlement-review-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "settlement-review-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7842,
+      "sha256": "25b046dbef4e99836748c2d59e241ce86ac80878a80b74ce50476a9e390c8b9c"
+    },
+    "settlement-review-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 46786,
+      "sha256": "63884697221d1f0c1b3a85d1ccf591bc2d3b95823b42dff3d3f99403dedbfde7"
+    },
+    "settlement-review-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "settlement-review-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39194,
+      "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+    },
+    "settlement-review-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "settlement-review-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 25292,
+      "sha256": "debf03db2ad84d0885f242e44afafb7661ba87672b6e5ad331083fc80549ba58"
+    },
+    "settlement-review-source9.json": {
+      "bytes": 1433,
+      "sha256": "55308c8ecf23ac5982a0bdaeaa0b8579b046b2c3c3574207101806d847c91ef2"
+    },
+    "source-before.json": {
+      "bytes": 49822,
+      "sha256": "2ad7c00380d1ec53ceb4495dc208dc48578d52a93fb92f61670dd42af09d4295"
+    },
+    "sync-rejection-review-audit.json": {
+      "bytes": 57019,
+      "sha256": "156a9c3f28ed6ea2e7d0e0be744e703431a14cf7dbcd6bad308879df4a3aa46e"
+    },
+    "sync-rejection-review-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13063,
+      "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+    },
+    "sync-rejection-review-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "sync-rejection-review-source/packages/native/windows-pipe-client/client-core.cc": {
+      "bytes": 16329,
+      "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+    },
+    "sync-rejection-review-source/packages/native/windows-pipe-client/client-core.h": {
+      "bytes": 7990,
+      "sha256": "2d631b635c4695ca92573cc43cba6641833b702539175dc61bed527512d20419"
+    },
+    "sync-rejection-review-source/packages/native/windows-pipe-client/client-win32.cc": {
+      "bytes": 47513,
+      "sha256": "a21ace5b29b6c097a41e755283766d67a35d0738d42680ccde3eef07b0f8ab2c"
+    },
+    "sync-rejection-review-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 26048,
+      "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+    },
+    "sync-rejection-review-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 39194,
+      "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+    },
+    "sync-rejection-review-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "sync-rejection-review-source/tests/native/windows_pipe_client_test.cc": {
+      "bytes": 26793,
+      "sha256": "7e2c909e01ab2f488d9e51de59d6149b65211e4b6ac263b2ec8323e410d6e1b1"
+    },
+    "sync-rejection-review-source9.json": {
+      "bytes": 1433,
+      "sha256": "42cb56f65119d2d9038bf93858f84ec92210725f789eff0dcc2d11f884cd8660"
+    },
+    "ts-architect-final.md": {
+      "bytes": 1405,
+      "sha256": "419e903260082be749f01c411ff26b7ab5e4276849c0d3bba1e7aaf1aa90f01c"
+    },
+    "ts-architect-initial.md": {
+      "bytes": 10929,
+      "sha256": "68a868be819b0ee5e3b7fb59abc33ed5ef1f68ac83e171fe731d275d4aa56eec"
+    },
+    "ts-before-final-regressions.test.ts": {
+      "bytes": 37179,
+      "sha256": "191291a0ed89166365d4773960e18cf3881a33d9478140a41e5db55d97925261"
+    },
+    "ts-followup-tests.ts": {
+      "bytes": 7658,
+      "sha256": "23979a3654c0da40f03aaae254e5584bdc36564052018f44a089c0daa8e7263d"
+    },
+    "ts-review-final-before-binding.ts": {
+      "bytes": 13062,
+      "sha256": "d39677a9f6b513f6a608e426122dabc60544c397c2059c6a6d74c03a6b5fcde6"
+    },
+    "ts-review-final-before-build.ts": {
+      "bytes": 25964,
+      "sha256": "ff6d8e32d359927d50ad31ffa34c9a843e36f5dcdcce0e48f8ef7d2a055853fe"
+    },
+    "ts-review-final-regressions.txt": {
+      "bytes": 2005,
+      "sha256": "0e722e16ed54bdc141b6bd5fb1283da6d0e19f412de1b93966c0d5e410dfae2b"
+    },
+    "ts-review-fix-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 13062,
+      "sha256": "d39677a9f6b513f6a608e426122dabc60544c397c2059c6a6d74c03a6b5fcde6"
+    },
+    "ts-review-fix-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "ts-review-fix-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 25964,
+      "sha256": "ff6d8e32d359927d50ad31ffa34c9a843e36f5dcdcce0e48f8ef7d2a055853fe"
+    },
+    "ts-review-fix-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 37128,
+      "sha256": "b90a6d897f1b5e49740c3556811e21a9e94bc0a5138ce86e2b6dd40d45e24846"
+    },
+    "ts-review-fix-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 35261,
+      "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+    },
+    "ts-review-fix-source5.json": {
+      "bytes": 811,
+      "sha256": "02177d349c582653e18e0fb090ca71f788777259c476794a5f799dda7efd6019"
+    },
+    "ts-review-source/packages/native/src/windows-pipe-client-binding.ts": {
+      "bytes": 11619,
+      "sha256": "4dda4d0905c676d32059b65c6bdf77b5f769383ced59b3efa27e3e63d8731e48"
+    },
+    "ts-review-source/packages/native/src/windows-pipe-client.ts": {
+      "bytes": 27625,
+      "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+    },
+    "ts-review-source/scripts/build-windows-pipe-client.ts": {
+      "bytes": 19380,
+      "sha256": "068a2e42268c1f9ba6babe490e9bedabfbe15755022b842d3c73ae6ba9788ff0"
+    },
+    "ts-review-source/tests/domain/windows-pipe-client-binding.test.ts": {
+      "bytes": 25832,
+      "sha256": "4bf57b36eb93b2a4df5331c35a88029cbf9df6df79f34f49c91338a6aca05943"
+    },
+    "ts-review-source/tests/domain/windows-pipe-client.test.ts": {
+      "bytes": 33231,
+      "sha256": "96e25a30921cebbe76894be0535fbcfda7591af5d221603a415f3fe59b8eb09c"
+    },
+    "ts-review-source5.json": {
+      "bytes": 811,
+      "sha256": "d243eafbe622e8975be3f274807576b0f71aec7931799329f7072fb90e66b654"
+    },
+    "whole-architect-final.json": {
+      "bytes": 358,
+      "sha256": "0f8399190f2be733f7e6b888fa71785fc8a9b20fbc4930bc2d86259ebdb8f0d9"
+    },
+    "whole-architect-final.md": {
+      "bytes": 1494,
+      "sha256": "1f8875d36afbdc898c319e9fabbbcf8830446969596d221f1d433ba58d2d46b5"
+    },
+    "whole-architect-followups.md": {
+      "bytes": 1791,
+      "sha256": "2ab617b90581468461fb0bc46a76a7492f4e261a8aaae603f5fbe113516ad773"
+    },
+    "whole-architect-initial.md": {
+      "bytes": 1772,
+      "sha256": "d94e865761285f2b4edec63c676e8eb9b68d408770152828b36d5fd1f42dc3aa"
+    },
+    "windows-pipe-client-binding.ts": {
+      "bytes": 11521,
+      "sha256": "b4498066233d6a3cb515ff16487a1bcec9ebdaeac8bc3961a8858d7c4d769097"
+    },
+    "work-report-draft.md": {
+      "bytes": 4039,
+      "sha256": "591aae533bd9cb815354aba03fe4aa1af476fb306a3f243893b7f4ab87813cad"
+    }
+  },
+  "external": {
+    "canonical": {
+      "path": "C:/Users/ksaei/OneDrive/문서/trio-main/docs/superpowers/plans/2026-10-02-manga-web-workspace-contracts-and-validation-plan.md",
+      "bytes": 2083005,
+      "sha256": "f2348fb473fa5d3f9a1f1c25087e7435b1cfde66d526a78fa588e861446f12e3"
+    },
+    "sources": {
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/packages/native/src/windows-pipe-client.ts": {
+        "bytes": 27625,
+        "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/packages/native/src/windows-pipe-client-binding.ts": {
+        "bytes": 13063,
+        "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/packages/native/windows-pipe-client/client-core.h": {
+        "bytes": 7990,
+        "sha256": "2d631b635c4695ca92573cc43cba6641833b702539175dc61bed527512d20419"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/packages/native/windows-pipe-client/client-core.cc": {
+        "bytes": 16329,
+        "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/packages/native/windows-pipe-client/client-win32.cc": {
+        "bytes": 47513,
+        "sha256": "a21ace5b29b6c097a41e755283766d67a35d0738d42680ccde3eef07b0f8ab2c"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/scripts/build-windows-pipe-client.ts": {
+        "bytes": 26048,
+        "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/tests/domain/windows-pipe-client.test.ts": {
+        "bytes": 35261,
+        "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/tests/domain/windows-pipe-client-binding.test.ts": {
+        "bytes": 39194,
+        "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+      },
+      "C:/Users/ksaei/Documents/Codex/trio-manga-web/tests/native/windows_pipe_client_test.cc": {
+        "bytes": 26820,
+        "sha256": "c0d61bcd4a477d52b195a89472c4582300d7aef326b890dae5394a28c9d2f981"
+      }
+    }
+  },
+  "scope": "SOURCE_AND_TS_FAKE",
+  "cppExecuted": false,
+  "wholeL2Accepted": false
+}

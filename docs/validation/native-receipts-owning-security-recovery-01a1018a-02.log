@@ -1,0 +1,24 @@
+
+> trio-manga-web@0.1.0 test:postgres
+> tsx scripts/test-postgres.ts tests/postgres/native-receipts.test.ts
+
+{"database":"postgres (PostgreSQL) 18.6","isolatedData":"E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-JYiZkE","host":"127.0.0.1"}
+
+ RUN  v4.1.11 C:/Users/ksaei/Documents/Codex/trio-manga-web
+
+stdout | tests/postgres/native-receipts.test.ts
+{"nativeReceiptsTrace":"shared_fixture","phase":"database_start"}
+
+stdout | tests/postgres/native-receipts.test.ts
+{"nativeReceiptsTrace":"shared_fixture","phase":"login_roles_verified","objectRoot":"E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-native-receipts-dZr2XB"}
+
+ ✓ tests/postgres/native-receipts.test.ts (10 tests | 7 skipped) 7858ms
+     ✓ protects receipt JSON with RLS and immutable records and rejects canonical, observation and object-time forgery  1291ms
+     ✓ serializes two MISS targets into one guarded intent and GO and holds a candidate-less origin and changed kernel  1036ms
+     ✓ recovers a completed FileObjectStore PUT after ACK loss using the original refs and full facade checks  545ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed | 7 skipped (10)
+   Start at  04:46:47
+   Duration  8.85s (transform 509ms, setup 0ms, import 839ms, tests 7.86s, environment 0ms)
+

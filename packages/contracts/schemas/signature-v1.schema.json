@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://trio.invalid/design/signature-v1.schema.json",
+  "title": "Offline design only: signature-v1.schema.json",
+  "$comment": "No remote schema loading, service activation, or production compatibility evidence.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "keyId": {
+      "$ref": "#/definitions/version"
+    },
+    "algorithm": {
+      "const": "Ed25519"
+    },
+    "signatureBase64": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]{86}==$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "keyId",
+    "algorithm",
+    "signatureBase64"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9._:-]+$"
+    }
+  }
+}

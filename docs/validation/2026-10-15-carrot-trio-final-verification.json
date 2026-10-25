@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-15",
+  "status": "비교·사용자 선택 자료 완료; 제품 완성/품질은 미검증",
+  "productSourceChanges": 0,
+  "productTests": "NOT RUN",
+  "documentVerification": {
+    "documents": 6,
+    "localLinks": 205,
+    "invalid": [],
+    "decisionAnchors": 33,
+    "uniqueAnchors": 33,
+    "userUndecidedRows": 33,
+    "productTests": "NOT RUN"
+  },
+  "sourcePreservation": {
+    "checked": 782,
+    "changes": [
+      {
+        "scope": "web",
+        "path": "docs/agent-harness.md",
+        "state": "changed"
+      }
+    ],
+    "productSourceChanges": 0
+  },
+  "inventoryVerification": {
+    "count": 6118,
+    "uniquePaths": 6118,
+    "deepAnnotated": 97,
+    "missing": []
+  },
+  "plan": {
+    "path": "C:\\Users\\ksaei\\OneDrive\\문서\\trio-main\\docs\\superpowers\\plans\\2026-10-02-manga-web-workspace-contracts-and-validation-plan.md",
+    "originalBytes": 927939,
+    "appendBytes": 3561,
+    "prefixUnchanged": true,
+    "beforeHash": "323DF79625116F9C59E90C9EE7AFCF09D35F27B48DD9F147A3AB207C0C2087DC",
+    "afterHash": "786C1FB41E1A423091086F6B924AD751AAB6E7E924E359FB62ABFA30CB7666AA"
+  },
+  "nextAction": "사용자 D01~D33 선택; 선택 전 제품 코드 변경 금지",
+  "independentReview": "GO; 내용 검토와 실제 제품 검증은 별도"
+}

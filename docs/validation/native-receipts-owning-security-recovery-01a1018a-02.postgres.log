@@ -1,0 +1,36 @@
+2026-10-04 04:46:46.618 KST [108448] LOG:  starting PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit
+2026-10-04 04:46:46.619 KST [108448] LOG:  listening on IPv4 address "127.0.0.1", port 14285
+2026-10-04 04:46:46.803 KST [86244] LOG:  database system was shut down at 2026-10-04 04:46:39 KST
+2026-10-04 04:46:46.860 KST [108448] LOG:  database system is ready to accept connections
+2026-10-04 04:46:53.843 KST [53984] ERROR:  permission denied for table native_result_candidates
+2026-10-04 04:46:53.843 KST [53984] STATEMENT:  SELECT protected_candidate FROM manga_web.native_result_candidates
+2026-10-04 04:46:53.845 KST [53984] ERROR:  permission denied for table native_result_candidates
+2026-10-04 04:46:53.845 KST [53984] STATEMENT:  UPDATE manga_web.native_result_candidates SET account_id=account_id
+2026-10-04 04:46:53.847 KST [53984] ERROR:  permission denied for table native_result_receipts
+2026-10-04 04:46:53.847 KST [53984] STATEMENT:  SELECT protected_receipt FROM manga_web.native_result_receipts
+2026-10-04 04:46:53.849 KST [53984] ERROR:  permission denied for table native_result_receipts
+2026-10-04 04:46:53.849 KST [53984] STATEMENT:  UPDATE manga_web.native_result_receipts SET account_id=account_id
+2026-10-04 04:46:53.856 KST [64832] ERROR:  permission denied for table native_result_candidates
+2026-10-04 04:46:53.856 KST [64832] STATEMENT:  SELECT protected_candidate FROM manga_web.native_result_candidates
+2026-10-04 04:46:53.858 KST [64832] ERROR:  permission denied for table native_result_candidates
+2026-10-04 04:46:53.858 KST [64832] STATEMENT:  UPDATE manga_web.native_result_candidates SET account_id=account_id
+2026-10-04 04:46:53.861 KST [64832] ERROR:  permission denied for table native_result_receipts
+2026-10-04 04:46:53.861 KST [64832] STATEMENT:  SELECT protected_receipt FROM manga_web.native_result_receipts
+2026-10-04 04:46:53.863 KST [64832] ERROR:  permission denied for table native_result_receipts
+2026-10-04 04:46:53.863 KST [64832] STATEMENT:  UPDATE manga_web.native_result_receipts SET account_id=account_id
+2026-10-04 04:46:54.394 KST [156640] ERROR:  NATIVE_JOB_RECORD_IMMUTABLE
+2026-10-04 04:46:54.394 KST [156640] CONTEXT:  PL/pgSQL function immutable_native_job_record() line 2 at RAISE
+2026-10-04 04:46:54.394 KST [156640] STATEMENT:  UPDATE manga_web.native_result_candidates SET account_id=account_id WHERE account_id=$1
+2026-10-04 04:46:54.435 KST [36648] ERROR:  NATIVE_JOB_RECORD_IMMUTABLE
+2026-10-04 04:46:54.435 KST [36648] CONTEXT:  PL/pgSQL function immutable_native_job_record() line 2 at RAISE
+2026-10-04 04:46:54.435 KST [36648] STATEMENT:  UPDATE manga_web.native_result_receipts SET account_id=account_id WHERE account_id=$1
+2026-10-04 04:46:54.439 KST [53984] ERROR:  NATIVE_RECEIPT_INVALID
+2026-10-04 04:46:54.439 KST [53984] CONTEXT:  PL/pgSQL function native_receipt_prepare(jsonb,jsonb) line 14 at RAISE
+2026-10-04 04:46:54.439 KST [53984] STATEMENT:  SELECT manga_web.native_receipt_prepare($1::jsonb,$2::jsonb) AS decision
+2026-10-04 04:46:56.266 KST [108448] LOG:  received fast shutdown request
+2026-10-04 04:46:56.314 KST [108448] LOG:  aborting any active transactions
+2026-10-04 04:46:56.318 KST [108448] LOG:  background worker "logical replication launcher" (PID 156664) exited with exit code 1
+2026-10-04 04:46:56.320 KST [145612] LOG:  shutting down
+2026-10-04 04:46:56.346 KST [145612] LOG:  checkpoint starting: shutdown immediate
+2026-10-04 04:47:07.264 KST [145612] LOG:  checkpoint complete: wrote 1379 buffers (8.4%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 1 recycled; write=0.689 s, sync=10.037 s, total=10.944 s; sync files=654, longest=0.558 s, average=0.016 s; distance=8364 kB, estimate=8364 kB; lsn=0/201E8F0, redo lsn=0/201E8F0
+2026-10-04 04:47:08.608 KST [108448] LOG:  database system is shut down

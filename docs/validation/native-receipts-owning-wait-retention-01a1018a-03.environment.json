@@ -1,0 +1,12 @@
+{
+  "version": "postgres (PostgreSQL) 18.6",
+  "isolatedData": "E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-KEOPcq",
+  "loopback": true,
+  "credentials": "random ephemeral test credential; omitted",
+  "files": [
+    "tests/postgres/native-receipts.test.ts"
+  ],
+  "testNamePattern": "keeps a missing first PUT|holds an expired original one-hour upload|holds deleted or expired original source assets",
+  "exitCode": 0,
+  "realProviderCalls": 0
+}

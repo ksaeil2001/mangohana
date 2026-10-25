@@ -1,0 +1,38 @@
+{
+  "packages/native/src/windows-pipe-client.ts": {
+    "bytes": 27625,
+    "sha256": "b635a4fbd62239e29bf4f8e3c8b95e2eca9f0185ffb0c16f424fa5b28845fac6"
+  },
+  "packages/native/src/windows-pipe-client-binding.ts": {
+    "bytes": 13063,
+    "sha256": "c86611b1c16d6894215010401dfeace0c2d540289bad4fb38bc9aca8ff5caa0a"
+  },
+  "packages/native/windows-pipe-client/client-core.h": {
+    "bytes": 7990,
+    "sha256": "2d631b635c4695ca92573cc43cba6641833b702539175dc61bed527512d20419"
+  },
+  "packages/native/windows-pipe-client/client-core.cc": {
+    "bytes": 16329,
+    "sha256": "db1d9356a24052601fa6999759e3b57838929ffa0a66651d9c2b1136d88972fd"
+  },
+  "packages/native/windows-pipe-client/client-win32.cc": {
+    "bytes": 47513,
+    "sha256": "a21ace5b29b6c097a41e755283766d67a35d0738d42680ccde3eef07b0f8ab2c"
+  },
+  "scripts/build-windows-pipe-client.ts": {
+    "bytes": 26048,
+    "sha256": "75052d8430a6bbc18fd24cc382f7e825759682c0b5954e2f71adb3d35e592a11"
+  },
+  "tests/domain/windows-pipe-client.test.ts": {
+    "bytes": 35261,
+    "sha256": "a27b6594a209619c387dc15c6807445694b5ccf9f32dbd259894dc83b0835068"
+  },
+  "tests/domain/windows-pipe-client-binding.test.ts": {
+    "bytes": 39194,
+    "sha256": "f6cd8e2f2e3e81ddb6d68f7f0dea07da77c96147eedf7a8574f048b8c493f62e"
+  },
+  "tests/native/windows_pipe_client_test.cc": {
+    "bytes": 26820,
+    "sha256": "c0d61bcd4a477d52b195a89472c4582300d7aef326b890dae5394a28c9d2f981"
+  }
+}

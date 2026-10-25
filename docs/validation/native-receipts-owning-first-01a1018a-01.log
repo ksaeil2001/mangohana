@@ -1,0 +1,22 @@
+
+> trio-manga-web@0.1.0 test:postgres
+> tsx scripts/test-postgres.ts tests/postgres/native-receipts.test.ts
+
+{"database":"postgres (PostgreSQL) 18.6","isolatedData":"E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-MoPxAh","host":"127.0.0.1"}
+
+ RUN  v4.1.11 C:/Users/ksaei/Documents/Codex/trio-manga-web
+
+stdout | tests/postgres/native-receipts.test.ts
+{"nativeReceiptsTrace":"shared_fixture","phase":"database_start"}
+
+stdout | tests/postgres/native-receipts.test.ts
+{"nativeReceiptsTrace":"shared_fixture","phase":"login_roles_verified","objectRoot":"E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-native-receipts-xeYUsE"}
+
+ ✓ tests/postgres/native-receipts.test.ts (10 tests | 9 skipped) 5937ms
+     ✓ prepares before PUT and verifies the original raw frame for a fresh target without another job or GO  833ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 9 skipped (10)
+   Start at  04:44:20
+   Duration  6.96s (transform 527ms, setup 0ms, import 872ms, tests 5.94s, environment 0ms)
+

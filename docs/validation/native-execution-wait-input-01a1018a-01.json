@@ -1,0 +1,12 @@
+{
+  "version": "postgres (PostgreSQL) 18.6",
+  "isolatedData": "E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-lDoAzq",
+  "loopback": true,
+  "credentials": "random ephemeral test credential; omitted",
+  "files": [
+    "tests/postgres/native-execution-wait.test.ts"
+  ],
+  "testNamePattern": "keeps INPUT native WAIT across restart",
+  "exitCode": 0,
+  "realProviderCalls": 0
+}

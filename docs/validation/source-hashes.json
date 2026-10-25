@@ -1,0 +1,8 @@
+{
+  "wire-v1.schema.json": "8f83e3a437c465abff35c51e2da211d0511839cb5b2402dab02d0838f1af2c3f",
+  "manifest-v1.schema.json": "492174b06c3c0737c2c07ef55ab4cc06a3adc95c58d240c66358e206983eebe0",
+  "signature-v1.schema.json": "82cd385ccec88d19d66b1e020c54d3c5558f7a0f6f3654e143d489f134be9e6d",
+  "measurement-profile.json": "d2c930bd511d0144e8debedcdf595fbc090bc00e829eed656b4ec092d4d2a5ab",
+  "quality-specimen-plan.json": "866030b22e39e82a914cebf57f629959d79f8aecdcbb95ff9a95ca6b9c16270f",
+  "storage-design.sql": "6c6008e12026a52e793c0915f4f4220bdcfdaf4223628245c699407afdc3e3d9"
+}

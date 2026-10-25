@@ -1,0 +1,38 @@
+
+> trio-manga-web@0.1.0 test:postgres
+> tsx scripts/test-postgres.ts tests/postgres/native-execution-wait.test.ts
+
+{"database":"postgres (PostgreSQL) 18.6","isolatedData":"E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-QXwSrL","host":"127.0.0.1"}
+
+ RUN  v4.1.11 C:/Users/ksaei/Documents/Codex/trio-manga-web
+
+stdout | tests/postgres/native-execution-wait.test.ts
+{"nativeExecutionWaitTrace":"shared_fixture","phase":"database_start"}
+
+stdout | tests/postgres/native-execution-wait.test.ts
+{"nativeExecutionWaitTrace":"shared_fixture","phase":"migrations_and_login_roles_verified"}
+
+ ❯ tests/postgres/native-execution-wait.test.ts (7 tests | 1 failed | 4 skipped) 5119ms
+     ↓ keeps INPUT native WAIT across restart and API safe stop without provider or free START
+     × keeps checkpoint native WAIT scoped to the current retry with original execution and cost unchanged 392ms
+     ✓ keeps known SUCCESS cost and START while native validation and late publication remain UNKNOWN 107ms
+     ✓ keeps DISPATCH native WAIT independent of actual provider START at PRE_PROVIDER  883ms
+     ↓ keeps DISPATCH native WAIT independent of actual provider START at POST_PROVIDER
+     ↓ keeps LOOKUP native WAIT in a closed source context without changing prior outcome or cost
+     ↓ keeps successful native calculation separate from unresolved release and unrelated request or account faults
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/postgres/native-execution-wait.test.ts > native execution waits through owning LOGIN roles > keeps checkpoint native WAIT scoped to the current retry with original execution and cost unchanged
+AssertionError: expected "vi.fn()" to be called once, but got 2 times
+ ❯ tests/postgres/native-execution-wait.test.ts:91:195
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 4 skipped (7)
+   Start at  04:16:12
+   Duration  6.11s (transform 494ms, setup 0ms, import 827ms, tests 5.12s, environment 0ms)
+

@@ -1,0 +1,52 @@
+{
+  "version": "noto-cjk-2.004-v1",
+  "sourceRevision": "523d033d6cb47f4a80c58a35753646f5c3608a78",
+  "license": {
+    "id": "f0000000-0000-4000-8000-000000000004",
+    "file": "OFL.txt",
+    "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+    "bytesLength": "4301",
+    "sourceUrl": "https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/LICENSE"
+  },
+  "fonts": [
+    {
+      "id": "f0000000-0000-4000-8000-000000000001",
+      "language": "ko",
+      "family": "Noto Sans CJK KR",
+      "file": "NotoSansCJKkr-Regular.otf",
+      "source": "Sans/OTF/Korean/NotoSansCJKkr-Regular.otf",
+      "sha256": "6bcb2a0703aa137e874fc2dffa85f6c21ba9a67fa329e81b8c801663af7e992a",
+      "bytesLength": "16433112",
+      "sourceUrl": "https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf",
+      "version": "Sans2.004",
+      "catalogVersion": "noto-cjk-2.004-v1",
+      "licenseId": "f0000000-0000-4000-8000-000000000004"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-000000000002",
+      "language": "ja",
+      "family": "Noto Sans CJK JP",
+      "file": "NotoSansCJKjp-Regular.otf",
+      "source": "Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",
+      "sha256": "68a3fc98800b2a27b371f2fb79991daf3633bd89309d4ffaa6946fd587f375b5",
+      "bytesLength": "16467736",
+      "sourceUrl": "https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",
+      "version": "Sans2.004",
+      "catalogVersion": "noto-cjk-2.004-v1",
+      "licenseId": "f0000000-0000-4000-8000-000000000004"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-000000000003",
+      "language": "zh-Hans",
+      "family": "Noto Sans CJK SC",
+      "file": "NotoSansCJKsc-Regular.otf",
+      "source": "Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf",
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "bytesLength": "16437364",
+      "sourceUrl": "https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf",
+      "version": "Sans2.004",
+      "catalogVersion": "noto-cjk-2.004-v1",
+      "licenseId": "f0000000-0000-4000-8000-000000000004"
+    }
+  ]
+}

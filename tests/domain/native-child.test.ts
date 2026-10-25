@@ -1,0 +1,20 @@
+import {describe,it,expect} from 'vitest';
+import {spawn} from 'node:child_process';
+import {mkdtemp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {setTimeout as delay} from 'node:timers/promises';
+import sharp from 'sharp';
+import {NativeController,type NativeJobEvidence} from '../../packages/native/src/controller.js';
+import {NativeFacade} from '../../packages/native/src/facade.js';
+import {createNativeJob,verifyNativeResult,type NativeLimits,type NativeResult} from '../../packages/native/src/dto.js';
+import {NativeReader,readNativeFrame,writeNativeFrame,writeNativeBytes} from '../../packages/native/src/frame.js';
+import {syntheticProfile} from '../../packages/media/src/profile.js';
+import {digest} from '../../packages/contracts/src/intent.js';
+
+const limits:NativeLimits={maxMetadataBytes:64*1024,maxInputBytes:1024*1024,maxOutputBytes:2*1024*1024,maxItems:10,childMemoryBytes:128*1024*1024,maxProcesses:16,timeoutMs:15000,terminationWaitMs:2000,parentInFlightBytes:16*1024*1024};
+describe('owned fixed child computation',()=>{
+  it('runs real image decoding through the binary transport and keeps physical subtree proof unconfirmed',async()=>{const root=await mkdtemp(path.join(tmpdir(),'trio-native-decode-'));const records:NativeJobEvidence[]=[];const controller=NativeController.owned({profile:syntheticProfile,limits,directoryRoot:root,observe:record=>records.push(record)});const facade=new NativeFacade(controller);const source=await sharp({create:{width:4,height:3,channels:4,background:'#12ab3490'}}).png().toBuffer();const result=await facade.decodeImage(source,syntheticProfile);expect(result.width).toBe(4);expect(result.height).toBe(3);expect(result.mediaType).toBe('image/png');expect(await sharp(result.canonicalPng).ensureAlpha().raw().toBuffer()).toEqual(await sharp(source).ensureAlpha().raw().toBuffer());controller.stopClaims();await controller.idle();expect(records).toHaveLength(1);expect(records[0]).toMatchObject({state:'SUCCEEDED',startedComputation:true,directChildClosed:true,subtreeTerminationConfirmed:false,operationJoined:true,isolation:'OWNED_FIXTURE'});});
+  it('accepts a GO token split across pipe writes before computing a raw ZIP frame',async()=>{const scratch=await mkdtemp(path.join(tmpdir(),'trio-native-go-'));const frameLimits={maxMetadataBytes:limits.maxMetadataBytes,maxBinaryBytes:limits.maxInputBytes,maxItems:limits.maxItems};const outputLimits={...frameLimits,maxBinaryBytes:limits.maxOutputBytes};const env:NodeJS.ProcessEnv={TEMP:scratch,TMP:scratch,TMPDIR:scratch,TRIO_NATIVE_JOB_DIRECTORY:scratch};if(process.env.SystemRoot)env.SystemRoot=process.env.SystemRoot;if(process.env.WINDIR)env.WINDIR=process.env.WINDIR;const bootstrap=fileURLToPath(new URL('../../packages/native/src/bootstrap.mjs',import.meta.url));const child=spawn(process.execPath,[bootstrap,JSON.stringify({inputLimits:frameLimits,outputLimits})],{cwd:scratch,env,windowsHide:true,shell:false,stdio:['pipe','pipe','pipe']});child.stdin.on('error',()=>{});child.stderr.resume();const closed=new Promise<number|null>(resolve=>child.once('close',code=>resolve(code)));const reader=new NativeReader(child.stdout,17+12+limits.maxMetadataBytes+limits.maxOutputBytes);try{expect((await reader.exact(8)).toString()).toBe('WAIT_V1\n');await writeNativeBytes(child.stdin,Buffer.from('G'));await delay(10);await writeNativeBytes(child.stdin,Buffer.from('O_V1\n'));expect((await reader.exact(9)).toString()).toBe('READY_V1\n');const blobs=new Map([['entry',Buffer.from([0,255,4,0])]]),job=createNativeJob('ZIP_WRITE',digest(syntheticProfile),{profile:syntheticProfile,entries:[{name:'owned.bin',blobId:'entry'}]},blobs,frameLimits);await writeNativeFrame(child.stdin,{envelope:job,blobs},frameLimits);child.stdin.end();const result=await readNativeFrame<NativeResult>(reader,outputLimits);verifyNativeResult(job,result.envelope);expect(result.envelope.metadata.archiveBlobId).toBe('archive');expect(result.blobs.get('archive')?.readUInt32LE(0)).toBe(0x04034b50);expect(await closed).toBe(0);}finally{child.kill('SIGKILL');await closed;}});
+});

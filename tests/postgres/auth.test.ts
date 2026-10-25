@@ -1,0 +1,66 @@
+import { afterEach,describe,it,expect } from 'vitest';
+import { randomUUID,randomBytes } from 'node:crypto';
+import type { Database } from '../../packages/storage/src/database.js';
+import { AuthService } from '../../packages/domain/src/auth.js';
+import { SyntheticAuthProvider,AuthVerificationError } from '../../packages/domain/src/auth-provider.js';
+import { WorkspaceService } from '../../packages/domain/src/workspace.js';
+import { currentSession } from '../../packages/domain/src/model.js';
+import type { AuthAttempt } from '../../packages/contracts/src/wire.generated.js';
+import { seedIdentity,seedWorkspace,testDatabase } from '../fixtures/database.js';
+const connections:Database[]=[];afterEach(async()=>{for(const db of connections.splice(0))await db.close();});
+async function fixture() {
+  let now=new Date('2026-10-03T00:00:00Z');const db=await testDatabase(async()=>now);connections.push(db);const seed=await seedWorkspace(db,await seedIdentity(db,now),0,now);const workspace=new WorkspaceService(db,{stageOrder:['OCR','TRANSLATE'],synthetic:true,paidEnabled:false,realProviderEnabled:false});
+  const provider=new SyntheticAuthProvider((method,email)=>method==='EMAIL_OTP'&&email==='current@example.invalid'?`synthetic-${seed.accountId}`:`synthetic-new-${method}`);const auth=new AuthService(db,workspace,provider,new Set([seed.accountId]),randomBytes(32));const browser={correlation:randomUUID(),ip:'127.0.0.1'};const actor={accountId:seed.accountId,sessionId:seed.sessionId,tabId:seed.tabId,ownerCapability:seed.ownerCapability};
+  const proof=async(purpose:AuthAttempt['purpose'],method:AuthAttempt['method']='EMAIL_OTP',bindingId:string|null=seed.bindingId)=>{now=new Date(now.valueOf()+60000);const start=await auth.begin(actor,browser,{commandId:randomUUID(),intentVersion:1,method,purpose,bindingId,email:method==='EMAIL_OTP'?'current@example.invalid':null});
+    const result=method==='EMAIL_OTP'?await auth.verify(browser,{commandId:randomUUID(),intentVersion:1,attemptId:start.attemptId,code:'123456'}):await auth.verifyCallback(browser,{commandId:randomUUID(),intentVersion:1,attemptId:start.attemptId},'123456',(await db.pool.query('SELECT protected_intent FROM manga_web.auth_attempts WHERE attempt_id=$1',[start.attemptId])).rows[0].protected_intent.state);return result.proofId!;};
+  return {db,seed,workspace,provider,auth,browser,actor,proof,advance:(ms:number)=>{now=new Date(now.valueOf()+ms);},now:()=>now};
+}
+describe('fresh authentication purposes, bindings and distinct logout contracts',()=>{
+  it('rejects a delayed actorless LOGIN begun before all logout and allows a newly started login afterward',async()=>{
+    const f=await fixture();const proof=await f.proof('CONFIRM_ALL_LOGOUT');f.advance(60000);const old=await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'});let release!:()=>void;let entered!:()=>void;const exchangeStarted=new Promise<void>(resolve=>{entered=resolve;});const paused=new Promise<void>(resolve=>{release=resolve;});const original=f.provider.verify.bind(f.provider);f.provider.verify=async(...args)=>{if(args[0].attemptId===old.attemptId){entered();await paused;}return original(...args);};
+    const pending=f.auth.verify(f.browser,{commandId:randomUUID(),intentVersion:1,attemptId:old.attemptId,code:'123456'});await exchangeStarted;await f.auth.logoutAll(f.actor,{commandId:randomUUID(),intentVersion:1,proofId:proof,lossWarningVersion:1,explicitDiscardAndRevoke:true});release();await expect(pending).rejects.toMatchObject({code:'PROOF_UNCONFIRMED'});expect((await f.db.pool.query('SELECT count(*) AS count FROM manga_web.app_sessions')).rows[0].count).toBe('1');f.advance(60000);const next=await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'});const logged=await f.auth.verify(f.browser,{commandId:randomUUID(),intentVersion:1,attemptId:next.attemptId,code:'123456'});expect(logged.sessionId).toBeTruthy();expect((await f.db.pool.query('SELECT auth_generation FROM manga_web.app_sessions WHERE session_id=$1',[logged.sessionId])).rows[0].auth_generation).toBe('1');
+  });
+  it('blocks shared recipient failures before provider exchange and reserves concurrent verification slots',async()=>{
+    const f=await fixture();let calls=0;const verify=f.provider.verify.bind(f.provider);f.provider.verify=async(...args)=>{calls++;return verify(...args);};
+    const start=await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'CURRENT@EXAMPLE.INVALID'});
+    for(let i=0;i<5;i++)await expect(f.auth.verify(f.browser,{commandId:randomUUID(),intentVersion:1,attemptId:start.attemptId,code:'000000'})).rejects.toMatchObject({code:'PROOF_UNCONFIRMED'});expect(calls).toBe(5);
+    f.advance(60000);const next=await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'});await expect(f.auth.verify(f.browser,{commandId:randomUUID(),intentVersion:1,attemptId:next.attemptId,code:'123456'})).rejects.toMatchObject({code:'PROOF_RATE_LIMITED'});expect(calls).toBe(5);expect((await f.db.pool.query('SELECT state FROM manga_web.auth_attempts WHERE attempt_id=$1',[next.attemptId])).rows[0].state).toBe('READY');
+    f.advance(900001);const attempts=[];for(let i=0;i<5;i++){if(i)f.advance(60000);attempts.push(await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:`other${i}@example.invalid`}));}
+    const outcomes=await Promise.allSettled(attempts.map(a=>f.auth.verify(f.browser,{commandId:randomUUID(),intentVersion:1,attemptId:a.attemptId,code:'000000'})));expect(outcomes.every(o=>o.status==='rejected')).toBe(true);expect(calls).toBe(10);
+  });
+  it('keeps provider limits and unknown exchange outcomes separate from invalid credentials',async()=>{
+    for(const kind of ['INVALID','RATE_LIMITED','UNKNOWN'] as const){const f=await fixture();f.provider.verify=async()=>{throw new AuthVerificationError(kind);};const start=await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'});await expect(f.auth.verify(f.browser,{commandId:randomUUID(),intentVersion:1,attemptId:start.attemptId,code:'123456'})).rejects.toBeTruthy();const row=(await f.db.pool.query('SELECT state,failed_count FROM manga_web.auth_attempts WHERE attempt_id=$1',[start.attemptId])).rows[0];expect(row).toMatchObject({state:kind==='UNKNOWN'?'VERIFY_UNKNOWN':'READY',failed_count:kind==='INVALID'?1:0});}
+  });
+  it('does not acquire nested connections for concurrent authenticated starts',async()=>{
+    const f=await fixture();const results=await Promise.allSettled(Array.from({length:16},(_,i)=>f.auth.begin(f.actor,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'CONFIRM_CURRENT_ACCOUNT',bindingId:f.seed.bindingId,email:`concurrent${i}@example.invalid`})));expect(results).toHaveLength(16);expect(results.every(r=>r.status==='fulfilled'||(r.reason&&r.reason.code==='PROOF_RATE_LIMITED'))).toBe(true);
+  });
+  it('creates one explicit login session and preserves its original seven-day deadline when the response is lost',async()=>{
+    const f=await fixture();const start=await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'});const command={commandId:randomUUID(),intentVersion:1,attemptId:start.attemptId,code:'123456'};
+    const first=await f.auth.verify(f.browser,command);const deadline=(await f.db.pool.query('SELECT absolute_expires_at FROM manga_web.app_sessions WHERE session_id=$1',[first.sessionId])).rows[0].absolute_expires_at;f.advance(1000);const repeated=await f.auth.verify(f.browser,command);expect(repeated.sessionId).toBe(first.sessionId);expect(repeated.cookie).not.toBe(first.cookie);
+    expect((await f.db.pool.query('SELECT absolute_expires_at FROM manga_web.app_sessions WHERE session_id=$1',[first.sessionId])).rows[0].absolute_expires_at).toEqual(deadline);expect(deadline.valueOf()-new Date('2026-10-03T00:00:00Z').valueOf()).toBe(7*86400000);
+    await expect(f.auth.verify({...f.browser,correlation:'other'},command)).rejects.toMatchObject({code:'PROOF_UNCONFIRMED'});
+    await expect(f.auth.verify(f.browser,{...command,code:'654321'})).rejects.toMatchObject({code:'INTENT_CONFLICT'});
+  });
+  it('requires two fresh purposes to link a method and cannot remove the last method or refresh sessions using link proof',async()=>{
+    const f=await fixture();const deadline=(await f.db.pool.query('SELECT absolute_expires_at FROM manga_web.app_sessions')).rows[0].absolute_expires_at;
+    const current=await f.proof('CONFIRM_CURRENT_ACCOUNT');const next=await f.proof('PROVE_LOGIN_BINDING','GOOGLE',null);const linked=await f.auth.link(f.actor,{commandId:randomUUID(),intentVersion:1,currentAccountProofId:current,newBindingProofId:next,expectedBindingRevision:'0',explicitLink:true});expect((await f.auth.bindings(f.actor)).items).toHaveLength(2);
+    expect((await f.db.pool.query('SELECT absolute_expires_at FROM manga_web.app_sessions')).rows[0].absolute_expires_at).toEqual(deadline);
+    const retained=await f.proof('CONFIRM_RETAINED_BINDING');await f.auth.unlink(f.actor,{commandId:randomUUID(),intentVersion:1,bindingId:linked.operationRef.id,retainedBindingProofId:retained,expectedBindingRevision:'1',explicitRemove:true});expect((await f.auth.bindings(f.actor)).items).toHaveLength(1);
+    const last=await f.proof('CONFIRM_RETAINED_BINDING');await expect(f.auth.unlink(f.actor,{commandId:randomUUID(),intentVersion:1,bindingId:f.seed.bindingId,retainedBindingProofId:last,expectedBindingRevision:'2',explicitRemove:true})).rejects.toMatchObject({code:'PROOF_UNCONFIRMED'});
+  });
+  it('requires the exact all-logout purpose, revokes every app session and closes the slot without pretending a file was saved',async()=>{
+    const f=await fixture();const wrong=await f.proof('CONFIRM_CURRENT_ACCOUNT');await expect(f.auth.logoutAll(f.actor,{commandId:randomUUID(),intentVersion:1,proofId:wrong,lossWarningVersion:1,explicitDiscardAndRevoke:true})).rejects.toMatchObject({code:'PROOF_UNCONFIRMED'});
+    const proof=await f.proof('CONFIRM_ALL_LOGOUT');await f.auth.logoutAll(f.actor,{commandId:randomUUID(),intentVersion:1,proofId:proof,lossWarningVersion:1,explicitDiscardAndRevoke:true});expect((await f.db.pool.query('SELECT lifecycle,close_reason FROM manga_web.workspace_contexts')).rows[0]).toMatchObject({lifecycle:'CLOSED',close_reason:'ALL_SESSIONS_LOGOUT'});
+    expect((await f.db.pool.query('SELECT count(*) AS count FROM manga_web.account_live_context_slots')).rows[0].count).toBe('0');await expect(f.db.accountTransaction(f.actor.accountId,tx=>currentSession(tx,f.actor))).rejects.toMatchObject({code:'SESSION_REQUIRED'});
+    expect((await f.db.pool.query('SELECT count(*) AS count FROM manga_web.file_attestations')).rows[0].count).toBe('0');
+  });
+  it('refuses current owner logout until normal save and leaves another session owner intact',async()=>{
+    const f=await fixture();await expect(f.auth.logoutCurrent(f.actor,{commandId:randomUUID(),intentVersion:1,exitOperationId:null})).rejects.toMatchObject({code:'SNAPSHOT_STALE'});
+    f.advance(60000);const start=await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'});const another=await f.auth.verify(f.browser,{commandId:randomUUID(),intentVersion:1,attemptId:start.attemptId,code:'123456'});await f.auth.logoutCurrent({...f.actor,sessionId:another.sessionId!},{commandId:randomUUID(),intentVersion:1,exitOperationId:null});
+    expect((await f.db.pool.query('SELECT lifecycle,owner_session_id FROM manga_web.workspace_contexts')).rows[0]).toMatchObject({lifecycle:'OPEN',owner_session_id:f.actor.sessionId});expect((await f.db.pool.query('SELECT auth_generation FROM manga_web.accounts')).rows[0].auth_generation).toBe('0');
+  });
+  it('expires proof at the exact original five-minute boundary and retains limiter windows across new attempts',async()=>{
+    const f=await fixture();const proof=await f.proof('CONFIRM_ALL_LOGOUT');const row=(await f.db.pool.query('SELECT expires_at FROM manga_web.auth_evidence WHERE evidence_id=$1',[proof])).rows[0];f.advance(row.expires_at.valueOf()-f.now().valueOf());await expect(f.auth.logoutAll(f.actor,{commandId:randomUUID(),intentVersion:1,proofId:proof,lossWarningVersion:1,explicitDiscardAndRevoke:true})).rejects.toMatchObject({code:'PROOF_UNCONFIRMED'});
+    for(let i=0;i<4;i++){f.advance(60000);await f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'});}f.advance(60000);await expect(f.auth.begin(null,f.browser,{commandId:randomUUID(),intentVersion:1,method:'EMAIL_OTP',purpose:'LOGIN',bindingId:null,email:'current@example.invalid'})).rejects.toMatchObject({code:'PROOF_RATE_LIMITED'});
+  });
+});

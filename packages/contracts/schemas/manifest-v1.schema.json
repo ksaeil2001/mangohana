@@ -1,0 +1,2524 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://trio.invalid/design/manifest-v1.schema.json",
+  "title": "Offline design only: manifest-v1.schema.json",
+  "$comment": "No remote schema loading, service activation, or production compatibility evidence.",
+  "type": "object",
+  "properties": {
+    "format": {
+      "const": "trio.manga-project"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "issuer": {
+      "$ref": "#/definitions/version"
+    },
+    "keyId": {
+      "$ref": "#/definitions/version"
+    },
+    "algorithm": {
+      "const": "Ed25519"
+    },
+    "exportId": {
+      "$ref": "#/definitions/id"
+    },
+    "createdAt": {
+      "$ref": "#/definitions/time"
+    },
+    "creatorAccountId": {
+      "$ref": "#/definitions/id"
+    },
+    "projectLineageId": {
+      "$ref": "#/definitions/id"
+    },
+    "snapshotRevision": {
+      "$ref": "#/definitions/counter"
+    },
+    "projectStatus": {
+      "type": "string",
+      "enum": [
+        "IN_PROGRESS",
+        "COMPLETED"
+      ]
+    },
+    "settings": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/settings"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/page"
+      },
+      "minItems": 0
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/asset"
+      },
+      "minItems": 0
+    },
+    "unsettledReferences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "executionId": {
+            "$ref": "#/definitions/id"
+          },
+          "costItemId": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pageLineageId": {
+            "$ref": "#/definitions/id"
+          },
+          "originRequestId": {
+            "$ref": "#/definitions/id"
+          },
+          "completionKind": {
+            "type": "string",
+            "enum": [
+              "NORMAL_COMPLETED",
+              "OTHER"
+            ]
+          }
+        },
+        "required": [
+          "executionId",
+          "costItemId",
+          "pageLineageId",
+          "originRequestId",
+          "completionKind"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "optionalCheckpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/checkpoint"
+      },
+      "minItems": 0
+    },
+    "fonts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/fontProvenance"
+      }
+    }
+  },
+  "required": [
+    "format",
+    "schemaVersion",
+    "issuer",
+    "keyId",
+    "algorithm",
+    "exportId",
+    "createdAt",
+    "creatorAccountId",
+    "projectLineageId",
+    "snapshotRevision",
+    "projectStatus",
+    "settings",
+    "pages",
+    "assets",
+    "unsettledReferences",
+    "optionalCheckpoints",
+    "fonts"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "counter": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,18})$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "time": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "decimal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,12})?$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9._:-]+$"
+    },
+    "positivePixels": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 2147483647
+    },
+    "point": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "AUTH_REQUIRED",
+        "ACCESS_DENIED",
+        "OWNER_CHANGED",
+        "REVISION_CONFLICT",
+        "INTENT_CONFLICT",
+        "SLOT_OCCUPIED",
+        "ACTIVE_WORK",
+        "EXECUTION_UNKNOWN",
+        "COST_UNCONFIRMED",
+        "COST_BOUND_UNCONFIRMED",
+        "PROVIDER_LIMIT_WAIT",
+        "MODEL_CONTRACT_UNAVAILABLE",
+        "INPUT_INVALID",
+        "LIMIT_PROFILE_UNCONFIRMED",
+        "BATCH_CAPACITY_EXCEEDED",
+        "DUPLICATE_CHOICE_REQUIRED",
+        "DRAFT_UNACKNOWLEDGED",
+        "SNAPSHOT_STALE",
+        "CAPTURE_EXPIRED",
+        "FILE_INVALID",
+        "FILE_ACCESS_UNCONFIRMED",
+        "CHECKPOINT_REUSE_UNAVAILABLE",
+        "DELIVERY_EXPIRED",
+        "STORAGE_FAILED",
+        "RENDER_FAILED",
+        "PROOF_UNCONFIRMED",
+        "CLOCK_UNCONFIRMED",
+        "DEPENDENCY_UNAVAILABLE"
+      ]
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "settingsVersion": {
+          "$ref": "#/definitions/counter"
+        },
+        "contractVersion": {
+          "$ref": "#/definitions/version"
+        },
+        "sourceLanguage": {
+          "type": "string",
+          "enum": [
+            "ja",
+            "zh-Hans",
+            "en"
+          ]
+        },
+        "targetLanguage": {
+          "type": "string",
+          "enum": [
+            "ko",
+            "en",
+            "ja"
+          ]
+        },
+        "modelId": {
+          "$ref": "#/definitions/version"
+        },
+        "reasoningLevel": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "fontAssetId": {
+          "$ref": "#/definitions/id"
+        },
+        "baseFontSizePx": {
+          "$ref": "#/definitions/positivePixels"
+        },
+        "minFontSizePx": {
+          "$ref": "#/definitions/positivePixels"
+        }
+      },
+      "required": [
+        "settingsVersion",
+        "contractVersion",
+        "sourceLanguage",
+        "targetLanguage",
+        "modelId",
+        "reasoningLevel",
+        "fontAssetId",
+        "baseFontSizePx",
+        "minFontSizePx"
+      ],
+      "additionalProperties": false
+    },
+    "ownedTarget": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/definitions/id"
+        },
+        "contextGeneration": {
+          "$ref": "#/definitions/counter"
+        },
+        "tabId": {
+          "$ref": "#/definitions/id"
+        },
+        "expectedOwnerRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "expectedWorkspaceRevision": {
+          "$ref": "#/definitions/counter"
+        }
+      },
+      "required": [
+        "contextId",
+        "contextGeneration",
+        "tabId",
+        "expectedOwnerRevision",
+        "expectedWorkspaceRevision"
+      ],
+      "additionalProperties": false
+    },
+    "textValue": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "AI_PROPOSED",
+            "USER_MODIFIED",
+            "USER_CONFIRMED"
+          ]
+        }
+      },
+      "required": [
+        "value",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "geometry": {
+      "type": "object",
+      "properties": {
+        "polygon": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/point"
+          },
+          "minItems": 3
+        },
+        "angleDegrees": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "readingOrder": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "HORIZONTAL",
+            "VERTICAL"
+          ]
+        }
+      },
+      "required": [
+        "polygon",
+        "angleDegrees",
+        "readingOrder",
+        "orientation"
+      ],
+      "additionalProperties": false
+    },
+    "block": {
+      "type": "object",
+      "properties": {
+        "regionId": {
+          "$ref": "#/definitions/id"
+        },
+        "geometry": {
+          "$ref": "#/definitions/geometry"
+        },
+        "sourceText": {
+          "$ref": "#/definitions/textValue"
+        },
+        "translatedText": {
+          "$ref": "#/definitions/textValue"
+        },
+        "fontAssetId": {
+          "$ref": "#/definitions/id"
+        },
+        "fontSizePx": {
+          "$ref": "#/definitions/positivePixels"
+        },
+        "appliedTranslation": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/appliedTranslation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "regionId",
+        "geometry",
+        "sourceText",
+        "translatedText",
+        "fontAssetId",
+        "fontSizePx",
+        "appliedTranslation"
+      ],
+      "additionalProperties": false
+    },
+    "asset": {
+      "type": "object",
+      "properties": {
+        "assetId": {
+          "$ref": "#/definitions/id"
+        },
+        "entry": {
+          "type": "string",
+          "pattern": "^(assets|fonts)/[0-9a-f-]{36}\\.bin$|^licenses/[0-9a-f-]{36}\\.txt$"
+        },
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "ORIGINAL",
+            "CLEANED",
+            "RENDER",
+            "FONT",
+            "LICENSE",
+            "CHECKPOINT"
+          ]
+        },
+        "mediaType": {
+          "type": "string",
+          "enum": [
+            "image/png",
+            "image/jpeg",
+            "font/otf",
+            "font/ttf",
+            "text/plain",
+            "application/octet-stream"
+          ]
+        },
+        "bytesLength": {
+          "$ref": "#/definitions/counter"
+        },
+        "sha256": {
+          "$ref": "#/definitions/digest"
+        },
+        "requiredFor": {
+          "type": "string",
+          "enum": [
+            "EDIT",
+            "CHECKPOINT"
+          ]
+        }
+      },
+      "required": [
+        "assetId",
+        "entry",
+        "purpose",
+        "mediaType",
+        "bytesLength",
+        "sha256",
+        "requiredFor"
+      ],
+      "additionalProperties": false
+    },
+    "checkpoint": {
+      "type": "object",
+      "properties": {
+        "checkpointId": {
+          "$ref": "#/definitions/id"
+        },
+        "originRequestId": {
+          "$ref": "#/definitions/id"
+        },
+        "originExecutionId": {
+          "$ref": "#/definitions/id"
+        },
+        "logicalStepId": {
+          "$ref": "#/definitions/version"
+        },
+        "stageContract": {
+          "$ref": "#/definitions/version"
+        },
+        "modelContract": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/version"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inputDigest": {
+          "$ref": "#/definitions/digest"
+        },
+        "dependencyDigest": {
+          "$ref": "#/definitions/digest"
+        },
+        "assetIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/id"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "checkpointId",
+        "originRequestId",
+        "originExecutionId",
+        "logicalStepId",
+        "stageContract",
+        "modelContract",
+        "inputDigest",
+        "dependencyDigest",
+        "assetIds"
+      ],
+      "additionalProperties": false
+    },
+    "page": {
+      "type": "object",
+      "properties": {
+        "pageLineageId": {
+          "$ref": "#/definitions/id"
+        },
+        "originalAssetId": {
+          "$ref": "#/definitions/id"
+        },
+        "widthPx": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "heightPx": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "skip": {
+          "type": "boolean"
+        },
+        "resultRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "cleanedAssetId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "renderAssetId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/block"
+          },
+          "minItems": 0
+        },
+        "paidCumulativeBaselineCredit": {
+          "$ref": "#/definitions/decimal"
+        },
+        "baselineContributionIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/id"
+          },
+          "minItems": 0
+        },
+        "geometryContract": {
+          "$ref": "#/definitions/version"
+        },
+        "renderContract": {
+          "$ref": "#/definitions/version"
+        },
+        "cleanupQa": {
+          "type": "string",
+          "enum": [
+            "NOT_RUN",
+            "NEEDS_REVIEW",
+            "PASSED",
+            "FAILED"
+          ]
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "paidCumulativeBaselineState": {
+          "type": "string",
+          "enum": [
+            "CONFIRMED",
+            "UNCONFIRMED"
+          ]
+        },
+        "renderSpecification": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/renderSpecification"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "pageLineageId",
+        "originalAssetId",
+        "widthPx",
+        "heightPx",
+        "skip",
+        "resultRevision",
+        "cleanedAssetId",
+        "renderAssetId",
+        "blocks",
+        "paidCumulativeBaselineCredit",
+        "baselineContributionIds",
+        "geometryContract",
+        "renderContract",
+        "cleanupQa",
+        "displayName",
+        "paidCumulativeBaselineState"
+      ],
+      "additionalProperties": false
+    },
+    "workspaceCommand": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "target": {
+          "$ref": "#/definitions/ownedTarget"
+        },
+        "operation": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "PATCH_SETTINGS"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "$ref": "#/definitions/settings"
+                    }
+                  },
+                  "required": [
+                    "settings"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "COMMIT_UPLOAD"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "uploadId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "candidateIdsInOrder": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/id"
+                      },
+                      "minItems": 0
+                    },
+                    "explicitDuplicateIds": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/id"
+                      },
+                      "minItems": 0
+                    },
+                    "previewRevision": {
+                      "$ref": "#/definitions/counter"
+                    }
+                  },
+                  "required": [
+                    "uploadId",
+                    "candidateIdsInOrder",
+                    "explicitDuplicateIds",
+                    "previewRevision"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "EXCLUDE_PAGES"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageIds": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/id"
+                      },
+                      "minItems": 1
+                    }
+                  },
+                  "required": [
+                    "pageIds"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "SET_SKIP"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageIds": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/id"
+                      },
+                      "minItems": 1
+                    },
+                    "skip": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "pageIds",
+                    "skip"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "REORDER_PAGES"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageIdsInOrder": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/id"
+                      },
+                      "minItems": 0
+                    }
+                  },
+                  "required": [
+                    "pageIdsInOrder"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "REQUEST_TRANSLATION"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "scope": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "PAGE"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "REGIONS"
+                            },
+                            "regionIds": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/definitions/id"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "regionIds"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "expectedResultRevision": {
+                      "$ref": "#/definitions/counter"
+                    },
+                    "settingsVersion": {
+                      "$ref": "#/definitions/counter"
+                    }
+                  },
+                  "required": [
+                    "pageId",
+                    "scope",
+                    "expectedResultRevision",
+                    "settingsVersion"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "BATCH_TRANSLATION"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageIdsInOrder": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/id"
+                      },
+                      "minItems": 0
+                    },
+                    "settingsVersion": {
+                      "$ref": "#/definitions/counter"
+                    }
+                  },
+                  "required": [
+                    "pageIdsInOrder",
+                    "settingsVersion"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "RETRY_REQUEST"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "requestId": {
+                      "$ref": "#/definitions/id"
+                    }
+                  },
+                  "required": [
+                    "requestId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "RETRANSLATE"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "scope": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "PAGE"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "REGIONS"
+                            },
+                            "regionIds": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/definitions/id"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "regionIds"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "expectedResultRevision": {
+                      "$ref": "#/definitions/counter"
+                    },
+                    "settingsVersion": {
+                      "$ref": "#/definitions/counter"
+                    }
+                  },
+                  "required": [
+                    "pageId",
+                    "scope",
+                    "expectedResultRevision",
+                    "settingsVersion"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "MANUAL_EDIT"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "regionId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "expectedResultRevision": {
+                      "$ref": "#/definitions/counter"
+                    },
+                    "patch": {
+                      "type": "object",
+                      "properties": {
+                        "sourceText": {
+                          "type": "string",
+                          "maxLength": 65536
+                        },
+                        "translatedText": {
+                          "type": "string",
+                          "maxLength": 65536
+                        },
+                        "fontAssetId": {
+                          "$ref": "#/definitions/id"
+                        },
+                        "fontSizePx": {
+                          "$ref": "#/definitions/positivePixels"
+                        },
+                        "orientation": {
+                          "type": "string",
+                          "enum": [
+                            "HORIZONTAL",
+                            "VERTICAL"
+                          ]
+                        },
+                        "typesetBox": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/typesetBox"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "targetOrientation": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "HORIZONTAL",
+                                "VERTICAL"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [],
+                      "additionalProperties": false,
+                      "minProperties": 1
+                    }
+                  },
+                  "required": [
+                    "pageId",
+                    "regionId",
+                    "expectedResultRevision",
+                    "patch"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "UNDO"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "expectedHistoryRevision": {
+                      "$ref": "#/definitions/counter"
+                    },
+                    "cursorId": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/id"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pageId",
+                    "expectedHistoryRevision",
+                    "cursorId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "REDO"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "pageId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "expectedHistoryRevision": {
+                      "$ref": "#/definitions/counter"
+                    },
+                    "cursorId": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/definitions/id"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pageId",
+                    "expectedHistoryRevision",
+                    "cursorId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "HANDOFF"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "newTabId": {
+                      "$ref": "#/definitions/id"
+                    }
+                  },
+                  "required": [
+                    "newTabId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "BEGIN_EXIT"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "purpose": {
+                      "type": "string",
+                      "enum": [
+                        "SAVE_AND_EXIT",
+                        "LOGOUT_CURRENT"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "purpose"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "DECLARE_DRAFT_BARRIER"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "exitOperationId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "acknowledgedMutationIds": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/id"
+                      },
+                      "minItems": 0
+                    },
+                    "localDraftsFlushed": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "exitOperationId",
+                    "acknowledgedMutationIds",
+                    "localDraftsFlushed"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "CAPTURE_PROJECT_FILE"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "exitOperationId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "draftBarrierId": {
+                      "$ref": "#/definitions/id"
+                    }
+                  },
+                  "required": [
+                    "exitOperationId",
+                    "draftBarrierId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "ATTEST_PROJECT_FILE"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "exitOperationId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "exportId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "draftBarrierId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "snapshotRevision": {
+                      "$ref": "#/definitions/counter"
+                    },
+                    "fileSha256": {
+                      "$ref": "#/definitions/digest"
+                    },
+                    "userKeptFile": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "exitOperationId",
+                    "exportId",
+                    "draftBarrierId",
+                    "snapshotRevision",
+                    "fileSha256",
+                    "userKeptFile"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "CAPTURE_ZIP"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {},
+                  "required": [],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "RETRY_ZIP"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "exportId": {
+                      "$ref": "#/definitions/id"
+                    }
+                  },
+                  "required": [
+                    "exportId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "RETRY_LIBRARY_STORE"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "storeOperationId": {
+                      "$ref": "#/definitions/id"
+                    },
+                    "retryGroupId": {
+                      "$ref": "#/definitions/id"
+                    }
+                  },
+                  "required": [
+                    "storeOperationId",
+                    "retryGroupId"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "SET_PROJECT_STATUS"
+                },
+                "payload": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "IN_PROGRESS",
+                        "COMPLETED"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "kind",
+                "payload"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "target",
+        "operation"
+      ],
+      "additionalProperties": false
+    },
+    "createWorkspace": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "tabId": {
+          "$ref": "#/definitions/id"
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "tabId"
+      ],
+      "additionalProperties": false
+    },
+    "importProjectFile": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "uploadId": {
+          "$ref": "#/definitions/id"
+        },
+        "tabId": {
+          "$ref": "#/definitions/id"
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "uploadId",
+        "tabId"
+      ],
+      "additionalProperties": false
+    },
+    "authAttempt": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "GOOGLE",
+            "EMAIL_OTP"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "LOGIN",
+            "CONFIRM_CURRENT_ACCOUNT",
+            "PROVE_LOGIN_BINDING",
+            "CONFIRM_RETAINED_BINDING",
+            "CONFIRM_ALL_LOGOUT"
+          ]
+        },
+        "bindingId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "email": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 320
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "method",
+        "purpose",
+        "bindingId",
+        "email"
+      ],
+      "additionalProperties": false
+    },
+    "verifyOtp": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "attemptId": {
+          "$ref": "#/definitions/id"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "attemptId",
+        "code"
+      ],
+      "additionalProperties": false
+    },
+    "completeAuthCallback": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "attemptId": {
+          "$ref": "#/definitions/id"
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "attemptId"
+      ],
+      "additionalProperties": false
+    },
+    "linkBinding": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "currentAccountProofId": {
+          "$ref": "#/definitions/id"
+        },
+        "newBindingProofId": {
+          "$ref": "#/definitions/id"
+        },
+        "expectedBindingRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "explicitLink": {
+          "const": true
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "currentAccountProofId",
+        "newBindingProofId",
+        "expectedBindingRevision",
+        "explicitLink"
+      ],
+      "additionalProperties": false
+    },
+    "unlinkBinding": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "bindingId": {
+          "$ref": "#/definitions/id"
+        },
+        "retainedBindingProofId": {
+          "$ref": "#/definitions/id"
+        },
+        "expectedBindingRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "explicitRemove": {
+          "const": true
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "bindingId",
+        "retainedBindingProofId",
+        "expectedBindingRevision",
+        "explicitRemove"
+      ],
+      "additionalProperties": false
+    },
+    "logoutCurrent": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "exitOperationId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "exitOperationId"
+      ],
+      "additionalProperties": false
+    },
+    "logoutAll": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "proofId": {
+          "$ref": "#/definitions/id"
+        },
+        "lossWarningVersion": {
+          "const": 1
+        },
+        "explicitDiscardAndRevoke": {
+          "const": true
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "proofId",
+        "lossWarningVersion",
+        "explicitDiscardAndRevoke"
+      ],
+      "additionalProperties": false
+    },
+    "prepareUpload": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "intentVersion": {
+          "const": 1
+        },
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "PAGE_IMAGES",
+            "PROJECT_IMPORT"
+          ]
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ownedTarget"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "commandId",
+        "intentVersion",
+        "purpose",
+        "target"
+      ],
+      "additionalProperties": false
+    },
+    "operationRef": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "AUTH_ATTEMPT",
+            "SESSION",
+            "BINDING",
+            "WORKSPACE",
+            "UPLOAD",
+            "REQUEST",
+            "BATCH",
+            "EXPORT",
+            "EXIT",
+            "LIBRARY_STORE",
+            "NONE"
+          ]
+        },
+        "id": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "commandReply": {
+      "type": "object",
+      "properties": {
+        "commandId": {
+          "$ref": "#/definitions/id"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "ACCEPTED",
+            "EXISTING",
+            "REJECTED",
+            "RECONCILING"
+          ]
+        },
+        "operationRef": {
+          "$ref": "#/definitions/operationRef"
+        },
+        "observedRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/counter"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reasonCode": {
+          "$ref": "#/definitions/reason"
+        },
+        "nextAction": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "REFETCH",
+            "RETRY_SAME_COMMAND",
+            "WAIT",
+            "LOGIN",
+            "USE_OWNER_TAB",
+            "NEW_TRANSLATION",
+            "NEW_CAPTURE",
+            "RESELECT_UPLOAD",
+            "PROVE_ACCESS",
+            "KEEP_FILE"
+          ]
+        },
+        "serverTime": {
+          "$ref": "#/definitions/time"
+        }
+      },
+      "required": [
+        "commandId",
+        "disposition",
+        "operationRef",
+        "observedRevision",
+        "reasonCode",
+        "nextAction",
+        "serverTime"
+      ],
+      "additionalProperties": false
+    },
+    "accountView": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/definitions/id"
+        },
+        "balanceCredit": {
+          "$ref": "#/definitions/decimal"
+        },
+        "freeStartedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "freeReservedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "liveContextId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "paidHoldReasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/reason"
+          },
+          "minItems": 0
+        },
+        "absoluteLoginExpiresAt": {
+          "$ref": "#/definitions/time"
+        },
+        "serverTime": {
+          "$ref": "#/definitions/time"
+        }
+      },
+      "required": [
+        "accountId",
+        "balanceCredit",
+        "freeStartedCount",
+        "freeReservedCount",
+        "liveContextId",
+        "paidHoldReasons",
+        "absoluteLoginExpiresAt",
+        "serverTime"
+      ],
+      "additionalProperties": false
+    },
+    "requestView": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "$ref": "#/definitions/id"
+        },
+        "pageId": {
+          "$ref": "#/definitions/id"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACCEPTED",
+            "ACTIVE",
+            "WAITING",
+            "STOP_REQUESTED",
+            "COMPLETED",
+            "STOPPED",
+            "FAILED"
+          ]
+        },
+        "executionState": {
+          "type": "string",
+          "enum": [
+            "NOT_STARTED",
+            "PREPARED",
+            "DISPATCHING",
+            "RUNNING",
+            "UNKNOWN",
+            "SUCCEEDED",
+            "REJECTED",
+            "FAILED"
+          ]
+        },
+        "resultState": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "AVAILABLE",
+            "APPLIED",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "settlementState": {
+          "type": "string",
+          "enum": [
+            "NOT_REQUIRED",
+            "PENDING",
+            "CONFIRMED",
+            "UNCONFIRMED"
+          ]
+        },
+        "holdReasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/reason"
+          },
+          "minItems": 0
+        },
+        "providerWaitUntil": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "requestId",
+        "pageId",
+        "state",
+        "executionState",
+        "resultState",
+        "settlementState",
+        "holdReasons",
+        "providerWaitUntil"
+      ],
+      "additionalProperties": false
+    },
+    "actionAvailability": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/version"
+        },
+        "allowed": {
+          "type": "boolean"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/reason"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "action",
+        "allowed",
+        "reasons"
+      ],
+      "additionalProperties": false
+    },
+    "workspaceView": {
+      "type": "object",
+      "properties": {
+        "contextId": {
+          "$ref": "#/definitions/id"
+        },
+        "contextGeneration": {
+          "$ref": "#/definitions/counter"
+        },
+        "workspaceRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "ownerRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "EXITING",
+            "CLOSED"
+          ]
+        },
+        "isEditingOwner": {
+          "type": "boolean"
+        },
+        "closeReason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "NORMAL_EXIT",
+                "DISCONNECT_EXPIRED",
+                "ALL_SESSIONS_LOGOUT"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reconnectUntil": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "settings": {
+          "$ref": "#/definitions/settings"
+        },
+        "projectStatus": {
+          "type": "string",
+          "enum": [
+            "IN_PROGRESS",
+            "COMPLETED"
+          ]
+        },
+        "pagesInOrder": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/page"
+          },
+          "minItems": 0
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/requestView"
+          },
+          "minItems": 0
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/actionAvailability"
+          },
+          "minItems": 0
+        },
+        "serverTime": {
+          "$ref": "#/definitions/time"
+        }
+      },
+      "required": [
+        "contextId",
+        "contextGeneration",
+        "workspaceRevision",
+        "ownerRevision",
+        "lifecycle",
+        "isEditingOwner",
+        "closeReason",
+        "reconnectUntil",
+        "settings",
+        "projectStatus",
+        "pagesInOrder",
+        "requests",
+        "actions",
+        "serverTime"
+      ],
+      "additionalProperties": false
+    },
+    "operationView": {
+      "type": "object",
+      "properties": {
+        "operationRef": {
+          "$ref": "#/definitions/operationRef"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ACCEPTED",
+            "RUNNING",
+            "RECONCILING",
+            "AVAILABLE",
+            "SUCCEEDED",
+            "FAILED",
+            "EXPIRED",
+            "CLOSED"
+          ]
+        },
+        "reasonCode": {
+          "$ref": "#/definitions/reason"
+        },
+        "snapshotRevision": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/counter"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "capturedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requiredEntryCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failedPageIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/id"
+          },
+          "minItems": 0
+        },
+        "fileSha256": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "serverTime": {
+          "$ref": "#/definitions/time"
+        }
+      },
+      "required": [
+        "operationRef",
+        "state",
+        "reasonCode",
+        "snapshotRevision",
+        "capturedAt",
+        "expiresAt",
+        "requiredEntryCount",
+        "failedPageIds",
+        "fileSha256",
+        "serverTime"
+      ],
+      "additionalProperties": false
+    },
+    "libraryItem": {
+      "type": "object",
+      "properties": {
+        "storeOperationId": {
+          "$ref": "#/definitions/id"
+        },
+        "pageLineageId": {
+          "$ref": "#/definitions/id"
+        },
+        "resultRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "storeCompletedAt": {
+          "$ref": "#/definitions/time"
+        },
+        "expiresAt": {
+          "$ref": "#/definitions/time"
+        },
+        "accessState": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "EXPIRED",
+            "UNCONFIRMED"
+          ]
+        },
+        "deletionState": {
+          "type": "string",
+          "enum": [
+            "NOT_DUE",
+            "PENDING",
+            "CONFIRMED",
+            "UNCONFIRMED"
+          ]
+        }
+      },
+      "required": [
+        "storeOperationId",
+        "pageLineageId",
+        "resultRevision",
+        "storeCompletedAt",
+        "expiresAt",
+        "accessState",
+        "deletionState"
+      ],
+      "additionalProperties": false
+    },
+    "libraryList": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/libraryItem"
+          },
+          "minItems": 0
+        },
+        "serverTime": {
+          "$ref": "#/definitions/time"
+        }
+      },
+      "required": [
+        "items",
+        "serverTime"
+      ],
+      "additionalProperties": false
+    },
+    "uploadView": {
+      "type": "object",
+      "properties": {
+        "uploadId": {
+          "$ref": "#/definitions/id"
+        },
+        "previewRevision": {
+          "$ref": "#/definitions/counter"
+        },
+        "candidateIdsInOrder": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/id"
+          },
+          "minItems": 0
+        },
+        "duplicateCandidateIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/id"
+          },
+          "minItems": 0
+        },
+        "failures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "candidateId": {
+                "$ref": "#/definitions/id"
+              },
+              "reasonCode": {
+                "$ref": "#/definitions/reason"
+              }
+            },
+            "required": [
+              "candidateId",
+              "reasonCode"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "expiresAt": {
+          "$ref": "#/definitions/time"
+        },
+        "serverTime": {
+          "$ref": "#/definitions/time"
+        }
+      },
+      "required": [
+        "uploadId",
+        "previewRevision",
+        "candidateIdsInOrder",
+        "duplicateCandidateIds",
+        "failures",
+        "expiresAt",
+        "serverTime"
+      ],
+      "additionalProperties": false
+    },
+    "appliedTranslation": {
+      "type": "object",
+      "properties": {
+        "sourceLanguage": {
+          "type": "string",
+          "enum": [
+            "ja",
+            "zh-Hans",
+            "en"
+          ]
+        },
+        "targetLanguage": {
+          "type": "string",
+          "enum": [
+            "ko",
+            "en",
+            "ja"
+          ]
+        },
+        "modelId": {
+          "$ref": "#/definitions/version"
+        },
+        "reasoningLevel": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH"
+          ]
+        },
+        "modelContract": {
+          "$ref": "#/definitions/version"
+        },
+        "promptContract": {
+          "$ref": "#/definitions/version"
+        },
+        "originExecutionId": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sourceLanguage",
+        "targetLanguage",
+        "modelId",
+        "reasoningLevel",
+        "modelContract",
+        "promptContract",
+        "originExecutionId"
+      ],
+      "additionalProperties": false
+    },
+    "fontProvenance": {
+      "type": "object",
+      "properties": {
+        "fontAssetId": {
+          "$ref": "#/definitions/id"
+        },
+        "family": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "fontVersion": {
+          "$ref": "#/definitions/version"
+        },
+        "fontCatalogVersion": {
+          "$ref": "#/definitions/version"
+        },
+        "licenseAssetId": {
+          "$ref": "#/definitions/id"
+        }
+      },
+      "required": [
+        "fontAssetId",
+        "family",
+        "fontVersion",
+        "fontCatalogVersion",
+        "licenseAssetId"
+      ],
+      "additionalProperties": false
+    },
+    "renderSpecification": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "fontCatalogVersion": {
+          "$ref": "#/definitions/version"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "regionId": {
+                "$ref": "#/definitions/id"
+              },
+              "minimumFontSizePx": {
+                "$ref": "#/definitions/positivePixels"
+              },
+              "sizing": {
+                "enum": [
+                  "AUTO_FIT",
+                  "EXACT"
+                ]
+              },
+              "rendererVersion": {
+                "enum": [
+                  "pango-canonical-v1",
+                  "pango-overflow-v2",
+                  "pango-balloon-v3"
+                ]
+              },
+              "typesetBox": {
+                "$ref": "#/definitions/typesetBox"
+              },
+              "targetOrientation": {
+                "type": "string",
+                "enum": [
+                  "HORIZONTAL",
+                  "VERTICAL"
+                ]
+              }
+            },
+            "required": [
+              "regionId",
+              "minimumFontSizePx",
+              "sizing"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "version",
+        "fontCatalogVersion",
+        "blocks"
+      ],
+      "additionalProperties": false
+    },
+    "typesetBox": {
+      "type": "object",
+      "properties": {
+        "left": {
+          "type": "number",
+          "minimum": 0
+        },
+        "top": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "$ref": "#/definitions/positivePixels"
+        },
+        "height": {
+          "$ref": "#/definitions/positivePixels"
+        }
+      },
+      "required": [
+        "left",
+        "top",
+        "width",
+        "height"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

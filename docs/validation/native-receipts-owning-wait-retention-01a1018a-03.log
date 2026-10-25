@@ -1,0 +1,24 @@
+
+> trio-manga-web@0.1.0 test:postgres
+> tsx scripts/test-postgres.ts tests/postgres/native-receipts.test.ts
+
+{"database":"postgres (PostgreSQL) 18.6","isolatedData":"E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-manga-web-pg-KEOPcq","host":"127.0.0.1"}
+
+ RUN  v4.1.11 C:/Users/ksaei/Documents/Codex/trio-manga-web
+
+stdout | tests/postgres/native-receipts.test.ts
+{"nativeReceiptsTrace":"shared_fixture","phase":"database_start"}
+
+stdout | tests/postgres/native-receipts.test.ts
+{"nativeReceiptsTrace":"shared_fixture","phase":"login_roles_verified","objectRoot":"E:\\Codex-Trio-Web-Validation-01a1018a\\run-tmp\\trio-native-receipts-3LE60H"}
+
+ ✓ tests/postgres/native-receipts.test.ts (10 tests | 7 skipped) 15146ms
+     ✓ keeps a missing first PUT in WAIT across the same parent and restart without resubmitting storage or native work  670ms
+     ✓ holds an expired original one-hour upload even when the current new upload is live  4929ms
+     ✓ holds deleted or expired original source assets and append-only job ERROR without another MISS or GO  4540ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed | 7 skipped (10)
+   Start at  04:50:34
+   Duration  16.13s (transform 526ms, setup 0ms, import 841ms, tests 15.15s, environment 0ms)
+

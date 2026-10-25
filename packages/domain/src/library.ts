@@ -1,0 +1,110 @@
+import { randomUUID } from 'node:crypto';
+import type { Database,Transaction } from '../../storage/src/database.js';
+import type { LibraryList } from '../../contracts/src/wire.generated.js';
+import { requireCondition,DomainError } from '../../contracts/src/errors.js';
+import { digest } from '../../contracts/src/intent.js';
+import { type Actor,type ResultRow,type ContextRow,contextRow,currentSession,reply } from './model.js';
+import { Assets } from './assets.js';
+import type { CommandExtension } from './workspace.js';
+import { queueWork } from './requests.js';
+import type { FontCatalog } from '../../media/src/fonts.js';
+import type { MediaProfile } from '../../media/src/profile.js';
+import { renderPage } from '../../media/src/render.js';
+import {ResultRaster} from './raster.js';
+import {DurableRenderHold} from './render-hold.js';
+import {NativeJobError,type NativeGateway,type NativeTarget} from '../../native/src/gateway.js';
+type Store={store_operation_id:string;source_context_id:string;page_lineage_id:string;result_id:string;render_digest:string;render_asset_id:string|null;asset_id:string|null;state:string;store_completed_at:Date|null;expires_at:Date|null;retry_group_id:string;revision:string;safe_error_code:string|null};
+export class InterruptedLibraryWorker extends Error {}
+type MediaWork={account_id:string;work_item_id:string;target_ref:{resultId?:string;storeOperationId?:string;retryGroupId?:string;assetId?:string};claim_generation:string;state:string;lease_until:Date|null;due_at:Date;kind:string};
+export class LibraryService {
+  canonical?:ResultRaster;
+  readonly workerId=randomUUID();
+  private acceptingClaims=true;
+  constructor(readonly db:Database,readonly assets:Assets,readonly fonts:FontCatalog,readonly profile:MediaProfile,readonly hooks:{render?:typeof renderPage}={},readonly native?:NativeGateway) {requireCondition(profile.kind==='SYNTHETIC'||native,'NATIVE_GATEWAY_REQUIRED',409,'WAIT');}
+  stopClaims():void {this.acceptingClaims=false;}
+  readonly commands:CommandExtension=async(tx,_actor,context,command)=>{
+    if(command.operation.kind!=='RETRY_LIBRARY_STORE')return null;const {storeOperationId,retryGroupId}=command.operation.payload;
+    const row=(await tx.client.query<Store>('SELECT * FROM library_store_operations WHERE account_id=$1 AND store_operation_id=$2 FOR UPDATE',[context.account_id,storeOperationId])).rows[0];requireCondition(row&&row.source_context_id===context.context_id,'INPUT_INVALID',422);
+    if(row.state==='SUCCEEDED'){requireCondition(row.expires_at&&tx.now<row.expires_at,'DELIVERY_EXPIRED');return reply(command.commandId,tx,context,{kind:'LIBRARY_STORE',id:storeOperationId});}
+    requireCondition(context.lifecycle!=='CLOSED','CONTEXT_CLOSED');if(row.state!=='FAILED')return reply(command.commandId,tx,context,{kind:'LIBRARY_STORE',id:storeOperationId},true);
+    requireCondition(row.safe_error_code!=='RENDER_QA_HOLD'&&!(await tx.client.query('SELECT 1 FROM result_render_holds WHERE account_id=$1 AND result_id=$2',[context.account_id,row.result_id])).rowCount,'RENDER_QA_HOLD',409,'WAIT');
+    requireCondition(!(await tx.client.query('SELECT 1 FROM library_store_attempts WHERE account_id=$1 AND store_operation_id=$2 AND retry_group_id=$3',[context.account_id,storeOperationId,retryGroupId])).rowCount,'INTENT_CONFLICT');
+    await tx.client.query("UPDATE library_store_operations SET retry_group_id=$3,state='ACCEPTED',revision=revision+1 WHERE account_id=$1 AND store_operation_id=$2",[context.account_id,storeOperationId,retryGroupId]);await queueWork(tx,'STORE',{resultId:row.result_id,storeOperationId,retryGroupId});return reply(command.commandId,tx,context,{kind:'LIBRARY_STORE',id:storeOperationId},true);
+  };
+  async runOnce():Promise<boolean> {
+    if(!this.acceptingClaims)return false;
+    const rows=(await this.db.pool.query<MediaWork>('SELECT * FROM manga_web.media_candidates()')).rows;let work:MediaWork|null=null;
+    for(const candidate of rows){if(!this.acceptingClaims)return false;work=await this.db.accountTransaction(candidate.account_id,async(tx)=>{const row=(await tx.client.query<MediaWork>('SELECT * FROM work_items WHERE account_id=$1 AND work_item_id=$2 FOR UPDATE',[candidate.account_id,candidate.work_item_id])).rows[0];if(!this.acceptingClaims||!row||row.state==='DONE'||row.due_at>tx.now||(row.lease_until&&row.lease_until>tx.now))return null;const generation=(BigInt(row.claim_generation)+1n).toString();await tx.client.query("UPDATE work_items SET state='CLAIMED',claim_owner=$3,claim_generation=$4,lease_until=$5 WHERE account_id=$1 AND work_item_id=$2",[candidate.account_id,candidate.work_item_id,this.workerId,generation,new Date(tx.now.valueOf()+30000)]);return {...row,claim_generation:generation};},true);if(work)break;}
+    if(!work)return false;
+    if(work.kind==='DELETE_OBJECT'){await this.deleteAsset(work.account_id,work.target_ref.assetId!);await this.finish(work,true);return true;}
+    const result=await this.db.accountTransaction(work.account_id,async(tx)=>{const row=(await tx.client.query<ResultRow>('SELECT * FROM results WHERE account_id=$1 AND result_id=$2',[work!.account_id,work!.target_ref.resultId])).rows[0];requireCondition(row&&['AI_APPLIED','MANUAL_EDIT'].includes(row.origin),'INPUT_INVALID',422);return row;},true);
+    let store:Store|null=null;let attemptId:string|null=null;let phase='RENDER_FAILED';
+    const beginAttempt=async()=>{if(attemptId)return;attemptId=await this.db.accountTransaction(work!.account_id,async tx=>{await this.currentWork(tx,work!);const previous=(await tx.client.query<{ordinal:number;attempt_id:string;state:string}>('SELECT ordinal,attempt_id,state FROM library_store_attempts WHERE account_id=$1 AND store_operation_id=$2 AND retry_group_id=$3 ORDER BY ordinal DESC LIMIT 1',[work!.account_id,store!.store_operation_id,store!.retry_group_id])).rows[0];if(previous?.state==='STARTED')return previous.attempt_id;requireCondition((previous?.ordinal??0)<3,'STORAGE_FAILED');const id=randomUUID();await tx.client.query("INSERT INTO library_store_attempts(account_id,attempt_id,store_operation_id,retry_group_id,ordinal,due_at,state) VALUES($1,$2,$3,$4,$5,$6,'STARTED')",[work!.account_id,id,store!.store_operation_id,store!.retry_group_id,(previous?.ordinal??0)+1,tx.now]);return id;},true);};
+    let leaseLost=false;const heartbeat=setInterval(()=>{void this.renew(work!).catch(()=>{leaseLost=true;});},10000);heartbeat.unref();
+    try {
+      const capturedStore=await this.db.accountTransaction(work.account_id,async(tx)=>{
+        const context=await contextRow(tx,result.context_id);
+        await this.currentWork(tx,work!);let row=(await tx.client.query<Store>('SELECT * FROM library_store_operations WHERE account_id=$1 AND source_context_id=$2 AND page_lineage_id=$3 AND result_id=$4 FOR UPDATE',[work!.account_id,result.context_id,result.page_lineage_id,result.result_id])).rows[0];
+        if(!row){const base=await this.assets.row(tx,result.cleaned_asset_id??result.original_asset_id);const hash=digest({resultId:result.result_id,baseSha256:base.sha256,editData:result.edit_data,fontCatalog:this.fonts.catalog,profile:this.profile.id});const id=randomUUID();const group=randomUUID();await tx.client.query(`INSERT INTO library_store_operations(account_id,store_operation_id,source_context_id,page_lineage_id,result_id,render_digest,purpose,state,revision,retry_group_id,render_asset_id) VALUES($1,$2,$3,$4,$5,$6,'LIBRARY_RESULT','ACCEPTED',0,$7,$8)`,[work!.account_id,id,result.context_id,result.page_lineage_id,result.result_id,hash,group,randomUUID()]);row=(await tx.client.query<Store>('SELECT * FROM library_store_operations WHERE account_id=$1 AND store_operation_id=$2',[work!.account_id,id])).rows[0];}
+        if(row.state==='SUCCEEDED'||row.state==='FAILED')return {row,context};
+        if(work!.target_ref.retryGroupId)requireCondition(row.retry_group_id===work!.target_ref.retryGroupId,'INTENT_CONFLICT');
+        const previous=(await tx.client.query<{ordinal:number;attempt_id:string;state:string}>('SELECT ordinal,attempt_id,state FROM library_store_attempts WHERE account_id=$1 AND store_operation_id=$2 AND retry_group_id=$3 ORDER BY ordinal DESC LIMIT 1',[work!.account_id,row.store_operation_id,row.retry_group_id])).rows[0];
+        if(previous?.state==='STARTED'){attemptId=previous.attempt_id;return {row,context};}
+        if((previous?.ordinal??0)>=3){await tx.client.query("UPDATE library_store_operations SET state='FAILED',safe_error_code='STORAGE_FAILED' WHERE account_id=$1 AND store_operation_id=$2",[work!.account_id,row.store_operation_id]);return {row:{...row,state:'FAILED'},context};}
+        return {row,context};
+      },true);store=capturedStore.row;
+      if(store.state==='SUCCEEDED'||store.state==='FAILED'){await this.finish(work,true);return true;}
+      let proof=await this.assets.store.receipt(`${work.account_id}/${store.store_operation_id}`);
+      if(!proof){let cached=await this.assets.store.receipt(`${work.account_id}/${store.render_asset_id!}`);let bytes:Buffer;
+        if(cached){bytes=await this.assets.store.read(cached.key);await this.assets.registerReceipt(work.account_id,store.render_asset_id!,cached,'LIBRARY','image/png',result.context_id);}else{
+          if(this.native){
+            const canonical=this.canonical??new ResultRaster(this.db,this.assets,this.fonts,this.profile,{},this.native),existing=await canonical.readExisting(work.account_id,result.result_id);
+            if(existing)bytes=existing.bytes;
+            else{
+              const priorHold=await canonical.review(work.account_id,result.result_id);if(priorHold)throw new DurableRenderHold(priorHold);
+              const context=capturedStore.context;const target:NativeTarget={accountId:work.account_id,targetKind:'LIBRARY',targetId:store.store_operation_id,semanticCaptureDigest:store.render_digest,protectedOwnerCapture:{contextId:context.context_id,contextGeneration:context.generation,ownerSessionId:context.owner_session_id,ownerTabId:context.owner_tab_id,ownerRevision:context.owner_revision,workspaceRevision:context.workspace_revision},claim:{generation:work.claim_generation,ownerId:this.workerId,workItemId:work.work_item_id}};
+              bytes=await this.native.forTarget(target).renderPage(await this.assets.bytes(work.account_id,result.cleaned_asset_id??result.original_asset_id),result.edit_data,this.fonts,this.profile);
+            }
+          }else bytes=this.canonical&&!this.hooks.render?(await this.canonical.get(work.account_id,result.result_id)).bytes:await (this.hooks.render??renderPage)(await this.assets.bytes(work.account_id,result.cleaned_asset_id??result.original_asset_id),result.edit_data,this.fonts,this.profile);
+          requireCondition(!leaseLost,'DEPENDENCY_UNAVAILABLE');await this.renew(work);await beginAttempt();phase='STORAGE_FAILED';const raster=await this.assets.put(work.account_id,store.render_asset_id!,bytes,'LIBRARY','image/png',result.context_id);cached=await this.assets.store.receipt(raster.object_key);
+        }
+        requireCondition(cached&&Date.parse(cached.completedAt)+30*86400000>await this.db.accountTransaction(work.account_id,async tx=>tx.now.valueOf(),true),'DELIVERY_EXPIRED');requireCondition(!leaseLost,'DEPENDENCY_UNAVAILABLE');await this.renew(work);await beginAttempt();phase='STORAGE_FAILED';await this.assets.put(work.account_id,store.store_operation_id,bytes,'LIBRARY','image/png',result.context_id);proof=await this.assets.store.receipt(`${work.account_id}/${store.store_operation_id}`);
+      }
+      await beginAttempt();
+      requireCondition(proof,'STORAGE_UNCONFIRMED');await this.assets.store.read(proof.key);const asset=await this.assets.registerReceipt(work.account_id,store.store_operation_id,proof,'LIBRARY','image/png',result.context_id);const completed=new Date(proof.completedAt);const expires=new Date(completed.valueOf()+30*86400000);
+      await this.db.accountTransaction(work.account_id,async(tx)=>{
+        await this.currentWork(tx,work!);
+        await tx.client.query("UPDATE library_store_operations SET state='SUCCEEDED',asset_id=$3,store_completed_at=$4,expires_at=$5,safe_error_code=NULL,revision=revision+1 WHERE account_id=$1 AND store_operation_id=$2 AND store_completed_at IS NULL",[work!.account_id,store!.store_operation_id,asset.asset_id,completed,expires]);await tx.client.query('UPDATE assets SET access_deadline=$3 WHERE account_id=$1 AND asset_id=$2',[work!.account_id,asset.asset_id,expires]);
+        await tx.client.query("UPDATE library_store_attempts SET state='SUCCEEDED',evidence_ref=$3 WHERE account_id=$1 AND attempt_id=$2 AND state='STARTED'",[work!.account_id,attemptId,asset.sha256]);
+        if(tx.now>=expires){await queueWork(tx,'DELETE_OBJECT',{assetId:asset.asset_id});return;}
+        const head=(await tx.client.query<{generation:string;result_revision:string}>(`SELECT c.generation,r.result_revision FROM library_heads h JOIN library_store_operations o USING(account_id,store_operation_id) JOIN results r ON r.account_id=o.account_id AND r.result_id=o.result_id JOIN workspace_contexts c ON c.account_id=r.account_id AND c.context_id=r.context_id WHERE h.account_id=$1 AND h.page_lineage_id=$2`,[work!.account_id,result.page_lineage_id])).rows[0];
+        const context=(await tx.client.query<ContextRow>('SELECT * FROM workspace_contexts WHERE account_id=$1 AND context_id=$2',[work!.account_id,result.context_id])).rows[0];
+        if(!head||BigInt(context.generation)>BigInt(head.generation)||(context.generation===head.generation&&BigInt(result.result_revision)>BigInt(head.result_revision)))await tx.client.query('INSERT INTO library_heads(account_id,page_lineage_id,store_operation_id,revision) VALUES($1,$2,$3,0) ON CONFLICT(account_id,page_lineage_id) DO UPDATE SET store_operation_id=EXCLUDED.store_operation_id,revision=library_heads.revision+1',[work!.account_id,result.page_lineage_id,store!.store_operation_id]);
+      },true);await this.finish(work,true);
+    }catch(error) {
+      if(error instanceof NativeJobError){
+        if(store)await this.db.accountTransaction(work.account_id,async tx=>{await this.currentWork(tx,work!);await tx.client.query("UPDATE library_store_operations SET safe_error_code='EXECUTION_UNKNOWN',revision=revision+1 WHERE account_id=$1 AND store_operation_id=$2 AND state='ACCEPTED'",[work!.account_id,store!.store_operation_id]);},true).catch(()=>undefined);
+        throw error;
+      }
+      if(error instanceof InterruptedLibraryWorker||leaseLost)throw error;
+      if(store&&error instanceof DomainError&&error.code==='RENDER_QA_HOLD'){
+        await this.db.accountTransaction(work.account_id,async tx=>{await this.currentWork(tx,work!);await tx.client.query("UPDATE library_store_operations SET state='FAILED',safe_error_code='RENDER_QA_HOLD',revision=revision+1 WHERE account_id=$1 AND store_operation_id=$2",[work!.account_id,store!.store_operation_id]);if(attemptId)await tx.client.query("UPDATE library_store_attempts SET state='QA_HOLD' WHERE account_id=$1 AND attempt_id=$2 AND state='STARTED'",[work!.account_id,attemptId]);},true);await this.finish(work,true);
+      }else if(store){await beginAttempt();const retry=await this.db.accountTransaction(work.account_id,async(tx)=>{await this.currentWork(tx,work!);await tx.client.query("UPDATE library_store_attempts SET state='FAILED' WHERE account_id=$1 AND attempt_id=$2 AND state='STARTED'",[work!.account_id,attemptId]);const attempts=(await tx.client.query<{ordinal:number;due_at:Date}>('SELECT ordinal,due_at FROM library_store_attempts WHERE account_id=$1 AND store_operation_id=$2 AND retry_group_id=$3 ORDER BY ordinal',[work!.account_id,store!.store_operation_id,store!.retry_group_id])).rows;const ordinal=attempts.at(-1)?.ordinal??1;if(ordinal>=3)await tx.client.query("UPDATE library_store_operations SET state='FAILED',safe_error_code=$3,revision=revision+1 WHERE account_id=$1 AND store_operation_id=$2",[work!.account_id,store!.store_operation_id,phase]);return {done:ordinal>=3,delay:Math.max(0,(attempts[0]?.due_at.valueOf()??tx.now.valueOf())+(ordinal===1?5000:30000)-tx.now.valueOf())};},true);await this.finish(work,retry.done,retry.delay);}else throw error;
+    }finally{clearInterval(heartbeat);}
+    return true;
+  }
+  async currentWork(tx:Transaction,work:MediaWork):Promise<void> {const row=(await tx.client.query<{claim_owner:string;claim_generation:string;lease_until:Date|null;state:string}>('SELECT claim_owner,claim_generation,lease_until,state FROM work_items WHERE account_id=$1 AND work_item_id=$2',[work.account_id,work.work_item_id])).rows[0];requireCondition(row?.state==='CLAIMED'&&row.claim_owner===this.workerId&&row.claim_generation===work.claim_generation&&row.lease_until&&tx.now<row.lease_until,'DEPENDENCY_UNAVAILABLE');}
+  async renew(work:MediaWork):Promise<void> {await this.db.accountTransaction(work.account_id,async(tx)=>{await this.currentWork(tx,work);await tx.client.query('UPDATE work_items SET lease_until=$3 WHERE account_id=$1 AND work_item_id=$2',[work.account_id,work.work_item_id,new Date(tx.now.valueOf()+30000)]);},true);}
+  async finish(work:MediaWork,done:boolean,delay=0):Promise<void> {await this.db.accountTransaction(work.account_id,async(tx)=>{await tx.client.query("UPDATE work_items SET state=$4,due_at=$5,claim_owner=NULL,lease_until=NULL WHERE account_id=$1 AND work_item_id=$2 AND claim_generation=$3 AND claim_owner=$6 AND lease_until>$7",[work.account_id,work.work_item_id,work.claim_generation,done?'DONE':'READY',new Date(tx.now.valueOf()+delay),this.workerId,tx.now]);},true);}
+  async expire(accountId:string):Promise<void> {
+    const operations=await this.db.accountTransaction(accountId,async(tx)=>(await tx.client.query<Store>('SELECT * FROM library_store_operations WHERE account_id=$1',[accountId])).rows,true);
+    // Every generated object has a preallocated operation or render ID, including a write interrupted before DB registration.
+    for(const op of operations)for(const id of [op.store_operation_id,op.render_asset_id])if(id){const proof=await this.assets.store.receipt(`${accountId}/${id}`);if(proof){await this.assets.registerReceipt(accountId,id,proof,'LIBRARY','image/png',op.source_context_id);if(id===op.store_operation_id)await this.db.accountTransaction(accountId,tx=>tx.client.query("UPDATE library_store_operations SET state='SUCCEEDED',asset_id=$3,store_completed_at=$4,expires_at=$5,revision=revision+1 WHERE account_id=$1 AND store_operation_id=$2 AND store_completed_at IS NULL",[accountId,id,id,new Date(proof.completedAt),new Date(Date.parse(proof.completedAt)+30*86400000)]),true);}}
+    const ids=await this.db.accountTransaction(accountId,async(tx)=>{const rows=(await tx.client.query<{asset_id:string}>("SELECT asset_id FROM assets WHERE account_id=$1 AND purpose='LIBRARY' AND access_deadline<=$2 AND deletion_state<>'CONFIRMED'",[accountId,tx.now])).rows;for(const row of rows)await tx.client.query("UPDATE assets SET deletion_state='PENDING' WHERE account_id=$1 AND asset_id=$2",[accountId,row.asset_id]);return rows.map(row=>row.asset_id);},true);for(const id of ids)await this.deleteAsset(accountId,id);
+  }
+  async deleteAsset(accountId:string,id:string):Promise<void> {const asset=await this.db.accountTransaction(accountId,async(tx)=>{const row=(await tx.client.query<{purpose:string;object_key:string;access_deadline:Date|null}>('SELECT purpose,object_key,access_deadline FROM assets WHERE account_id=$1 AND asset_id=$2',[accountId,id])).rows[0];requireCondition(row?.purpose==='LIBRARY'&&row.access_deadline&&tx.now>=row.access_deadline,'DELIVERY_EXPIRED');return row;},true);let confirmed=false;try{confirmed=await this.assets.store.remove(asset.object_key);}catch{confirmed=false;}await this.db.accountTransaction(accountId,tx=>tx.client.query('UPDATE assets SET deletion_state=$3 WHERE account_id=$1 AND asset_id=$2',[accountId,id,confirmed?'CONFIRMED':'UNCONFIRMED']),true);}
+  async list(actor:Actor):Promise<LibraryList> {return this.db.accountTransaction(actor.accountId,async(tx)=>{await currentSession(tx,actor);const rows=(await tx.client.query<Store&{result_revision:string;deletion_state:'NOT_DUE'|'PENDING'|'CONFIRMED'|'UNCONFIRMED'}>(`SELECT o.*,r.result_revision,a.deletion_state FROM library_heads h JOIN library_store_operations o USING(account_id,store_operation_id) JOIN results r ON r.account_id=o.account_id AND r.result_id=o.result_id JOIN assets a ON a.account_id=o.account_id AND a.asset_id=o.asset_id WHERE h.account_id=$1 AND o.state='SUCCEEDED' ORDER BY o.store_completed_at DESC`,[actor.accountId])).rows;
+    return {items:rows.map(row=>({storeOperationId:row.store_operation_id,pageLineageId:row.page_lineage_id,resultRevision:row.result_revision,storeCompletedAt:row.store_completed_at!.toISOString(),expiresAt:row.expires_at!.toISOString(),accessState:tx.now<row.expires_at!?'AVAILABLE':'EXPIRED',deletionState:row.deletion_state})),serverTime:tx.now.toISOString()};});}
+  async download(actor:Actor,id:string):Promise<{bytes:Buffer;expiresAt:Date}> {const row=await this.db.accountTransaction(actor.accountId,async(tx)=>{await currentSession(tx,actor);const row=(await tx.client.query<Store>('SELECT o.* FROM library_heads h JOIN library_store_operations o USING(account_id,store_operation_id) WHERE h.account_id=$1 AND o.store_operation_id=$2',[actor.accountId,id])).rows[0];requireCondition(row?.state==='SUCCEEDED'&&row.asset_id&&row.expires_at&&tx.now<row.expires_at,'DELIVERY_EXPIRED');return row;});return {bytes:await this.assets.bytes(actor.accountId,row.asset_id!),expiresAt:row.expires_at!};}
+  async checkDownload(actor:Actor,id:string):Promise<void> {await this.db.accountTransaction(actor.accountId,async tx=>{await currentSession(tx,actor);const row=(await tx.client.query<Store>('SELECT o.* FROM library_heads h JOIN library_store_operations o USING(account_id,store_operation_id) WHERE h.account_id=$1 AND o.store_operation_id=$2',[actor.accountId,id])).rows[0];requireCondition(row?.state==='SUCCEEDED'&&row.expires_at&&tx.now<row.expires_at,'DELIVERY_EXPIRED');});}
+}

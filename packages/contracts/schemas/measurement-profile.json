@@ -1,0 +1,30 @@
+{
+  "version": "limits-v1-unmeasured",
+  "state": "UNMEASURED",
+  "evidenceReferences": [],
+  "limits": {
+    "maxFileBytes": null,
+    "maxPixelsPerPage": null,
+    "maxFilesPerUpload": null,
+    "maxWorkspacePages": null,
+    "maxWorkspaceBytes": null,
+    "maxArchiveCompressedBytes": null,
+    "maxArchiveExpandedBytes": null,
+    "maxArchiveEntries": null,
+    "maxArchiveRatio": null,
+    "maxManifestBytes": null,
+    "maxDecodeMemoryBytes": null,
+    "maxStageMilliseconds": null,
+    "maxConcurrentImageStages": null,
+    "minReadableFontSizePx": null,
+    "maxRequestCostUsd": null,
+    "maxDailyOperatorSpendUsd": null
+  },
+  "realProviderEnabled": false,
+  "paidExecutionEnabled": false,
+  "purchaseEnabled": false,
+  "fixedProtocolLimits": {
+    "maxJsonBodyBytes": 262144,
+    "maxDisplayNameCharacters": 256
+  }
+}
