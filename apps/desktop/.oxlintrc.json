@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "off"
+  },
+  "jsPlugins": ["@shadcn/lint"],
+  "settings": {
+    "shadcn": {
+      "componentImports": ["(^|/)Ui(?:\\.[jt]sx?)?$"],
+      "note": "공통 UI는 src/renderer/components/Ui.tsx, 테마 토큰은 src/renderer/design-tokens.css를 확인하세요. 설정 안내는 docs/shadcn-lint.md에 있습니다."
+    }
+  },
+  "rules": {
+    "shadcn/no-raw-colors": "error",
+    "shadcn/no-arbitrary-values": ["error", { "deny": ["color"] }],
+    "shadcn/no-restyle": ["error", {
+      "allow": ["layout", "*"],
+      "deny": ["color", "typography", "spacing", "shape", "effects", "motion"],
+      "message": "{{component}}의 외관은 Ui.tsx의 variant와 공통 CSS에서 관리하세요. 소비처에서는 배치만 조정하세요."
+    }],
+    "shadcn/no-inline-styles": ["error", {
+      "allow": ["*"],
+      "contracts": [{
+        "pattern": "^(Button|SettingsRow|Feedback|ModalSurface)$",
+        "deny": ["color", "background*", "border*", "outline*", "box-shadow", "text-shadow", "font*", "line-height", "letter-spacing", "text-decoration*", "padding*", "opacity", "filter", "fill", "stroke*"],
+        "message": "{{component}} 소비처에서 {{property}} 외관을 덮어쓰지 마세요. 공통 컴포넌트의 variant와 공통 CSS를 사용하세요."
+      }]
+    }]
+  }
+}

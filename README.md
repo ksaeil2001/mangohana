@@ -1,5 +1,19 @@
 # Mangohana
 
+## 데스크톱 앱
+
+Electron 기반 망고하나 작업실은 [apps/desktop](apps/desktop)에 있습니다. 기존 웹서비스와 의존성·개발 명령을 별도로 관리합니다.
+
+```powershell
+cd apps/desktop
+npm ci
+npm run dev:electron
+```
+
+데스크톱 빌드는 해당 폴더에서 `npm run build`, 테스트는 `npm test -- --dir tests`로 실행합니다. 가져온 소스와 검증 범위는 [데스크톱 가져오기 기록](apps/desktop/IMPORT.md)에 정리했습니다. 아래 웹서비스의 기존 실행·검증 방법은 그대로 사용합니다.
+
+## 웹서비스
+
 Trio 만화 번역 웹서비스의 현재 소스와 연결된 설계·조사 기록을 보존하는 저장소입니다. 업로드한 만화를 OCR → 문맥 번역 → 원문 제거 → 자동 식자로 처리하고, 검수·취소·복구·저장·다운로드로 연결하는 것을 목표로 합니다.
 
 2026-10-25 게시본은 기존 `trio-manga-web` 작업 폴더의 코드·테스트·설정·검증 기록을 복사한 소스 스냅샷입니다. 원본 Electron 저장소의 다른 미커밋 변경과 Git 이력은 가져오지 않았습니다. 제품 코드와 기존 기록의 바이트를 보존했으며 이 README만 게시 안내로 추가했습니다.
@@ -9,6 +23,7 @@ Trio 만화 번역 웹서비스의 현재 소스와 연결된 설계·조사 기
 | 경로 | 내용 |
 |---|---|
 | `apps/api`, `apps/worker`, `apps/web` | API·worker·React 웹 UI |
+| `apps/desktop` | Electron 데스크톱 앱·프로젝트 저장·이미지 중심 편집 UI |
 | `packages` | 계약·도메인·저장·제공자·미디어·native 경계 |
 | `db/migrations` | 기존 데이터베이스 migration |
 | `scripts`, `tests` | 기존 개발·격리 검증 도구와 테스트 |

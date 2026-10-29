@@ -1,0 +1,109 @@
+name: Windows package verification
+
+on:
+  pull_request:
+    paths:
+      - "electron/**"
+      - "src/**"
+      - "build/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/windows-package.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "electron/**"
+      - "src/**"
+      - "build/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/windows-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-package-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: Package and smoke test Windows x64 Electron app
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24.11.1"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm.cmd ci
+        shell: pwsh
+
+      - name: Typecheck
+        run: npm.cmd run typecheck
+        shell: pwsh
+
+      - name: Build Windows x64 installer and package
+        run: npm.cmd run dist:win
+        shell: pwsh
+
+      - name: Smoke test packaged Windows app
+        run: |
+          $packageRoot = Join-Path $PWD "release/win-unpacked"
+          $app = Get-ChildItem -Path $packageRoot -Filter "*.exe" -File |
+            Where-Object { $_.Name -ne "elevate.exe" } |
+            Select-Object -First 1
+
+          if ($null -eq $app) {
+            throw "Packaged application executable was not found in $packageRoot."
+          }
+
+          $requiredPaths = @(
+            $app.FullName,
+            (Join-Path $packageRoot "resources/app.asar"),
+            (Join-Path $packageRoot "resources.pak")
+          )
+          foreach ($path in $requiredPaths) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Required packaged resource is missing: $path"
+            }
+          }
+
+          $process = $null
+          try {
+            $process = Start-Process -FilePath $app.FullName -WorkingDirectory $packageRoot -PassThru
+            Start-Sleep -Seconds 8
+            if ($process.HasExited) {
+              throw "Packaged app exited during startup with exit code $($process.ExitCode)."
+            }
+            Write-Host "Packaged app started successfully (PID $($process.Id))."
+          }
+          finally {
+            if ($null -ne $process -and -not $process.HasExited) {
+              taskkill /PID $process.Id /T /F | Out-Null
+            }
+          }
+        shell: pwsh
+
+      - name: Upload Windows package artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trio-windows-x64-${{ github.run_number }}
+          path: |
+            release/win-unpacked/**
+            release/*-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 7

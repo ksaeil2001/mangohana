@@ -1,0 +1,210 @@
+/* Owned by AppShell, ProjectHomeScreen and ProjectSetupScreen. */
+.mangohana-shell.stitch-suite,
+.mangohana-setup.project-setup-screen {
+  --trio-stitch-canvas: var(--trio-bg);
+  --stitch-canvas: var(--trio-bg);
+  --stitch-soft: var(--trio-panel);
+  --stitch-line: var(--trio-border-soft);
+  color: var(--trio-text);
+  background: var(--trio-bg);
+  color-scheme: dark;
+}
+
+[data-theme="light"] .mangohana-shell.stitch-suite,
+[data-theme="light"] .mangohana-setup.project-setup-screen {
+  color-scheme: light;
+}
+
+:is(.mangohana-shell, .mangohana-setup) :is(button, a, input, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--trio-accent);
+  outline-offset: 3px;
+}
+
+:is(.mangohana-shell, .mangohana-setup) .mangohana-icon,
+:is(.mangohana-shell, .mangohana-setup) .mangohana-entry-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:is(.mangohana-shell, .mangohana-setup) .mangohana-entry-icon { width: 32px; height: 32px; color: var(--trio-accent); }
+:is(.mangohana-shell, .mangohana-setup) .mangohana-note { margin: 0; color: var(--trio-muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+.mangohana-example-start { display: grid; justify-items: start; gap: var(--trio-space-1); }
+:is(.mangohana-shell, .mangohana-setup) .mangohana-brand { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; padding: 0; border: 0; background: transparent; color: var(--trio-text); font-size: 18px; font-weight: 650; letter-spacing: -0.04em; }
+:is(.mangohana-shell, .mangohana-setup) .mangohana-brand img { display: block; flex: 0 0 auto; }
+.mangohana-shell .mangohana-visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The navigation stays beside the page; the compact menu takes its own row. */
+.mangohana-shell.stitch-suite { grid-template-columns: 184px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); font-size: 14px; }
+.mangohana-shell.stitch-suite .trio-home-body-layout { display: contents; }
+.mangohana-shell.stitch-suite .trio-home-global-header.project-home-header { grid-column: 1 / -1; grid-row: 1; min-height: 66px; padding: 12px 24px; justify-content: space-between; background: var(--mangohana-rail); }
+.mangohana-shell.stitch-suite .stitch-suite-location { gap: 26px; }
+.mangohana-shell .mangohana-location { display: flex; align-items: center; gap: 22px; min-width: 0; color: var(--trio-muted); }
+.mangohana-shell .mangohana-location > span { color: var(--trio-border); }
+.mangohana-shell.stitch-suite .stitch-suite-location strong { color: var(--trio-muted); font-size: 13px; font-weight: 500; }
+.mangohana-shell.stitch-suite .stitch-suite-header-actions { gap: 14px; }
+.mangohana-shell.stitch-suite .trio-header-projects-link { display: inline-flex; }
+.mangohana-shell.stitch-suite .stitch-project-switcher { gap: 8px; }
+.mangohana-shell.stitch-suite .stitch-project-switcher select { width: 205px; height: 36px; padding: 5px 28px 5px 10px; border: 1px solid var(--trio-border-soft); border-radius: 6px; background-color: var(--trio-panel); color: var(--trio-text); }
+.mangohana-shell.stitch-suite .trio-home-sidebar { grid-column: 1; grid-row: 2; width: auto; padding: 28px 12px 18px; gap: 16px; background: var(--mangohana-rail); }
+.mangohana-shell .mangohana-rail-label { padding: 0 16px; color: var(--trio-subtle); font-size: 11px; letter-spacing: 0.04em; }
+.mangohana-shell.stitch-suite .trio-sidebar-nav-section { width: 100%; margin: 0; padding: 0; }
+.mangohana-shell.stitch-suite .trio-nav-list { gap: 6px; }
+.mangohana-shell.stitch-suite .trio-nav-item { position: relative; flex-direction: row; justify-content: flex-start; gap: 13px; min-height: 46px; padding: 10px 15px; border-radius: 6px; }
+.mangohana-shell.stitch-suite .trio-nav-item span { font-size: 13px; }
+.mangohana-shell.stitch-suite .trio-nav-item.active { border-color: transparent; background: var(--trio-accent-soft); color: var(--trio-accent); }
+.mangohana-shell.stitch-suite .trio-nav-item.active::before { content: ""; position: absolute; top: 12px; bottom: 12px; left: -12px; width: 3px; border-radius: 0 3px 3px 0; background: var(--trio-accent); }
+.mangohana-shell .mangohana-rail-support { display: grid; gap: 4px; margin-top: auto; padding-top: 18px; border-top: 1px solid var(--trio-border-soft); }
+.mangohana-shell .mangohana-support-link { display: flex; align-items: center; gap: 13px; min-height: 42px; padding: 8px 15px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--trio-muted); font-size: 13px; text-align: left; }
+.mangohana-shell .mangohana-support-link:hover { background: var(--trio-panel-raised); color: var(--trio-text); }
+.mangohana-shell.stitch-suite .trio-home-main-scroll { grid-column: 2; grid-row: 2; gap: 40px; padding: clamp(24px, 3.4vw, 52px); background: var(--trio-bg); }
+.mangohana-shell.stitch-suite .trio-page-container { max-width: 1120px; }
+.mangohana-shell.stitch-suite .trio-home-footer { display: flex; justify-content: space-between; max-width: 1120px; padding-top: 18px; }
+.mangohana-shell.stitch-suite .trio-footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+.mangohana-shell.stitch-suite .trio-footer-link { border: 0; padding: 4px 0; color: var(--trio-muted); background: transparent; }
+
+/* Home: two real entry points, then recent work and truthful readiness. */
+.mangohana-shell .mangohana-home-intro { display: grid; gap: 10px; margin-bottom: 32px; }
+.mangohana-shell .mangohana-eyebrow { color: var(--trio-subtle); font-size: 12px; font-weight: 500; }
+.mangohana-shell .mangohana-home-intro h1 { width: fit-content; max-width: 100%; font-size: clamp(27px, 2.6vw, 36px); font-weight: 600; letter-spacing: -0.055em; }
+.mangohana-shell .mangohana-home-intro p { color: var(--trio-muted); }
+.mangohana-shell .mangohana-entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+.mangohana-shell .mangohana-entry { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; min-width: 0; padding: 26px; border: 1px solid var(--trio-border-soft); border-radius: 10px; background: var(--trio-panel); }
+.mangohana-shell .mangohana-entry--new { border-color: color-mix(in srgb, var(--trio-accent) 28%, var(--trio-border-soft)); background: var(--mangohana-entry-new); }
+.mangohana-shell .mangohana-entry--open .mangohana-entry-icon { color: var(--trio-muted); }
+.mangohana-shell .mangohana-entry > .mangohana-entry-icon { margin-bottom: 6px; }
+.mangohana-shell .mangohana-entry h2 { font-size: 21px; font-weight: 600; letter-spacing: -0.04em; }
+.mangohana-shell .mangohana-entry > p { max-width: 38em; color: var(--trio-muted); font-size: 13px; }
+.mangohana-shell.stitch-suite .mangohana-start-button { gap: 10px; min-height: 44px; margin-top: 8px; padding: 10px 18px; border-radius: 6px; }
+.mangohana-shell .mangohana-entry-hint { margin-top: auto; padding-top: 18px; font-size: 12px; line-height: 1.65; }
+.mangohana-shell .mangohana-txt-disclosure { width: 100%; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--trio-border-soft); }
+.mangohana-shell .mangohana-txt-disclosure summary { width: fit-content; color: var(--trio-muted); font-size: 12px; cursor: pointer; }
+.mangohana-shell .mangohana-txt-disclosure[open] :is(p, button) { margin-top: 12px; }
+.mangohana-shell .mangohana-home-lower { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; gap: 26px; }
+.mangohana-shell .mangohana-section-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.mangohana-shell .mangohana-section-heading > div { display: grid; gap: 5px; }
+.mangohana-shell .mangohana-section-heading h2 { font-size: 16px; font-weight: 600; }
+.mangohana-shell .mangohana-count { color: var(--trio-muted); font-size: 12px; }
+.mangohana-shell .mangohana-recents { min-width: 0; }
+.mangohana-shell .mangohana-recents > .mangohana-section-heading { padding: 0 0 16px; border-bottom: 1px solid var(--trio-border-soft); }
+.mangohana-shell .mangohana-recent-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.mangohana-shell .mangohana-recent-list li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 14px; min-width: 0; padding: 18px 0; border-bottom: 1px solid var(--trio-border-soft); }
+.mangohana-shell .mangohana-recent-list li > div { display: grid; gap: 5px; min-width: 0; }
+.mangohana-shell .mangohana-project-mark { display: grid; place-items: center; width: 40px; height: 46px; border: 1px solid var(--trio-border-soft); border-radius: 5px; color: var(--trio-muted); background: var(--trio-panel); }
+.mangohana-shell .mangohana-recent-title { width: fit-content; max-width: 100%; padding: 2px 0; border: 0; background: transparent; color: var(--trio-text); font-weight: 600; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.mangohana-shell .mangohana-recent-title:hover:not(:disabled) { color: var(--trio-accent); }
+.mangohana-shell .mangohana-recent-unavailable { color: var(--trio-warning); font-size: 12px; overflow-wrap: anywhere; }
+.mangohana-shell .mangohana-empty-state { display: grid; justify-items: start; gap: 10px; padding: 26px 0; color: var(--trio-muted); }
+.mangohana-shell .mangohana-empty-state > .mangohana-entry-icon { color: var(--trio-subtle); margin-bottom: 4px; }
+.mangohana-shell .mangohana-empty-state p { font-size: 13px; }
+.mangohana-shell .mangohana-empty-state button { margin-top: 4px; }
+.mangohana-shell .mangohana-readiness { display: grid; gap: 16px; min-width: 0; padding: 22px; border: 1px solid var(--trio-border-soft); border-radius: 8px; background: var(--trio-panel); }
+.mangohana-shell .mangohana-status { display: inline-flex; align-items: center; gap: 7px; color: var(--trio-muted); font-size: 12px; }
+.mangohana-shell .mangohana-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--trio-success); }
+.mangohana-shell .mangohana-status[data-status-tone="warning"]::before { background: var(--trio-warning); }
+.mangohana-shell .mangohana-readiness-list { display: grid; gap: 10px; margin: 0; font-size: 12px; }
+.mangohana-shell .mangohana-readiness-list > div { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--trio-border-soft); }
+.mangohana-shell .mangohana-readiness-list dt { color: var(--trio-muted); }
+.mangohana-shell .mangohana-readiness-list dd { margin: 0; text-align: right; }
+.mangohana-shell .mangohana-feedback { display: grid; justify-items: start; gap: 10px; padding: 12px; border-left: 2px solid var(--trio-warning); background: var(--trio-bg); font-size: 13px; overflow-wrap: anywhere; }
+.mangohana-shell .mangohana-feedback[role="alert"] { border-color: var(--trio-error); }
+.mangohana-shell .mangohana-action-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.mangohana-shell.stitch-suite .trio-modal-card { max-height: calc(100dvh - 48px); overflow: auto; }
+
+/* Setup uses the same palette while preserving the controlled project draft. */
+.mangohana-setup.project-setup-screen.stitch-flow { padding: 0 clamp(24px, 4vw, 64px) 36px; }
+.mangohana-setup .mangohana-setup-brandbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; min-height: 74px; margin-bottom: 28px; border-bottom: 1px solid var(--trio-border-soft); }
+.mangohana-setup.stitch-flow .project-setup-header { gap: 24px; margin-bottom: 28px; padding: 0; border: 0; }
+.mangohana-setup.stitch-flow .project-setup-header h1 { margin: 4px 0 6px; font-size: 30px; }
+.mangohana-setup.stitch-flow .project-setup-count { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--trio-border-soft); border-radius: 6px; color: var(--trio-text); background: var(--trio-panel); }
+.mangohana-setup.stitch-flow .mangohana-setup-layout { grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; }
+.mangohana-setup.stitch-flow .project-setup-drop-zone { justify-content: flex-start; min-height: 154px; padding: 24px; border-color: var(--trio-border); border-radius: 8px; background: var(--trio-panel); }
+.mangohana-setup.stitch-flow .project-setup-drop-zone > div { flex: 1; gap: 7px; }
+.mangohana-setup.stitch-flow .project-setup-drop-zone strong { color: var(--trio-text); font-size: 17px; }
+.mangohana-setup.stitch-flow .project-setup-drop-zone button { flex: 0 0 auto; min-height: 40px; padding: 8px 16px; border-radius: 6px; }
+.mangohana-setup.stitch-flow[aria-busy="true"] .project-setup-drop-zone { border-style: solid; }
+.mangohana-setup.stitch-flow .project-setup-empty { min-height: 270px; gap: 10px; }
+.mangohana-setup.stitch-flow .project-setup-pages { min-height: 0; margin-top: 28px; }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-grid { grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: 18px; }
+.mangohana-setup.stitch-flow .project-setup-thumbnail { padding: 10px; border: 1px solid var(--trio-border-soft); border-radius: 7px; background: var(--trio-panel); }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-preview { display: grid; place-items: center; height: 185px; padding: 6px; border: 0; border-radius: 3px; background: var(--trio-bg); }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-image { width: 100%; height: 100%; max-height: 173px; object-fit: contain; }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-meta { gap: 5px; padding: 10px 0; }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-meta strong { display: block; overflow-wrap: anywhere; }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-actions button { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 4px 7px; border: 1px solid var(--trio-border-soft); border-radius: 4px; background: var(--trio-bg); color: var(--trio-text); }
+.mangohana-setup.stitch-flow .project-setup-thumbnail-actions .project-setup-remove { margin-left: auto; color: var(--trio-error); font-size: 12px; }
+.mangohana-setup.stitch-flow .mangohana-setup-details { position: sticky; top: 0; display: flex; flex-direction: column; gap: 24px; min-width: 0; padding: 24px; border: 1px solid var(--trio-border-soft); border-radius: 8px; background: var(--trio-panel); }
+.mangohana-setup.stitch-flow .trio-project-setup-form { display: grid; gap: 22px; margin: 0; padding: 0; border: 0; background: transparent; }
+.mangohana-setup.stitch-flow .stitch-flow-section-heading h2 { margin: 6px 0 0; font-size: 20px; font-weight: 600; }
+.mangohana-setup.stitch-flow .trio-field { display: grid; gap: 9px; min-width: 0; }
+.mangohana-setup.stitch-flow .trio-field > span { color: var(--trio-muted); font-size: 12px; }
+.mangohana-setup.stitch-flow .trio-field input { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid var(--trio-border); border-radius: 5px; color: var(--trio-text); background: var(--trio-bg); }
+.mangohana-setup.stitch-flow .trio-storage-field > div { display: grid; justify-items: start; gap: 12px; }
+.mangohana-setup.stitch-flow .trio-storage-field p { width: 100%; margin: 0; color: var(--trio-text); font-size: 13px; overflow-wrap: anywhere; }
+.mangohana-setup.stitch-flow .project-setup-footer { display: grid; gap: 16px; margin: 0; padding: 20px 0 0; border-top: 1px solid var(--trio-border-soft); background: transparent; }
+.mangohana-setup.stitch-flow .project-setup-footer > p { margin: 0; font-size: 12px; color: var(--trio-muted); }
+.mangohana-setup.stitch-flow .project-setup-footer > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.mangohana-setup.stitch-flow .project-setup-footer .mangohana-setup-summary { display: flex; justify-content: space-between; align-items: center; color: var(--trio-muted); font-size: 13px; }
+.mangohana-setup .mangohana-setup-summary strong { color: var(--trio-text); font-size: 16px; }
+.mangohana-setup.stitch-flow .project-setup-footer button { flex: 1; min-height: 44px; padding: 8px 12px; border-radius: 5px; }
+
+@media (max-width: 1100px) {
+  .mangohana-shell.stitch-suite { grid-template-columns: 160px minmax(0, 1fr); }
+  .mangohana-shell.stitch-suite .trio-home-main-scroll { padding: 28px; }
+  .mangohana-shell .mangohana-home-lower { grid-template-columns: minmax(0, 1fr); }
+  .mangohana-shell.stitch-suite .stitch-project-switcher > span { display: none; }
+  .mangohana-setup.stitch-flow .mangohana-setup-layout { grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; }
+  .mangohana-setup.stitch-flow .project-setup-drop-zone { flex-wrap: wrap; }
+}
+
+@media (max-width: 880px) {
+  .mangohana-shell.stitch-suite { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+  .mangohana-shell.stitch-suite .trio-home-global-header.project-home-header { gap: 12px; padding: 12px 18px; }
+  .mangohana-shell.stitch-suite .trio-home-global-header button.trio-mobile-nav-toggle { display: inline-flex; }
+  .mangohana-shell.stitch-suite .stitch-suite-location { gap: 14px; }
+  .mangohana-shell .mangohana-location { gap: 14px; }
+  .mangohana-shell.stitch-suite .trio-home-sidebar { display: none; position: static; grid-column: 1; grid-row: 2; width: 100%; max-height: 38dvh; padding: 12px 18px; border-right: 0; border-bottom: 1px solid var(--trio-border-soft); }
+  .mangohana-shell.stitch-suite[data-navigation-open="true"] .trio-home-sidebar { display: flex; }
+  .mangohana-shell .mangohana-rail-label { display: none; }
+  .mangohana-shell.stitch-suite .trio-nav-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mangohana-shell.stitch-suite .trio-nav-item { padding: 8px; gap: 8px; }
+  .mangohana-shell.stitch-suite .trio-nav-item.active::before { display: none; }
+  .mangohana-shell .mangohana-rail-support { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 8px 0 0; }
+  .mangohana-shell.stitch-suite .trio-home-main-scroll { grid-column: 1; grid-row: 3; padding: 24px; }
+  .mangohana-shell .mangohana-entry-grid { gap: 16px; }
+  .mangohana-shell .mangohana-entry { padding: 22px; }
+  .mangohana-setup.stitch-flow .mangohana-setup-layout { grid-template-columns: minmax(0, 1fr); }
+  .mangohana-setup.stitch-flow .mangohana-setup-details { position: static; }
+}
+
+@media (max-width: 600px) {
+  .mangohana-shell .mangohana-location { display: none; }
+  .mangohana-shell.stitch-suite .stitch-suite-header-actions { flex: 1 1 100%; justify-content: space-between; gap: 10px; }
+  .mangohana-shell.stitch-suite .stitch-project-switcher { flex: 1; }
+  .mangohana-shell.stitch-suite .stitch-project-switcher select { width: 100%; }
+  .mangohana-shell.stitch-suite .trio-nav-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mangohana-shell.stitch-suite .trio-home-main-scroll { padding: 24px 18px; }
+  .mangohana-shell .mangohana-home-intro { margin-bottom: 24px; }
+  .mangohana-shell .mangohana-entry-grid { grid-template-columns: minmax(0, 1fr); }
+  .mangohana-shell .mangohana-recent-list li { grid-template-columns: 32px minmax(0, 1fr); gap: 10px; }
+  .mangohana-shell .mangohana-project-mark { width: 32px; }
+  .mangohana-shell .mangohana-recent-list li > button { grid-column: 2; justify-self: start; }
+  .mangohana-setup.project-setup-screen.stitch-flow { padding-inline: 18px; }
+  .mangohana-setup.stitch-flow .project-setup-header { flex-wrap: wrap; gap: 16px; }
+  .mangohana-setup.stitch-flow .project-setup-header > div { flex-basis: calc(100% - 110px); }
+  .mangohana-setup.stitch-flow .project-setup-drop-zone { padding: 20px; }
+  .mangohana-setup.stitch-flow .project-setup-drop-zone > div { flex-basis: calc(100% - 52px); }
+  .mangohana-setup.stitch-flow .project-setup-thumbnail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (forced-colors: active) {
+  :is(.mangohana-shell, .mangohana-setup) :is(button, a, input, select, summary, [tabindex]):focus-visible { outline-color: Highlight; }
+  .mangohana-shell.stitch-suite .trio-nav-item.active { border-color: Highlight; }
+  .mangohana-shell.stitch-suite .trio-nav-item.active::before { background: Highlight; }
+}

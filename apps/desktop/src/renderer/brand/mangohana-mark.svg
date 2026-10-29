@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="mango" x1="9" y1="12" x2="31" y2="35" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffd477" />
+      <stop offset="1" stop-color="#f6a91e" />
+    </linearGradient>
+  </defs>
+  <path d="M30.5 9.5c4.2 4.4 2.7 13.4-2.6 20.1-5.1 6.5-13.4 8.6-18.3 4.2C4.7 29.4 6 20.5 11.4 14c5.4-6.6 14.7-9.1 19.1-4.5Z" fill="url(#mango)" />
+  <path d="M26.3 10.1c1.8-4 5.4-5.3 10-3.6-.9 5.7-4.3 7.8-8.6 6.1" fill="#85aa72" />
+  <path d="M11.7 21.8c1.5-4.4 5.8-8.4 10-9.2" stroke="#fff0c4" stroke-width="2.4" stroke-linecap="round" />
+</svg>

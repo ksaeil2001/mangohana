@@ -26,5 +26,8 @@
     "scripts",
     "tests",
     "*.ts"
+  ],
+  "exclude": [
+    "apps/desktop"
   ]
 }

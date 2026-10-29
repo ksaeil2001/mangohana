@@ -1,0 +1,340 @@
+/* The workspace navigation is separate from the page image and never overlays it. */
+.focus-deck-shell.has-workspace-navigation[data-layout-tier] {
+  --focus-pages-width: 228px;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) !important;
+  grid-template-rows: minmax(48px, auto) minmax(0, 1fr) 0 auto !important;
+}
+
+.focus-deck-shell.has-workspace-navigation[data-layout-tier]:not(.results-collapsed) {
+  grid-template-rows: minmax(48px, auto) minmax(0, 1fr) minmax(34px, min(240px, 28vh)) auto !important;
+}
+
+.focus-deck-shell.has-workspace-navigation > .focus-deck-top-bar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.focus-deck-shell.has-workspace-navigation > .focus-deck-navigation {
+  grid-column: 1;
+  grid-row: 2 / 5;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--trio-panel);
+  border-right: 1px solid var(--trio-border-soft);
+}
+
+.focus-deck-shell.has-workspace-navigation > .focus-deck-workspace {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.focus-deck-shell.has-workspace-navigation > .focus-deck-filmstrip {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.focus-deck-shell.has-workspace-navigation.results-collapsed > .focus-deck-filmstrip {
+  visibility: hidden;
+}
+
+.focus-deck-shell.has-workspace-navigation .focus-deck-results-control {
+  display: none;
+}
+
+.focus-deck-shell.has-workspace-navigation:not(.results-collapsed) > .focus-deck-filmstrip {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.focus-deck-shell.has-workspace-navigation > .focus-deck-status-bar {
+  grid-column: 2;
+  grid-row: 4;
+}
+
+.mangohana-workspace-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 8px;
+}
+
+.mangohana-workspace-navigation > button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 48px;
+  padding: 0 10px;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 5px;
+  color: var(--trio-text);
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+}
+
+.mangohana-workspace-navigation > button:hover:not(:disabled) {
+  background: var(--trio-panel-raised);
+}
+
+.mangohana-workspace-navigation > button[aria-expanded="true"] {
+  color: var(--trio-accent);
+  background: var(--trio-accent-soft);
+  border-left-color: var(--trio-accent);
+}
+
+.mangohana-workspace-navigation > button:focus-visible {
+  outline: 2px solid var(--trio-accent);
+  outline-offset: 2px;
+}
+
+.mangohana-workspace-navigation > button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.mangohana-navigation-icon {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.focus-deck-shell.has-workspace-navigation[data-layout-tier] > .focus-deck-workspace {
+  grid-template-columns: var(--focus-pages-width) minmax(0, 1fr);
+}
+
+.focus-deck-shell.has-workspace-navigation.pages-collapsed[data-layout-tier] > .focus-deck-workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.focus-deck-shell.has-workspace-navigation :is(.focus-deck-pages-edge, .focus-deck-inspector-edge) {
+  display: none;
+}
+
+.focus-deck-shell.has-workspace-navigation .focus-deck-pages {
+  min-width: 0;
+  border-right: 1px solid var(--trio-border-soft);
+}
+
+.focus-deck-shell.has-workspace-navigation .app-top-brand h1 {
+  color: var(--trio-text);
+  white-space: nowrap;
+}
+
+.mangohana-workspace-mark {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+}
+
+.mangohana-workbench-bottom {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  align-items: center;
+  gap: 18px;
+  padding: 3px 12px;
+}
+
+.mangohana-workbench-bottom .top-page-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.mangohana-workbench-bottom .top-page-actions button {
+  min-height: 32px;
+  padding: 4px 8px;
+}
+
+.mangohana-workbench-bottom .workbench-status {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mangohana-latest-status {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mangohana-selected-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.mangohana-selected-line details { position: relative; }
+.mangohana-selected-line summary { cursor: pointer; }
+.mangohana-selected-line-detail {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  z-index: 20;
+  width: min(320px, 65vw);
+  padding: 12px;
+  border: 1px solid var(--trio-border);
+  border-radius: 8px;
+  background: var(--trio-panel);
+  box-shadow: var(--trio-shadow-popover);
+}
+
+.mangohana-selected-line-detail p { margin: 4px 0 10px; overflow-wrap: anywhere; }
+
+.page-image-cleaned-review {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page-image-cleaned-review span {
+  max-width: 15rem;
+  font-size: 12px;
+}
+
+.mangohana-editing-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px;
+}
+
+.mangohana-editing-tools button[aria-pressed="true"] {
+  border-color: var(--trio-accent);
+  color: var(--trio-accent);
+  background: var(--trio-accent-soft);
+}
+
+.mangohana-stage-container:not([hidden]) {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mangohana-stage-container .issue-line-editor-surface {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.focus-deck-shell.has-workspace-navigation .guided-work-content:has(.mangohana-typesetting-instructions) {
+  overflow: auto;
+}
+
+.mangohana-typesetting-instructions {
+  display: flex !important;
+  flex-direction: column;
+  gap: var(--trio-space-2);
+  padding: var(--trio-space-2) !important;
+}
+
+.mangohana-typesetting-instructions > p { margin: 0; }
+
+.focus-deck-shell.has-workspace-navigation .page-image-panel:not(.editor-open) {
+  grid-template-areas: "stage" "toolbar" "quick";
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  border: 0;
+}
+
+.focus-deck-shell.has-workspace-navigation .page-image-panel:not(.editor-open) .page-image-stage {
+  grid-area: 1 / 1 !important;
+}
+
+.focus-deck-shell.has-workspace-navigation .page-image-panel:not(.editor-open) .page-image-toolbar {
+  grid-area: 2 / 1 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 0;
+  border-top: 1px solid var(--trio-border-soft);
+}
+
+.focus-deck-shell.has-workspace-navigation .page-image-toolbar .page-image-title {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.focus-deck-shell.has-workspace-navigation .page-image-toolbar .page-image-tools {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.page-image-advanced {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.page-image-advanced > summary {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--trio-border);
+  border-radius: 5px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.page-image-advanced > summary:focus-visible {
+  outline: 2px solid var(--trio-accent);
+  outline-offset: 2px;
+}
+
+.page-image-advanced-content {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 15;
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px !important;
+  width: min(440px, calc(100vw - 40px));
+  max-height: min(60vh, 480px);
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--trio-border);
+  border-radius: 8px;
+  background: var(--trio-panel);
+  box-shadow: var(--trio-shadow-popover);
+}
+
+.page-image-advanced-content .page-image-tool-group {
+  flex-wrap: wrap;
+}
+
+.page-image-advanced-content .page-image-overlay-dropdown .semantic-overlay-legend {
+  position: static;
+  max-width: 100%;
+  max-height: none;
+}
+
+@media (max-width: 1200px) {
+  .focus-deck-shell.has-workspace-navigation[data-layout-tier] {
+    grid-template-columns: 76px minmax(0, 1fr) !important;
+  }
+
+  .mangohana-workspace-navigation > button {
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px;
+    font-size: 12px;
+  }
+}
+
+@media (forced-colors: active) {
+  .mangohana-workspace-navigation > button[aria-expanded="true"] {
+    border-color: Highlight;
+    color: Highlight;
+  }
+}

@@ -1,0 +1,4 @@
+# Detached CMS signatures cover the exact manifest bytes.
+tests/fixtures/pipeline-signing/pipeline-manifest.json text eol=lf
+resources/font_ko_fallback/pretendard-1.3.9/resource-manifest.json -text
+resources/font_ko_fallback/pretendard-1.3.9/LICENSE.txt -text -whitespace

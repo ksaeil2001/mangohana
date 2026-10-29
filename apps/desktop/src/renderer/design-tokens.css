@@ -1,0 +1,200 @@
+/* Trio foundations. Theme selection remains owned by the existing App state.
+   Canvas/annotation colors are separate from chrome and never recolor artwork. */
+:root {
+  color-scheme: dark;
+  --trio-bg: #1c1c1e;
+  --trio-stitch-canvas: var(--trio-bg);
+  --trio-panel: #242426;
+  --trio-panel-raised: #303033;
+  --trio-border: #777780;
+  --trio-border-soft: #38383c;
+  --trio-text: #f5f5f7;
+  --trio-muted: #b9b9c0;
+  --trio-subtle: #aaaab3;
+  --trio-accent: #8ab4ff;
+  --trio-accent-hover: #aecbff;
+  --trio-on-accent: #10213e;
+  --trio-accent-soft: #293952;
+  --trio-success: #85d6ac;
+  --trio-success-soft: #223a2e;
+  --trio-warning: #edc17c;
+  --trio-warning-soft: #3f3322;
+  --trio-error: #ffaaa4;
+  --trio-error-soft: #432c2d;
+  --trio-canvas: #171719;
+  --trio-canvas-raised: #242426;
+  --trio-on-canvas: #f5f5f7;
+  --trio-backdrop: rgb(0 0 0 / 40%);
+  --trio-shadow-control: 0 1px 2px rgb(0 0 0 / 8%);
+  --trio-shadow-popover: 0 8px 32px rgb(0 0 0 / 20%);
+  --trio-shadow-modal: 0 24px 64px rgb(0 0 0 / 24%);
+  --trio-font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Pretendard", "Noto Sans KR", "Malgun Gothic", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  --trio-font-mono: "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+  --trio-text-page: 22px;
+  --trio-text-section: 16px;
+  --trio-text-title: 16px;
+  --trio-text-body: 14px;
+  --trio-text-secondary: 13px;
+  --trio-text-caption: 12px;
+  --trio-leading: 1.5;
+  --trio-weight-regular: 400;
+  --trio-weight-medium: 500;
+  --trio-weight-semibold: 600;
+  --trio-space-1: 4px;
+  --trio-space-2: 8px;
+  --trio-space-3: 12px;
+  --trio-space-4: 16px;
+  --trio-space-5: 20px;
+  --trio-space-6: 24px;
+  --trio-space-8: 32px;
+  --trio-space-10: 40px;
+  --trio-space-12: 48px;
+  --trio-radius-sm: 6px;
+  --trio-radius-control: 4px;
+  --trio-radius: 6px;
+  --trio-radius-panel: 6px;
+  --trio-radius-modal: 10px;
+  --trio-radius-pill: 999px;
+  --trio-control-height: 36px;
+  --trio-control-compact: 32px;
+  --trio-control-touch: 44px;
+  --trio-transition-fast: 150ms ease;
+  --trio-transition-panel: 200ms ease;
+  --trio-page-padding: var(--trio-space-8);
+  --trio-dialog-width: 480px;
+  --trio-dialog-wide: 840px;
+
+  /* Semantic review states retain their separate meanings. */
+  --trio-state-ai: var(--trio-accent);
+  --trio-state-ai-soft: var(--trio-accent-soft);
+  --trio-state-modified: var(--trio-warning);
+  --trio-state-modified-soft: var(--trio-warning-soft);
+  --trio-state-confirmed: var(--trio-success);
+  --trio-state-confirmed-soft: var(--trio-success-soft);
+  --trio-state-error: var(--trio-error);
+  --trio-state-error-soft: var(--trio-error-soft);
+
+  /* Compatibility aliases: older workbench components share these foundations. */
+  --surface: var(--trio-bg);
+  --app-surface: var(--trio-bg);
+  --panel: var(--trio-panel);
+  --panel-surface: var(--trio-panel);
+  --panel-muted: var(--trio-panel-raised);
+  --panel-strong: var(--trio-border-soft);
+  --surface-sunken: var(--trio-bg);
+  --trio-bg-subtle: var(--trio-panel-raised);
+  --trio-primary: var(--trio-accent);
+  --ink: var(--trio-text);
+  --ink-muted: var(--trio-muted);
+  --ink-soft: var(--trio-subtle);
+  --line: var(--trio-border-soft);
+  --line-strong: var(--trio-border);
+  --border-color: var(--trio-border-soft);
+  --accent: var(--trio-accent);
+  --accent-strong: var(--trio-accent-hover);
+  --danger: var(--trio-error);
+  --warning: var(--trio-warning);
+  --frame: var(--trio-panel);
+  --frame-raised: var(--trio-panel-raised);
+  --paper: var(--trio-panel);
+  --paper-muted: var(--trio-panel-raised);
+  --image-stage: var(--trio-canvas);
+  --canvas-surface: var(--trio-canvas);
+  --font-body: var(--trio-font-body);
+  --font-mono: var(--trio-font-mono);
+  --inkline-ink: var(--trio-text);
+  --inkline-muted: var(--trio-muted);
+  --inkline-rule: var(--trio-border-soft);
+  --inkline-blue: var(--trio-accent);
+  --inkline-blue-soft: var(--trio-accent-soft);
+  --inkline-red: var(--trio-error);
+  --inkline-green: var(--trio-success);
+  --focus-navy: var(--trio-panel);
+  --focus-navy-raised: var(--trio-panel-raised);
+  --focus-cream: var(--trio-bg);
+  --focus-paper: var(--trio-panel);
+  --focus-teal: var(--trio-accent);
+  --focus-radius-sm: var(--trio-radius-sm);
+  --focus-radius-md: var(--trio-radius);
+
+  /* Workflow identity is accent, not an error or review warning. */
+  --focus-ocr: var(--trio-accent);
+  --focus-speaker: var(--trio-accent);
+  --focus-translation: var(--trio-accent);
+  --focus-complete: var(--trio-success);
+  --stage-ocr: var(--trio-accent);
+  --stage-ocr-tint: var(--trio-accent-soft);
+  --stage-speaker: var(--trio-accent);
+  --stage-speaker-tint: var(--trio-accent-soft);
+  --stage-translation: var(--trio-accent);
+  --stage-translation-tint: var(--trio-accent-soft);
+  --stage-complete: var(--trio-success);
+  --stage-complete-tint: var(--trio-success-soft);
+}
+
+:root[data-theme="light"] {
+  --trio-stitch-canvas: #f7f5f1;
+  color-scheme: light;
+  --trio-bg: #f5f5f7;
+  --trio-panel: #ffffff;
+  --trio-panel-raised: #ededf0;
+  --trio-border: #8b8b94;
+  --trio-border-soft: #dedee3;
+  --trio-text: #202024;
+  --trio-muted: #606068;
+  --trio-subtle: #686872;
+  --trio-accent: #245dc1;
+  --trio-accent-hover: #1b489a;
+  --trio-on-accent: #ffffff;
+  --trio-accent-soft: #e8effb;
+  --trio-success: #256a48;
+  --trio-success-soft: #e8f3ed;
+  --trio-warning: #825614;
+  --trio-warning-soft: #fbf1df;
+  --trio-error: #b63330;
+  --trio-error-soft: #fbeceb;
+}
+
+/* 망고하나 화면의 명시적 테마 팔레트. */
+.mangohana-shell.stitch-suite,
+.mangohana-setup.project-setup-screen {
+  --trio-bg: #202224;
+  --trio-panel: #27292c;
+  --trio-panel-raised: #303336;
+  --trio-border: #62676b;
+  --trio-border-soft: #3b3e42;
+  --trio-text: #f1f0ec;
+  --trio-muted: #b9babc;
+  --trio-subtle: #a4a6a9;
+  --trio-accent: #ffbd45;
+  --trio-accent-hover: #ffd078;
+  --trio-on-accent: #252016;
+  --trio-accent-soft: #3b3325;
+  --mangohana-rail: #232527;
+  --mangohana-entry-new: #2e2c26;
+}
+
+[data-theme="light"] .mangohana-shell.stitch-suite,
+[data-theme="light"] .mangohana-setup.project-setup-screen {
+  --trio-bg: #f5f3ee;
+  --trio-panel: #fffefa;
+  --trio-panel-raised: #ebe9e2;
+  --trio-border: #8a8880;
+  --trio-border-soft: #d9d6cd;
+  --trio-text: #292b2d;
+  --trio-muted: #5d6062;
+  --trio-subtle: #66696b;
+  --trio-accent: #9a6000;
+  --trio-accent-hover: #754900;
+  --trio-on-accent: #fffefa;
+  --trio-accent-soft: #f5e6c8;
+  --mangohana-rail: #eeece6;
+  --mangohana-entry-new: #fbf3e3;
+}
+
+html[data-theme="dark"] .focus-deck-shell.has-workspace-navigation {
+  --trio-accent: #ffca5c;
+  --trio-accent-hover: #ffdb8b;
+  --trio-accent-soft: #453821;
+  --trio-on-accent: #241900;
+}

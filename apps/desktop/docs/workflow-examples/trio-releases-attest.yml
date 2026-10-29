@@ -1,0 +1,247 @@
+name: Trio public release provenance
+
+# Install this exact file as .github/workflows/trio-releases-attest.yml in the
+# future public ksaeil2001/trio-releases repository. It attests delivery bytes
+# after the private source promotion has completed. It does not claim that the
+# public repository rebuilt those bytes from the private source.
+# This reviewed v0.1.4 template accepts only tag v0.1.4 and version 0.1.4.
+# The v0.1.4 allowlist includes Trio-Setup-0.1.4.exe and Trio-0.1.4.AppImage.
+# The existing Linux artifact policy is unchanged; macOS is outside MVP.
+
+on:
+  repository_dispatch:
+    types:
+      - trio-release-published
+
+permissions:
+  contents: read
+
+env:
+  DELIVERY_REPOSITORY: ksaeil2001/trio-releases
+  ATTEST_ACTION_SHA: 1e69f48acb82d1966a394da916b4c1698aa569d6
+
+jobs:
+  verify-and-attest:
+    name: Verify exact public release and attest delivery bytes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22.14.0
+
+      - name: Validate dispatch payload and fetch the published release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_TAG: ${{ github.event.client_payload.tag }}
+          EXPECTED_VERSION: ${{ github.event.client_payload.version }}
+          EXPECTED_SOURCE_SHA: ${{ github.event.client_payload.source_sha }}
+          EXPECTED_EVIDENCE_SHA: ${{ github.event.client_payload.evidence_sha256 }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$GITHUB_REPOSITORY" = "$DELIVERY_REPOSITORY"
+          printf '%s' "$EXPECTED_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'
+          printf '%s' "$EXPECTED_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'
+          if test "$EXPECTED_TAG" != "v0.1.4" || test "$EXPECTED_VERSION" != "0.1.4"; then
+            echo "This reviewed public provenance template is bound to v0.1.4 / 0.1.4." >&2
+            exit 1
+          fi
+          test "$EXPECTED_TAG" = "v$EXPECTED_VERSION"
+          printf '%s' "$EXPECTED_SOURCE_SHA" | grep -Eq '^[0-9a-f]{40}$'
+          printf '%s' "$EXPECTED_EVIDENCE_SHA" | grep -Eq '^[0-9a-f]{64}$'
+          gh api "repos/$DELIVERY_REPOSITORY/releases/tags/$EXPECTED_TAG" > published-release.json
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+
+          const release = JSON.parse(await readFile("published-release.json", "utf8"));
+          const tag = process.env.EXPECTED_TAG;
+          const version = process.env.EXPECTED_VERSION;
+          const sourceSha = process.env.EXPECTED_SOURCE_SHA;
+          const evidenceSha = process.env.EXPECTED_EVIDENCE_SHA;
+          if (release.draft !== false || release.prerelease !== false || release.tag_name !== tag) {
+            throw new Error("Published release is not a non-prerelease release for the requested tag.");
+          }
+          if (!Array.isArray(release.assets)) throw new Error("Published release has no asset list.");
+          const names = release.assets.map((asset) => asset.name);
+          const expected = new Set([
+            `Trio-Setup-${version}.exe`,
+            `Trio-Setup-${version}.exe.blockmap`,
+            "latest.yml",
+            `Trio-${version}.AppImage`,
+            "SHA256SUMS",
+            `trio-${version}.cdx.json`,
+            "THIRD_PARTY_NOTICES.md",
+            "RELEASE_NOTES.md",
+            "release-evidence.json",
+            "release-evidence.sha256"
+          ]);
+          if (names.length !== expected.size || new Set(names).size !== expected.size || names.some((name) => !expected.has(name))) {
+            throw new Error("Public release assets do not match the exact stable allowlist.");
+          }
+          for (const asset of release.assets) {
+            if (!Number.isSafeInteger(asset.id) || asset.id <= 0) throw new Error(`Invalid public asset ID: ${asset.name}`);
+            if (!Number.isSafeInteger(asset.size) || asset.size < 0) throw new Error(`Invalid public asset size: ${asset.name}`);
+            const canonicalUrl = `https://github.com/${process.env.DELIVERY_REPOSITORY}/releases/download/${tag}/${asset.name}`;
+            if (asset.browser_download_url !== canonicalUrl) throw new Error(`Public asset has a non-canonical release download URL: ${asset.name}`);
+          }
+          await writeFile("asset-map.json", JSON.stringify(release.assets.map(({ name, id, size, browser_download_url }) => ({ name, id, size, browser_download_url }))));
+          await writeFile("expected-assets.json", JSON.stringify([...expected].sort((a, b) => a.localeCompare(b))));
+          void sourceSha;
+          void evidenceSha;
+          NODE
+      - name: Download each exact public release asset without App authentication
+        env:
+          EXPECTED_TAG: ${{ github.event.client_payload.tag }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          unset GH_TOKEN GITHUB_TOKEN
+          rm -rf public-assets
+          mkdir -p public-assets
+          node --input-type=module -e 'import { readFile, writeFile } from "node:fs/promises"; const assets = JSON.parse(await readFile("asset-map.json", "utf8")); await writeFile("asset-downloads.tsv", assets.map(({ name, size, browser_download_url }) => `${name}\t${size}\t${browser_download_url}`).join("\n") + "\n");'
+          while IFS=$'\t' read -r name expected_size browser_download_url; do
+            test -n "$name"
+            test "$name" != "*"
+            test "$expected_size" -ge 0
+            curl --fail --silent --show-error --location "$browser_download_url" > "public-assets/$name"
+          done < asset-downloads.tsv
+
+      - name: Verify canonical checksums, evidence, metadata and source binding
+        id: verify
+        env:
+          EXPECTED_VERSION: ${{ github.event.client_payload.version }}
+          EXPECTED_SOURCE_SHA: ${{ github.event.client_payload.source_sha }}
+          EXPECTED_EVIDENCE_SHA: ${{ github.event.client_payload.evidence_sha256 }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node --input-type=module <<'NODE'
+          import { createHash } from "node:crypto";
+          import { lstat, readFile } from "node:fs/promises";
+
+          const expected = new Set(JSON.parse(await readFile("expected-assets.json", "utf8")));
+          const assetMap = JSON.parse(await readFile("asset-map.json", "utf8"));
+          const allNames = assetMap.map(({ name }) => name).sort((a, b) => a.localeCompare(b));
+          const expectedNames = [...expected].sort((a, b) => a.localeCompare(b));
+          if (JSON.stringify(allNames) !== JSON.stringify(expectedNames)) throw new Error("Asset API list changed during verification.");
+          const lstatAll = async (name) => {
+            const stat = await lstat(`public-assets/${name}`);
+            if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) throw new Error(`Unsafe public asset: ${name}`);
+            return readFile(`public-assets/${name}`);
+          };
+          const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
+          const files = new Map();
+          const apiByName = new Map(assetMap.map(({ name, size }) => [name, size]));
+          for (const name of expected) {
+            const bytes = await lstatAll(name);
+            if (bytes.byteLength !== apiByName.get(name)) throw new Error(`API asset size does not match downloaded byte length: ${name}`);
+            files.set(name, bytes);
+          }
+
+          const checksumSource = (await lstatAll("SHA256SUMS")).toString("utf8");
+          if (!checksumSource.endsWith("\n") || checksumSource.endsWith("\n\n")) throw new Error("SHA256SUMS newline is not canonical.");
+          const checksumNames = [...expected].filter((name) => name !== "SHA256SUMS" && name !== "release-evidence.json" && name !== "release-evidence.sha256").sort((a, b) => a.localeCompare(b));
+          const checksumLines = checksumSource.trimEnd().split("\n");
+          if (checksumLines.length !== checksumNames.length) throw new Error("SHA256SUMS asset count mismatch.");
+          checksumLines.forEach((line, index) => {
+            const match = /^([a-f0-9]{64}) {2}([^\s]+)$/u.exec(line);
+            if (!match || match[2] !== checksumNames[index] || match[1] !== digest(files.get(match[2]))) throw new Error("SHA256SUMS digest or order mismatch.");
+          });
+
+          const evidenceBytes = files.get("release-evidence.json");
+          const evidence = JSON.parse(evidenceBytes.toString("utf8"));
+          if (evidence.sourceSha !== process.env.EXPECTED_SOURCE_SHA || evidence.packageVersion !== process.env.EXPECTED_VERSION) throw new Error("Evidence source or version mismatch.");
+          if (digest(evidenceBytes) !== process.env.EXPECTED_EVIDENCE_SHA) throw new Error("Evidence JSON digest mismatch.");
+          if ((await lstatAll("release-evidence.sha256")).toString("utf8") !== `${process.env.EXPECTED_EVIDENCE_SHA}  release-evidence.json\n`) throw new Error("Evidence sidecar mismatch.");
+          if (evidence.candidateEvidence?.evidenceFile !== "release-evidence.json" || evidence.candidateEvidence?.digestFile !== "release-evidence.sha256") throw new Error("Evidence sidecar contract mismatch.");
+          if (evidence.supportingFiles?.sbom !== `trio-${process.env.EXPECTED_VERSION}.cdx.json` || evidence.supportingFiles?.thirdPartyNotices !== "THIRD_PARTY_NOTICES.md" || evidence.supportingFiles?.releaseNotes !== "RELEASE_NOTES.md") throw new Error("Supporting file contract mismatch.");
+          if (!evidence.publicAssets?.every((asset) => expected.has(asset.name) && asset.name !== "release-evidence.json" && asset.name !== "release-evidence.sha256")) throw new Error("Evidence contains an unexpected public asset.");
+          if (evidence.publicAssets.length !== checksumNames.length) throw new Error("Evidence public asset count mismatch.");
+          for (const asset of evidence.publicAssets) {
+            if (apiByName.get(asset.name) !== asset.size) throw new Error(`Public API asset size does not match candidate evidence: ${asset.name}`);
+          }
+          for (const reference of evidence.updaterReferences ?? []) {
+            if (!expected.has(reference.filename)) throw new Error(`Evidence updater reference is outside allowlist: ${reference.filename}`);
+          }
+          process.stdout.write(`verified source=${process.env.EXPECTED_SOURCE_SHA} version=${process.env.EXPECTED_VERSION}\n`);
+          NODE
+
+      - name: Attest Windows installer with the exact CycloneDX SBOM subject
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/Trio-Setup-${{ github.event.client_payload.version }}.exe
+          sbom-path: public-assets/trio-${{ github.event.client_payload.version }}.cdx.json
+          create-storage-record: false
+
+      - name: Attest Windows blockmap
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/Trio-Setup-${{ github.event.client_payload.version }}.exe.blockmap
+          create-storage-record: false
+
+      - name: Attest Windows updater metadata
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/latest.yml
+          create-storage-record: false
+
+      - name: Attest Linux AppImage with the exact CycloneDX SBOM subject
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/Trio-${{ github.event.client_payload.version }}.AppImage
+          sbom-path: public-assets/trio-${{ github.event.client_payload.version }}.cdx.json
+          create-storage-record: false
+
+      - name: Attest checksum manifest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/SHA256SUMS
+          create-storage-record: false
+
+      - name: Attest CycloneDX SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/trio-${{ github.event.client_payload.version }}.cdx.json
+          create-storage-record: false
+
+      - name: Attest third-party notices
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/THIRD_PARTY_NOTICES.md
+          create-storage-record: false
+
+      - name: Attest release notes
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/RELEASE_NOTES.md
+          create-storage-record: false
+
+      - name: Attest canonical release evidence
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/release-evidence.json
+          create-storage-record: false
+
+      - name: Attest release evidence sidecar
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: public-assets/release-evidence.sha256
+          create-storage-record: false
+
+      - name: Print consumer verification command
+        shell: bash
+        run: |
+          {
+            echo "### Public delivery provenance"
+            echo "- release: $GITHUB_REPOSITORY@${{ github.event.client_payload.tag }}"
+            echo "- delivery source SHA recorded in evidence: ${{ github.event.client_payload.source_sha }}"
+            echo "- evidence SHA-256: ${{ github.event.client_payload.evidence_sha256 }}"
+            echo "- provenance: attestation requested for every exact public asset"
+            echo '- verify an asset: `gh attestation verify <asset> --repo ksaeil2001/trio-releases`'
+          } >> "$GITHUB_STEP_SUMMARY"

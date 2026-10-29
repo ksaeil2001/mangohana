@@ -1,0 +1,86 @@
+Trio Proprietary License v1.0
+
+Copyright (c) 2026 ksaeil2001. All rights reserved.
+
+This license applies to the Trio source code, executable builds, documentation,
+artwork, and other materials in this repository, except for third-party
+components that are distributed under their own licenses.
+
+1. Limited license
+
+Subject to these terms, you may download, install, and use an unmodified
+official Trio binary solely for your personal or internal business manga
+localization workflow. You may make a reasonable number of backup copies for
+that purpose.
+
+2. Restrictions
+
+Except where applicable law expressly permits it, you may not:
+
+  a. copy, modify, translate, adapt, reverse engineer, decompile, or
+     disassemble Trio or any part of it;
+  b. distribute, sublicense, sell, rent, lease, host, publish, or otherwise
+     make Trio available to a third party;
+  c. remove or alter copyright, trademark, attribution, license, or other
+     proprietary notices;
+  d. use Trio to develop, market, or distribute a competing product based on
+     the source code or protected materials; or
+  e. use Trio in a way that violates applicable law, third-party rights, or
+     the terms that govern any connected AI service.
+
+3. Evaluation and commercial arrangements
+
+This repository does not grant a right to redistribute Trio, incorporate its
+source code into another product, or provide it as a hosted service. Any
+commercial distribution, resale, white-label use, OEM arrangement, source-code
+license, or enterprise deployment requires a separate written agreement from
+the copyright holder.
+
+4. Third-party services and components
+
+Trio can connect to third-party AI providers, including Google Gemini and
+OpenAI, when the user supplies valid credentials. Those services are governed
+by their own terms, pricing, privacy policies, availability, and content-use
+rules. The user is responsible for obtaining all required rights and
+permissions for materials submitted to those services.
+
+Some software components included with or used by Trio are available under
+separate open-source licenses. Their license terms remain in force for those
+components and take precedence over this license where required.
+
+5. Ownership
+
+Trio and all related intellectual-property rights remain the exclusive property
+of the copyright holder and its licensors. No ownership right is transferred by
+this license.
+
+6. Disclaimer of warranties
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, TRIO IS PROVIDED "AS IS" AND "AS
+AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR
+STATUTORY, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, TITLE, NON-INFRINGEMENT, ACCURACY, OR UNINTERRUPTED AVAILABILITY.
+
+7. Limitation of liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER AND LICENSORS
+WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL,
+PUNITIVE, OR LOST-PROFIT DAMAGES, OR FOR ANY LOSS OF DATA, BUSINESS
+INTERRUPTION, OR PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, ARISING FROM OR
+RELATED TO TRIO, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+8. Termination
+
+This license ends automatically if you breach its terms. Upon termination, you
+must stop using Trio and delete all copies under your control, except where
+retention is required by law.
+
+9. Changes and contact
+
+The copyright holder may publish updated license terms with future releases.
+For a commercial licensing inquiry, use the repository's official contact or
+support channel once published. Until then, GitHub Issues are not a confidential
+legal or commercial communications channel.
+
+This license is a release-distribution policy draft and should be reviewed by a
+qualified attorney before paid commercial distribution or enforcement.

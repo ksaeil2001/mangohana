@@ -1,0 +1,15 @@
+.superpowers/
+.worktrees/
+node_modules/
+dist-renderer/
+dist-electron/
+/release/
+coverage/
+*.log
+.gstack/
+.playwright-cli/
+review-captures*/
+/artifacts/
+/qa/
+.grok/
+.playwright-mcp/

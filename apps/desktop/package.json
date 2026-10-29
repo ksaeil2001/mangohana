@@ -1,0 +1,139 @@
+{
+  "name": "character-dialogue-translation-editor",
+  "productName": "Trio",
+  "version": "0.1.4",
+  "description": "Trio image-first manga localization workbench with review gates and safe project export.",
+  "author": "Local User",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/electron/main.js",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4173",
+    "build:electron": "tsc -p tsconfig.node.json",
+    "watch:electron": "tsc -p tsconfig.node.json --watch --preserveWatchOutput",
+    "dev:electron:start": "wait-on http://localhost:4173 dist-electron/electron/main.js && cross-env VITE_DEV_SERVER_URL=http://localhost:4173 electron .",
+    "dev:electron": "npm run build:electron && concurrently -k \"npm:dev\" \"npm:watch:electron\" \"npm:dev:electron:start\"",
+    "build": "tsc -p tsconfig.node.json && vite build",
+    "build:ocr-resource-manifest": "node scripts/build-production-ocr-resource-manifest.mjs",
+    "start": "npm run build && electron .",
+    "pack:win": "npm run build && electron-builder --win --x64 --dir --publish never",
+    "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never",
+    "pack:mac:future": "npm run build && electron-builder --mac --x64 --dir --publish never",
+    "dist:mac:future": "npm run build && electron-builder --mac dmg zip --x64 --publish never",
+    "pack:linux": "npm run build && electron-builder --linux --x64 --dir --publish never",
+    "dist:linux": "npm run build && electron-builder --linux AppImage --x64 --publish never",
+    "smoke:package": "node scripts/ci-smoke-packaged-app.mjs",
+    "smoke:ipc": "vitest run tests/main/ipcHandlers.integration.test.ts",
+    "smoke:storage": "npm run build && node scripts/storage-smoke.mjs",
+    "smoke:ocr-production": "npm run build:electron && electron scripts/production-ocr-smoke",
+    "test:release-policy": "vitest run tests/scripts/releaseChannelPolicy.test.mjs",
+    "test:release-evidence": "vitest run tests/scripts/releaseCandidateEvidence.test.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "node scripts/lint.mjs",
+    "lint:jsx": "oxlint src/renderer",
+    "lint:design-system": "node scripts/lint-design-system.mjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.node.json --noEmit"
+  },
+  "build": {
+    "appId": "com.local.character-dialogue-translation-editor",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "ksaeil2001",
+        "repo": "trio-releases",
+        "releaseType": "release"
+      }
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "Trio-${version}.${ext}",
+    "files": [
+      "package.json",
+      "dist-electron/**",
+      "dist-renderer/**"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/pipeline-resources",
+        "to": "pipeline-resources"
+      },
+      {
+        "from": "resources/font_ko_fallback/pretendard-1.3.9",
+        "to": "pipeline-resources/pretendard-ko-fallback/1.3.9",
+        "filter": [
+          "**/*",
+          "!source-manifest.json"
+        ]
+      }
+    ],
+    "asar": true,
+    "win": {
+      "artifactName": "Trio-Setup-${version}.${ext}",
+      "icon": "build/mangohana-icon.ico",
+      "signtoolOptions": {
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "rfc3161TimeStampServer": "http://ts.ssl.com"
+      },
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": true
+    },
+    "linux": {
+      "category": "Graphics",
+      "icon": "build/icons"
+    },
+    "mac": {
+      "icon": "build/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "pkijs": "3.4.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "uuid": "^14.0.0",
+    "yauzl": "3.4.0"
+  },
+  "devDependencies": {
+    "@electron/fuses": "1.8.0",
+    "@shadcn/lint": "^0.2.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@types/uuid": "^11.0.0",
+    "@types/yauzl": "^3.4.0",
+    "@vitejs/plugin-react": "^6.1.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^42.9.3",
+    "electron-builder": "^26.15.7",
+    "jsdom": "^29.1.1",
+    "oxlint": "^1.87.0",
+    "postcss": "8.5.26",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11",
+    "wait-on": "^9.1.0"
+  }
+}

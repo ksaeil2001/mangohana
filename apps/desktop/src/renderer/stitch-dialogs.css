@@ -1,0 +1,157 @@
+/* Dialog presentation only. Each owner retains its dismissal, save and approval rules. */
+.stitch-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  background: var(--trio-backdrop);
+  backdrop-filter: none;
+}
+
+.stitch-dialog {
+  --stitch-dialog-paper: var(--trio-panel);
+  --stitch-dialog-ground: var(--trio-stitch-canvas);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(100%, 560px);
+  max-width: 560px;
+  max-height: calc(100dvh - 48px);
+  min-height: 0;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--trio-border-soft);
+  border-radius: 6px;
+  background: var(--stitch-dialog-paper);
+  color: var(--trio-text);
+  box-shadow: var(--trio-shadow-modal);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.stitch-dialog.trio-modal-wide { width: min(100%, 1040px); max-width: 1040px; }
+.stitch-dialog.stitch-dialog--batch { width: min(100%, 880px); max-width: 880px; }
+.stitch-dialog :is(input, textarea, select, button) { min-width: 0; max-width: 100%; font-family: inherit; font-size: 14px; box-shadow: none; }
+.stitch-dialog :is(input, textarea, select) { border: 1px solid var(--trio-border); border-radius: 4px; background: var(--stitch-dialog-ground); color: var(--trio-text); }
+.stitch-dialog :is(input:not([type="checkbox"]), select) { min-height: 36px; padding: 8px 12px; }
+.stitch-dialog :is(p, strong, h2, h3, h4, button, small, label, code) { overflow-wrap: anywhere; }
+.stitch-dialog button { white-space: normal; }
+.stitch-dialog :is(button, input, textarea, select):focus-visible { outline: 2px solid var(--trio-accent); outline-offset: 2px; }
+.stitch-dialog :is(.trio-modal-header, .speech-review-header) { display: flex; flex: 0 0 auto; align-items: start; justify-content: space-between; gap: 20px; margin: 0; padding: 24px; border-bottom: 1px solid var(--trio-border-soft); background: transparent; }
+.stitch-dialog :is(.trio-modal-header, .speech-review-header) > div { min-width: 0; }
+.stitch-dialog :is(.trio-modal-header, .speech-review-header) :is(h2, h3) { margin: 4px 0 8px; font-size: 22px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.4; }
+.stitch-dialog :is(.trio-modal-header, .speech-review-header) p { margin: 0; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-dialog-kicker,
+.stitch-dialog .stitch-dialog-eyebrow,
+.stitch-workbench-inline .stitch-dialog-kicker { margin: 0; color: var(--trio-muted); font-size: 12px; font-weight: 500; letter-spacing: 0.04em; }
+.stitch-dialog .stitch-dialog-field { display: grid; gap: 8px; margin-top: 20px; font-size: 12px; color: var(--trio-muted); }
+.stitch-dialog :is(.trio-modal-body, .trio-review-scroll-body) { flex: 1 1 auto; min-height: 0; margin: 0; padding: 24px; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.stitch-dialog .trio-modal-body p { color: var(--trio-muted); font-size: 14px; line-height: 1.6; }
+.stitch-dialog :is(.trio-modal-footer, .speech-review-actions) { display: flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin: 0; padding: 16px 24px; border-top: 1px solid var(--trio-border-soft); background: var(--stitch-dialog-paper); }
+.stitch-dialog :is(.trio-modal-footer, .speech-review-actions) p { flex: 1 1 15em; margin: 0; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.stitch-dialog .trio-modal-close { flex: 0 0 auto; width: 36px; min-height: 36px; padding: 4px; border: 0; border-radius: 4px; background: transparent; color: var(--trio-muted); }
+.stitch-dialog .stitch-dialog-empty { padding: 24px; color: var(--trio-muted); text-align: center; }
+.stitch-dialog .trio-review-scroll-body { padding: 0; }
+.stitch-dialog .stitch-review-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-dialog .stitch-review-bulk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.stitch-dialog .trio-review-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-dialog .trio-review-filters label { display: grid; gap: 6px; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-review-search { flex: 1 1 16em; }
+.stitch-dialog .stitch-review-filter-count { flex-basis: 100%; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-candidate-layout { display: grid; grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.3fr); min-height: 280px; align-items: start; }
+.stitch-dialog .stitch-candidate-master { min-width: 0; padding: 8px 0; border-right: 1px solid var(--trio-border-soft); }
+.stitch-dialog .stitch-candidate-master ul { margin: 0; padding: 0; list-style: none; }
+.stitch-dialog .stitch-candidate-master li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 16px 20px; border: 0; border-left: 3px solid transparent; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-dialog .stitch-candidate-master li[data-current="true"] { border-left-color: var(--trio-accent); background: var(--trio-accent-soft); }
+.stitch-dialog .stitch-candidate-identity { display: grid; gap: 4px; justify-items: start; padding: 0; border: 0; background: transparent; color: var(--trio-text); text-align: start; }
+.stitch-dialog .stitch-candidate-identity strong { font-weight: 500; }
+.stitch-dialog .stitch-candidate-identity :is(span, small) { color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-candidate-select { min-height: 32px; padding: 4px 8px; border-color: var(--trio-border-soft); background: transparent; font-size: 12px; }
+.stitch-dialog .stitch-candidate-select[aria-pressed="true"] { color: var(--trio-accent); }
+.stitch-dialog .stitch-candidate-detail { position: sticky; top: 0; display: grid; align-content: start; gap: 20px; min-width: 0; padding: 24px; }
+.stitch-dialog .stitch-candidate-detail header { padding-bottom: 16px; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-dialog .stitch-candidate-detail h4 { margin: 8px 0; font-size: 20px; font-weight: 500; }
+.stitch-dialog .stitch-candidate-detail p { margin: 0; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-candidate-detail label { display: grid; gap: 8px; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-candidate-detail input { width: 100%; }
+.stitch-dialog .stitch-candidate-context { display: grid; gap: 8px; padding-top: 16px; border-top: 1px solid var(--trio-border-soft); }
+.stitch-dialog .stitch-candidate-context strong { font-size: 12px; font-weight: 500; }
+.stitch-dialog .stitch-batch-steps { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: 0 0 24px; padding: 0 0 16px; border-bottom: 1px solid var(--trio-border-soft); list-style: none; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-batch-steps [aria-current="step"] { color: var(--trio-accent); }
+.stitch-dialog .stitch-batch-plan { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
+.stitch-dialog .stitch-batch-plan h4 { margin: 0 0 16px; font-size: 18px; font-weight: 500; }
+.stitch-dialog .stitch-batch-plan p { margin: 12px 0; font-size: 12px; }
+.stitch-dialog .stitch-batch-scope dl { display: grid; gap: 16px; padding: 20px 0; margin: 20px 0; border-block: 1px solid var(--trio-border-soft); }
+.stitch-dialog .stitch-batch-scope dt { margin-bottom: 6px; font-size: 12px; color: var(--trio-text); }
+.stitch-dialog .stitch-batch-scope dd { margin: 0; font-size: 12px; color: var(--trio-muted); }
+.stitch-dialog .stitch-batch-config fieldset { display: grid; gap: 16px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.stitch-dialog .stitch-batch-config legend { padding: 0; margin: 0 0 16px; font-size: 12px; color: var(--trio-muted); }
+.stitch-dialog .stitch-batch-config .checkbox-row { align-items: center; font-size: 14px; }
+.stitch-dialog .stitch-batch-config .checkbox-row:has(input:disabled) { color: var(--trio-muted); }
+.stitch-dialog .stitch-batch-preset { display: grid; gap: 8px; margin-top: 12px; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog .stitch-batch-condition { color: var(--trio-warning); }
+.stitch-dialog .stitch-batch-progress { padding: 24px 0 0; margin-top: 24px; border-top: 1px solid var(--trio-border-soft); }
+.stitch-dialog .stitch-batch-progress h4 { margin: 0 0 12px; font-size: 18px; font-weight: 500; }
+.stitch-dialog .stitch-batch-next { margin: 12px 0 0; color: var(--trio-muted); font-size: 12px; }
+.stitch-dialog.stitch-app-dialog > form { display: flex; flex-direction: column; min-height: 0; max-height: calc(100dvh - 48px); overflow: hidden; }
+.stitch-dialog.stitch-app-dialog > form > :is(.trio-modal-body, .stitch-app-dialog-body) { min-height: 0; overflow: auto; }
+
+/* OCR and speaker review share a visual grammar in their modal and inline forms. */
+.stitch-dialog.stitch-dialog--ocr { display: flex; width: min(100%, 1000px); max-width: 1000px; padding: 0; gap: 0; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-body { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: auto; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-layout { display: grid; grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.2fr); flex: 1 1 auto; min-height: 0; overflow: auto; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-list { min-height: 0; padding: 12px; overflow: auto; border-right: 1px solid var(--trio-border-soft); }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-group { margin: 0; padding: 12px 0; border: 0; border-radius: 0; background: transparent; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-group-heading h3 { margin: 0; font-size: 14px; font-weight: 500; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-group-description { color: var(--trio-muted); font-size: 12px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: start; margin: 0; padding: 12px 8px; border: 0; border-left: 2px solid transparent; border-bottom: 1px solid var(--trio-border-soft); border-radius: 0; background: transparent; box-shadow: none; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-item.active { border-left-color: var(--trio-accent); background: var(--trio-accent-soft); }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-check { align-self: start; font-size: 12px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-candidate { display: grid; gap: 8px; width: 100%; padding: 0; border: 0; background: transparent; color: var(--trio-text); text-align: start; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-candidate span { white-space: normal; overflow-wrap: anywhere; font-size: 14px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-candidate small { color: var(--trio-muted); font-size: 12px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-detail { display: grid; align-content: start; gap: 16px; min-width: 0; padding: 20px; overflow: auto; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-detail h3 { margin: 8px 0; font-size: 18px; font-weight: 500; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-detail p { margin: 0; font-size: 12px; color: var(--trio-muted); }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-detail > label { display: grid; gap: 8px; color: var(--trio-muted); font-size: 12px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-detail textarea { width: 100%; min-height: 160px; resize: vertical; padding: 12px; font-size: 14px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-detail .speaker-review-source { padding-bottom: 16px; border-bottom: 1px solid var(--trio-border-soft); color: var(--trio-text); font-size: 14px; white-space: pre-wrap; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-ownership { padding-top: 16px; border-top: 1px solid var(--trio-border-soft); }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-speaker-candidates { display: flex; flex-wrap: wrap; gap: 8px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-speaker-candidates button { font-size: 12px; }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .speech-review-actions { flex-shrink: 0; flex-wrap: wrap; gap: 8px; padding: 16px; border-top: 1px solid var(--trio-border-soft); }
+:is(.stitch-dialog--ocr, .stitch-workbench-inline.stitch-ocr-review) .stitch-ocr-selection-count { flex: 1 1 100%; color: var(--trio-muted); font-size: 12px; }
+.stitch-workbench-inline.stitch-ocr-review { display: flex; flex-direction: column; min-height: 0; padding: 0; gap: 0; border: 0; border-radius: 0; background: var(--trio-panel); }
+.stitch-workbench-inline.stitch-ocr-review .speech-review-header { padding: 16px; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-workbench-inline.stitch-ocr-review .speech-review-header h2 { margin: 4px 0 8px; font-size: 18px; font-weight: 500; }
+.stitch-workbench-inline.stitch-ocr-review .speech-review-header p { margin: 0; font-size: 12px; color: var(--trio-muted); }
+.stitch-workbench-inline.stitch-ocr-review .stitch-ocr-layout { grid-template-columns: minmax(0, 1fr); overflow: auto; }
+.stitch-workbench-inline.stitch-ocr-review .speech-review-list { max-height: 220px; border-right: 0; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-workbench-inline.stitch-ocr-review .stitch-ocr-detail { flex: 1 1 auto; overflow: visible; }
+.stitch-workbench-inline.stitch-ocr-review .speech-review-group-list { gap: 0; }
+
+@media (max-width: 720px) {
+  .stitch-dialog-backdrop { padding: 16px; }
+  .stitch-dialog { max-height: calc(100dvh - 32px); }
+  .stitch-dialog :is(.trio-modal-header, .speech-review-header) { padding: 20px; }
+  .stitch-dialog :is(.trio-modal-body, .trio-modal-footer) { padding: 16px 20px; }
+  .stitch-dialog .stitch-batch-plan { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .stitch-dialog .stitch-candidate-layout { grid-template-columns: minmax(0, 1fr); }
+  .stitch-dialog .stitch-candidate-master { max-height: 240px; border-right: 0; overflow: auto; }
+  .stitch-dialog .stitch-candidate-detail { position: static; border-top: 1px solid var(--trio-border-soft); }
+  .stitch-dialog.stitch-dialog--ocr .stitch-ocr-layout { grid-template-columns: minmax(0, 1fr); }
+  .stitch-dialog.stitch-dialog--ocr .speech-review-list { max-height: 240px; }
+}
+
+@media (max-height: 600px) {
+  .stitch-dialog-backdrop { padding: 12px; }
+  .stitch-dialog { max-height: calc(100dvh - 24px); }
+  .stitch-dialog :is(.trio-modal-header, .speech-review-header) { max-height: 30dvh; padding: 12px 20px; overflow: auto; }
+  .stitch-dialog :is(.trio-modal-footer, .speech-review-actions) { max-height: 32dvh; padding: 12px 20px; overflow: auto; }
+}

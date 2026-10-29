@@ -1,0 +1,656 @@
+name: Trio private candidate package and evidence
+
+on:
+  pull_request:
+    paths:
+      - "electron/**"
+      - "src/**"
+      - "scripts/**"
+      - "resources/**"
+      - "build/**"
+      - "tests/**"
+      - "docs/release/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".gitattributes"
+      - ".github/workflows/package-release.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "electron/**"
+      - "src/**"
+      - "scripts/**"
+      - "resources/**"
+      - "build/**"
+      - "tests/**"
+      - "docs/release/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".gitattributes"
+      - ".github/workflows/package-release.yml"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Choose private QA or a fail-closed stable candidate."
+        type: choice
+        required: true
+        default: qa
+        options:
+          - qa
+          - stable-candidate
+          - preview-transition-candidate
+      expected_source_sha:
+        description: "Exact 40-character source SHA for stable-candidate."
+        type: string
+        required: true
+      confirmation:
+        description: "Type BUILD v0.1.4 CANDIDATE for stable-candidate."
+        type: string
+        required: true
+        default: "BUILD v0.1.4 CANDIDATE"
+      preview_version:
+        description: "Fixed private preview candidate version."
+        type: string
+        required: false
+        default: "0.1.4-preview.1"
+      preview_tag:
+        description: "Fixed private preview candidate tag."
+        type: string
+        required: false
+        default: "v0.1.4-preview.1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trio-candidate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  TRIO_STABLE_VERSION: "0.1.4"
+  NODE_VERSION: "22.14.0"
+
+jobs:
+  qa-package:
+    name: ${{ matrix.label }} unsigned QA
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.mode == 'qa' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Windows x64
+            runner: windows-latest
+            install_command: npm.cmd ci
+            typecheck_command: npm.cmd run typecheck
+            package_command: npm.cmd run dist:win
+            smoke_command: npm.cmd run smoke:package
+          - label: Linux x64
+            runner: ubuntu-latest
+            install_command: npm ci
+            typecheck_command: npm run typecheck
+            package_command: npm run dist:linux
+            smoke_command: npm run smoke:package
+    steps:
+      - name: Check out source without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: ${{ matrix.install_command }}
+
+      - name: Install Linux display dependency
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes xvfb
+
+      - name: Typecheck
+        run: ${{ matrix.typecheck_command }}
+
+      - name: Build unsigned QA package
+        run: ${{ matrix.package_command }}
+
+      - name: Run packaged smoke test
+        run: ${{ matrix.smoke_command }}
+
+  preview-transition-candidate:
+    name: Windows x64 signed private preview transition candidate
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'preview-transition-candidate' }}
+    environment: transition-qa
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact source without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate fixed preview candidate inputs
+        shell: pwsh
+        env:
+          EXPECTED_SOURCE_SHA: ${{ inputs.expected_source_sha }}
+          PREVIEW_VERSION: ${{ inputs.preview_version }}
+          PREVIEW_TAG: ${{ inputs.preview_tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:GITHUB_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'GitHub source SHA is not a full commit SHA.' }
+          if ($env:EXPECTED_SOURCE_SHA -notmatch '^[0-9a-fA-F]{40}$' -or $env:EXPECTED_SOURCE_SHA -cne $env:GITHUB_SHA) { throw 'Preview candidate source SHA does not match the checked-out commit.' }
+          if ($env:PREVIEW_VERSION -cne '0.1.4-preview.1') { throw 'Only 0.1.4-preview.1 is supported as the preview candidate version.' }
+          if ($env:PREVIEW_TAG -cne 'v0.1.4-preview.1') { throw 'Only v0.1.4-preview.1 is supported as the preview candidate tag.' }
+          $packageVersion = node --input-type=module -e 'import packageJson from "./package.json" with { type: "json" }; console.log(packageJson.version)'
+          if ($packageVersion.Trim() -cne '0.1.4') { throw 'The source package version must remain 0.1.4.' }
+          $policy = node scripts/release-channel-policy.mjs --tag $env:PREVIEW_TAG
+          if ($LASTEXITCODE -ne 0) { throw 'Preview candidate release policy rejected the fixed preview tag.' }
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { throw 'The preview candidate source checkout is not clean.' }
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies and run preview regression checks
+        shell: pwsh
+        run: |
+          npm.cmd ci
+          if ($LASTEXITCODE -ne 0) { throw 'Preview candidate dependency install failed.' }
+          npm.cmd run typecheck
+          if ($LASTEXITCODE -ne 0) { throw 'Preview candidate typecheck failed.' }
+          npm.cmd run test:release-policy
+          if ($LASTEXITCODE -ne 0) { throw 'Preview candidate release policy tests failed.' }
+
+      - name: Configure SSL.com eSigner CKA for the private preview package
+        shell: pwsh
+        env:
+          TRIO_ESIGNER_CKA_URL: ${{ vars.TRIO_ESIGNER_CKA_URL }}
+          TRIO_ESIGNER_CKA_SHA256: ${{ vars.TRIO_ESIGNER_CKA_SHA256 }}
+          TRIO_ESIGNER_CKA_CONFIGURATOR: ${{ vars.TRIO_ESIGNER_CKA_CONFIGURATOR }}
+          TRIO_ESIGNER_CKA_API_TOKEN: ${{ secrets.TRIO_ESIGNER_CKA_API_TOKEN }}
+          TRIO_ESIGNER_CKA_CLIENT_SECRET: ${{ secrets.TRIO_ESIGNER_CKA_CLIENT_SECRET }}
+          TRIO_ESIGNER_CKA_CREDENTIAL: ${{ secrets.TRIO_ESIGNER_CKA_CREDENTIAL }}
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: ./scripts/setup-esigner-cka.ps1
+
+      - name: Build signed preview NSIS package without publishing
+        shell: pwsh
+        env:
+          CSC_NAME: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm.cmd run build
+          if ($LASTEXITCODE -ne 0) { throw 'Preview candidate build failed.' }
+          npx --no-install electron-builder --win nsis --x64 --publish never --config.extraMetadata.version=0.1.4-preview.1
+          if ($LASTEXITCODE -ne 0) { throw 'Preview candidate packaging failed.' }
+
+      - name: Verify packaged Pretendard resource and Windows signatures
+        shell: pwsh
+        env:
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Path preview-verification -Force | Out-Null
+          node scripts/verify-packaged-pretendard.mjs `
+            --resources-dir "$PWD/release/win-unpacked/resources" `
+            --output "$PWD/preview-verification/pretendard.json"
+          if ($LASTEXITCODE -ne 0) { throw 'The packaged Pretendard verifier failed.' }
+          ./scripts/verify-windows-signing.ps1 `
+            -PackageDirectory "$PWD" `
+            -AppExecutable "release/win-unpacked/Trio.exe" `
+            -NsisInstaller "release/Trio-Setup-0.1.4-preview.1.exe" `
+            -OutputPath "$PWD/preview-verification/windows.json"
+          if ($LASTEXITCODE -ne 0) { throw 'The preview candidate Windows signing verifier failed.' }
+
+      - name: Run packaged preview smoke test
+        shell: pwsh
+        run: npm.cmd run smoke:package
+
+      - name: Verify exact latest.yml, installer and blockmap and write private evidence
+        shell: pwsh
+        env:
+          PREVIEW_SOURCE_SHA: ${{ github.sha }}
+          PREVIEW_VERSION: ${{ inputs.preview_version }}
+          PREVIEW_TAG: ${{ inputs.preview_tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $assetDirectory = Join-Path $PWD 'release'
+          $verificationDirectory = Join-Path $PWD 'preview-verification'
+          $metadataPath = Join-Path $assetDirectory 'latest.yml'
+          $installerPath = Join-Path $assetDirectory 'Trio-Setup-0.1.4-preview.1.exe'
+          $blockmapPath = Join-Path $assetDirectory 'Trio-Setup-0.1.4-preview.1.exe.blockmap'
+          foreach ($requiredPath in @($metadataPath, $installerPath, $blockmapPath)) {
+            if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw 'The preview candidate updater asset set is incomplete.' }
+          }
+          $strictYamlScript = @'
+          import { readFileSync } from "node:fs";
+          import yaml from "js-yaml";
+          const [metadataPath, expectedVersion, expectedInstaller] = process.argv.slice(1);
+          const root = yaml.load(readFileSync(metadataPath, "utf8").replace(/^\uFEFF/, ""), { schema: yaml.JSON_SCHEMA, json: false });
+          const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+          const exact = (value, keys) => {
+            if (!isObject(value) || Object.keys(value).length !== keys.length || Object.keys(value).some((key) => !keys.includes(key))) throw new Error("unexpected latest.yml shape");
+          };
+          exact(root, ["version", "files", "path", "sha512", "releaseDate"]);
+          if (root.version !== expectedVersion || root.path !== expectedInstaller || !Array.isArray(root.files) || root.files.length !== 1) throw new Error("latest.yml version or file set mismatch");
+          exact(root.files[0], ["url", "sha512", "size"]);
+          if (root.files[0].url !== expectedInstaller || root.files[0].sha512 !== root.sha512 || !Number.isSafeInteger(root.files[0].size) || root.files[0].size <= 0) throw new Error("latest.yml installer record mismatch");
+          if (typeof root.releaseDate !== "string" || root.releaseDate.length === 0) throw new Error("latest.yml releaseDate is required");
+          '@
+          & node --input-type=module -e $strictYamlScript -- $metadataPath '0.1.4-preview.1' 'Trio-Setup-0.1.4-preview.1.exe'
+          if ($LASTEXITCODE -ne 0) { throw 'The preview candidate latest.yml failed strict validation.' }
+          $metadataSha256 = (Get-FileHash -LiteralPath $metadataPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          $installerSha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          $blockmapSha256 = (Get-FileHash -LiteralPath $blockmapPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          $metadataSha512 = (Get-FileHash -LiteralPath $metadataPath -Algorithm SHA512).Hash.ToLowerInvariant()
+          $installerSha512 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA512).Hash.ToLowerInvariant()
+          $blockmapSha512 = (Get-FileHash -LiteralPath $blockmapPath -Algorithm SHA512).Hash.ToLowerInvariant()
+          foreach ($digest in @($metadataSha256, $installerSha256, $blockmapSha256)) {
+            if ($digest -notmatch '^[a-f0-9]{64}$') { throw 'A preview candidate updater asset digest is invalid.' }
+          }
+          foreach ($digest in @($metadataSha512, $installerSha512, $blockmapSha512)) {
+            if ($digest -notmatch '^[a-f0-9]{128}$') { throw 'A preview candidate updater SHA-512 digest is invalid.' }
+          }
+          $toolingFiles = @(
+            '.github/workflows/package-release.yml',
+            '.github/workflows/transition-update-qa.yml',
+            'scripts/release-channel-policy.mjs',
+            'scripts/setup-esigner-cka.ps1',
+            'scripts/verify-windows-signing.ps1',
+            'scripts/verify-packaged-pretendard.mjs',
+            'scripts/verify-git-source-integrity.mjs',
+            'package.json',
+            'package-lock.json'
+          )
+          foreach ($toolingFile in $toolingFiles) {
+            if (-not (Test-Path -LiteralPath $toolingFile -PathType Leaf)) { throw 'A required release tooling file is missing.' }
+          }
+          $evidenceScript = @'
+          import { createHash } from "node:crypto";
+          import { readFile, stat, writeFile } from "node:fs/promises";
+          const [outputPath, sidecarPath, sourceSha, version, tag, metadataPath, installerPath, blockmapPath, ...toolingFiles] = process.argv.slice(1);
+          const hex = (bytes, algorithm) => createHash(algorithm).update(bytes).digest("hex").toLowerCase();
+          const base64 = (bytes, algorithm) => createHash(algorithm).update(bytes).digest("base64");
+          const asset = async (name, path) => {
+            const bytes = await readFile(path);
+            if (bytes.byteLength <= 0) throw new Error(`Updater asset ${name} must be non-empty`);
+            return { name, size: bytes.byteLength, sha256: hex(bytes, "sha256"), sha512: base64(bytes, "sha512") };
+          };
+          const updaterAssets = await Promise.all([
+            asset("latest.yml", metadataPath),
+            asset("Trio-Setup-0.1.4-preview.1.exe", installerPath),
+            asset("Trio-Setup-0.1.4-preview.1.exe.blockmap", blockmapPath)
+          ]);
+          const releaseToolingFiles = [];
+          for (const name of toolingFiles) {
+            const bytes = await readFile(name);
+            releaseToolingFiles.push({ name, sha256: hex(bytes, "sha256") });
+          }
+          const evidence = {
+            schemaVersion: "trio.transition-candidate-evidence.v1",
+            sourceSha: sourceSha.toLowerCase(),
+            version,
+            tag,
+            updaterAssets,
+            releaseToolingFiles
+          };
+          const evidenceBytes = Buffer.from(`${JSON.stringify(evidence)}\n`, "utf8");
+          await writeFile(outputPath, evidenceBytes, { flag: "wx" });
+          await writeFile(sidecarPath, `${hex(evidenceBytes, "sha256")}\n`, { flag: "wx" });
+          process.stdout.write(JSON.stringify({ sourceSha: evidence.sourceSha, updaterAssetCount: updaterAssets.length }));
+          '@
+          $evidencePath = Join-Path $verificationDirectory 'transition-candidate-evidence.json'
+          $sidecarPath = Join-Path $verificationDirectory 'transition-candidate-evidence.sha256'
+          & node --input-type=module -e $evidenceScript -- `
+            $evidencePath $sidecarPath $env:PREVIEW_SOURCE_SHA $env:PREVIEW_VERSION $env:PREVIEW_TAG `
+            $metadataPath $installerPath $blockmapPath $toolingFiles
+          if ($LASTEXITCODE -ne 0) { throw 'The private preview candidate evidence could not be created.' }
+          $sidecarDigest = (Get-Content -Raw -LiteralPath $sidecarPath).Trim()
+          if ($sidecarDigest -notmatch '^[a-f0-9]{64}$') { throw 'The private preview candidate evidence sidecar is not lowercase SHA-256.' }
+
+      - name: Upload immutable private preview transition candidate artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trio-preview-transition-candidate-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            release/latest.yml
+            release/Trio-Setup-0.1.4-preview.1.exe
+            release/Trio-Setup-0.1.4-preview.1.exe.blockmap
+            preview-verification/transition-candidate-evidence.json
+            preview-verification/transition-candidate-evidence.sha256
+            preview-verification/windows.json
+            preview-verification/pretendard.json
+          if-no-files-found: error
+          retention-days: 30
+
+  stable-windows:
+    name: Windows x64 signed stable candidate
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'stable-candidate' }}
+    # This is the credential boundary for the first stage of the documented
+    # one-person, two-stage release process; it is not an independent reviewer.
+    environment: stable-release
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact source without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate source and stable candidate confirmation
+        shell: pwsh
+        env:
+          EXPECTED_SOURCE_SHA: ${{ inputs.expected_source_sha }}
+          CANDIDATE_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          if ($env:GITHUB_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'GitHub source SHA is not a full commit SHA.' }
+          if ($env:EXPECTED_SOURCE_SHA -notmatch '^[0-9a-fA-F]{40}$' -or $env:EXPECTED_SOURCE_SHA -cne $env:GITHUB_SHA) { throw 'Stable candidate source SHA does not match the checked-out commit.' }
+          if ($env:CANDIDATE_CONFIRMATION -cne 'BUILD v0.1.4 CANDIDATE') { throw 'Stable candidate confirmation is invalid.' }
+          $packageVersion = node --input-type=module -e 'import packageJson from "./package.json" with { type: "json" }; console.log(packageJson.version)'
+          if ($packageVersion.Trim() -cne '0.1.4') { throw 'Stable candidate package version must be 0.1.4.' }
+          if ((git diff --exit-code) -ne $null) { throw 'The checked-out source tree is not clean.' }
+          $policy = node scripts/release-channel-policy.mjs --tag v0.1.4 2>$null
+          if ($LASTEXITCODE -eq 0) { throw 'Unsigned stable tag policy unexpectedly allowed publication.' }
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm.cmd ci
+
+      - name: Typecheck and release policy tests
+        run: |
+          npm.cmd run typecheck
+          npm.cmd run test:release-policy
+          npm.cmd test -- tests/renderer/productionTypesetFont.test.ts tests/renderer/typesettingReadiness.test.ts
+
+      - name: Configure SSL.com eSigner CKA
+        shell: pwsh
+        env:
+          TRIO_ESIGNER_CKA_URL: ${{ vars.TRIO_ESIGNER_CKA_URL }}
+          TRIO_ESIGNER_CKA_SHA256: ${{ vars.TRIO_ESIGNER_CKA_SHA256 }}
+          TRIO_ESIGNER_CKA_CONFIGURATOR: ${{ vars.TRIO_ESIGNER_CKA_CONFIGURATOR }}
+          TRIO_ESIGNER_CKA_API_TOKEN: ${{ secrets.TRIO_ESIGNER_CKA_API_TOKEN }}
+          TRIO_ESIGNER_CKA_CLIENT_SECRET: ${{ secrets.TRIO_ESIGNER_CKA_CLIENT_SECRET }}
+          TRIO_ESIGNER_CKA_CREDENTIAL: ${{ secrets.TRIO_ESIGNER_CKA_CREDENTIAL }}
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: ./scripts/setup-esigner-cka.ps1
+
+      - name: Build signed NSIS package
+        shell: pwsh
+        env:
+          CSC_NAME: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: npm.cmd run dist:win
+
+      - name: Verify packaged Pretendard resource
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path windows-verification -Force | Out-Null
+          node scripts/verify-packaged-pretendard.mjs `
+            --resources-dir "$PWD/release/win-unpacked/resources" `
+            --output "$PWD/windows-verification/pretendard.json"
+
+      - name: Verify Authenticode signatures
+        shell: pwsh
+        env:
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: |
+          ./scripts/verify-windows-signing.ps1 `
+            -PackageDirectory "$PWD" `
+            -AppExecutable "release/win-unpacked/Trio.exe" `
+            -NsisInstaller "release/Trio-Setup-0.1.4.exe" `
+            -OutputPath "$PWD/windows-verification/windows.json"
+
+      - name: Run packaged smoke test
+        run: npm.cmd run smoke:package
+
+      - name: Confirm source tree stayed clean after packaging inputs
+        shell: pwsh
+        run: |
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { throw 'The stable Windows source tree changed during packaging.' }
+
+      - name: Upload private Windows evidence and exact assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: stable-windows-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            release/Trio-Setup-0.1.4.exe
+            release/Trio-Setup-0.1.4.exe.blockmap
+            release/latest.yml
+            windows-verification/windows.json
+            windows-verification/pretendard.json
+          if-no-files-found: error
+          retention-days: 30
+
+  stable-linux:
+    name: Linux x64 manual AppImage stable candidate
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'stable-candidate' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact source without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate source and stable candidate confirmation
+        shell: bash
+        env:
+          EXPECTED_SOURCE_SHA: ${{ inputs.expected_source_sha }}
+          CANDIDATE_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          printf '%s' "$EXPECTED_SOURCE_SHA" | grep -Eq '^[0-9a-fA-F]{40}$'
+          test "$GITHUB_SHA" = "$EXPECTED_SOURCE_SHA"
+          test "$CANDIDATE_CONFIRMATION" = "BUILD v0.1.4 CANDIDATE"
+          test "$(node --input-type=module -e 'import packageJson from "./package.json" with { type: "json" }; console.log(packageJson.version)')" = "0.1.4"
+          test -z "$(git diff --exit-code)"
+          if node scripts/release-channel-policy.mjs --tag v0.1.4 >/dev/null 2>&1; then
+            echo "Unsigned stable tag policy unexpectedly allowed publication." >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Linux display dependency
+        run: sudo apt-get update && sudo apt-get install --yes xvfb
+
+      - name: Run updater policy and Linux-disabled regression tests
+        run: |
+          npm run test:release-policy
+          npm test -- tests/main/autoUpdater.test.ts tests/main/electronUpdaterInterop.test.ts
+
+      - name: Build Linux AppImage
+        run: npm run dist:linux
+
+      - name: Run packaged smoke test
+        run: npm run smoke:package
+
+      - name: Confirm source tree stayed clean after packaging inputs
+        shell: bash
+        run: git diff --exit-code
+
+      - name: Record Linux updater-disabled evidence
+        run: |
+          mkdir -p linux-verification
+          printf '%s\n' '{"updaterDisabled":true}' > linux-verification/linux.json
+
+      - name: Upload private Linux evidence and AppImage only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: stable-linux-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            release/Trio-0.1.4.AppImage
+            linux-verification/linux.json
+          if-no-files-found: error
+          retention-days: 30
+
+  assemble-candidate:
+    name: Assemble immutable private stable candidate bundle
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'stable-candidate' }}
+    needs:
+      - stable-windows
+      - stable-linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact source without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies for SBOM and evidence verifier
+        run: npm ci
+
+      - name: Download each private platform artifact by exact name
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: stable-windows-${{ github.sha }}-${{ github.run_id }}
+          path: incoming/windows
+
+      - name: Download exact Linux artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: stable-linux-${{ github.sha }}-${{ github.run_id }}
+          path: incoming/linux
+
+      - name: Copy exact regular assets into a fresh immutable staging directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf candidate-assets
+          mkdir -p candidate-assets
+          copy_exact() {
+            local source="$1"
+            local target="candidate-assets/$2"
+            test -f "$source"
+            test ! -L "$source"
+            test "$(stat -c '%h' "$source")" = "1"
+            cp --reflink=never -- "$source" "$target"
+            test -f "$target"
+            test ! -L "$target"
+            test "$(stat -c '%h' "$target")" = "1"
+          }
+          copy_exact incoming/windows/release/Trio-Setup-0.1.4.exe Trio-Setup-0.1.4.exe
+          copy_exact incoming/windows/release/Trio-Setup-0.1.4.exe.blockmap Trio-Setup-0.1.4.exe.blockmap
+          copy_exact incoming/windows/release/latest.yml latest.yml
+          copy_exact incoming/linux/release/Trio-0.1.4.AppImage Trio-0.1.4.AppImage
+          copy_exact THIRD_PARTY_NOTICES.md THIRD_PARTY_NOTICES.md
+          cp -- "docs/release/v0.1.4-release-notes.md" candidate-assets/RELEASE_NOTES.md
+          test ! -L candidate-assets/RELEASE_NOTES.md
+          test "$(stat -c '%h' candidate-assets/RELEASE_NOTES.md)" = "1"
+
+      - name: Merge only sanitized verification objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          const sources = {
+            windows: "incoming/windows/windows-verification/windows.json",
+            linux: "incoming/linux/linux-verification/linux.json",
+            pretendard: "incoming/windows/windows-verification/pretendard.json"
+          };
+          const expected = {
+            windows: ["expectedPublisherMatched", "authenticodeChainValid", "digestAlgorithm", "timestampValid", "appExecutableVerified", "nsisInstallerVerified"],
+            linux: ["updaterDisabled"],
+            pretendard: ["cmsValid", "hashValid", "publisherAllowed", "identityMatched", "glyphCoverageValid"]
+          };
+          const verification = {};
+          for (const [platform, path] of Object.entries(sources)) {
+            const value = JSON.parse(await readFile(path, "utf8"));
+            const keys = Object.keys(value).sort();
+            const expectedKeys = [...expected[platform]].sort();
+            if (JSON.stringify(keys) !== JSON.stringify(expectedKeys)) throw new Error(`Unexpected sanitized ${platform} keys.`);
+            if (platform === "windows" && value.digestAlgorithm !== "SHA-256") throw new Error("Windows evidence digest algorithm is not SHA-256.");
+            if (!Object.values(value).every((item) => item === true || typeof item === "string")) throw new Error(`Unsanitized ${platform} verification object.`);
+            verification[platform] = value;
+          }
+          await writeFile("candidate-verification.json", `${JSON.stringify(verification)}\n`, { flag: "wx" });
+          NODE
+
+      - name: Generate CycloneDX SBOM from the lockfile
+        shell: bash
+        run: npm sbom --sbom-format cyclonedx > candidate-assets/trio-0.1.4.cdx.json
+
+      - name: Create and verify canonical candidate evidence (sole authoritative SHA-256)
+        id: evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          create_output="$(node scripts/release-candidate-evidence.mjs create \
+            --assets-dir candidate-assets \
+            --source-sha "$GITHUB_SHA" \
+            --version 0.1.4 \
+            --verification-file candidate-verification.json)"
+          node scripts/release-candidate-evidence.mjs verify \
+            --assets-dir candidate-assets \
+            --source-sha "$GITHUB_SHA" \
+            --version 0.1.4 >/dev/null
+          evidence_sha="$(node --input-type=module -e 'import { readFile } from "node:fs/promises"; import { createHash } from "node:crypto"; const bytes = await readFile("candidate-assets/release-evidence.json"); console.log(createHash("sha256").update(bytes).digest("hex"));')"
+          echo "evidence_sha=$evidence_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Upload one private candidate artifact with exact allowlist
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trio-stable-candidate-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            candidate-assets/Trio-Setup-0.1.4.exe
+            candidate-assets/Trio-Setup-0.1.4.exe.blockmap
+            candidate-assets/latest.yml
+            candidate-assets/Trio-0.1.4.AppImage
+            candidate-assets/SHA256SUMS
+            candidate-assets/trio-0.1.4.cdx.json
+            candidate-assets/THIRD_PARTY_NOTICES.md
+            candidate-assets/RELEASE_NOTES.md
+            candidate-assets/release-evidence.json
+            candidate-assets/release-evidence.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Print sanitized candidate summary only
+        shell: bash
+        run: |
+          {
+            echo "### Trio v0.1.4 private stable candidate"
+            echo "- source SHA: $GITHUB_SHA"
+            echo "- package version: 0.1.4"
+            echo "- evidence SHA-256: ${{ steps.evidence.outputs.evidence_sha }}"
+            echo "- artifact name: trio-stable-candidate-${{ github.sha }}-${{ github.run_id }}"
+            echo "- stable status: NO-GO until separately approved and promoted"
+          } >> "$GITHUB_STEP_SUMMARY"

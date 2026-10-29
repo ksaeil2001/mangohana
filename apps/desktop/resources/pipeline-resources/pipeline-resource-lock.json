@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "appVersion": "0.1.4",
+  "pipelineVersion": "1.0.0",
+  "resources": [
+    {
+      "role": "font_ko_fallback",
+      "resourceId": "pretendard-ko-fallback",
+      "version": "1.3.9",
+      "manifestSha256": "27efedd0315cc2e77e54d2f3c86b1dd321a570c33e9dabcac1682354fd2e1628",
+      "distribution": "bundled",
+      "requiredFor": [
+        "typeset"
+      ]
+    },
+    {
+      "role": "ocr_production",
+      "resourceId": "trio-production-ocr-win32-x64",
+      "version": "1.0.0",
+      "manifestSha256": "c40f832a9b372dc2d45a529ab69d57c2dc45eefeb4d28d59e94a4e32619a15c0",
+      "distribution": "download",
+      "download": {
+        "archiveUrl": "https://github.com/ksaeil2001/trio-plus/releases/download/ocr-production-v1.0.0/trio-production-ocr-win32-x64-1.0.0.zip",
+        "manifestUrl": "https://github.com/ksaeil2001/trio-plus/releases/download/ocr-production-v1.0.0/resource-manifest.json",
+        "signatureUrl": "https://github.com/ksaeil2001/trio-plus/releases/download/ocr-production-v1.0.0/resource-manifest.p7s"
+      },
+      "requiredFor": [
+        "ocr"
+      ]
+    }
+  ]
+}

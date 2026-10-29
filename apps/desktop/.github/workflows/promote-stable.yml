@@ -1,0 +1,578 @@
+name: Trio stable digest-bound promotion
+
+# Draft release assets are not anonymously downloadable on GitHub. The workflow
+# therefore performs authenticated exact verification before publication, then
+# performs anonymous checks after publication and returns the Release to draft
+# in the same step if any public check fails. A short public interval is
+# possible; the release may be briefly public, and this is not a zero-exposure rollback guarantee.
+# Successful promotion dispatches the exact `trio-release-published` event.
+# Its client_payload contains only tag, version, source_sha and evidence_sha256.
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: "Completed private candidate workflow run ID."
+        type: string
+        required: true
+      tag:
+        description: "Exact private-source tag to promote."
+        type: string
+        required: true
+        default: "v0.1.4"
+      evidence_sha256:
+        description: "Lowercase SHA-256 of release-evidence.json."
+        type: string
+        required: true
+      confirmation:
+        description: "Type PUBLISH v0.1.4 to continue."
+        type: string
+        required: true
+        default: "PUBLISH v0.1.4"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: trio-stable-promotion-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  STABLE_VERSION: "0.1.4"
+  SOURCE_REPOSITORY: ${{ github.repository }}
+  DELIVERY_REPOSITORY: "ksaeil2001/trio-releases"
+  NODE_VERSION: "22.14.0"
+
+jobs:
+  preflight:
+    name: Validate immutable candidate before promotion environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      source_sha: ${{ steps.source.outputs.source_sha }}
+      candidate_artifact_id: ${{ steps.candidate-artifact.outputs.artifact_id }}
+      candidate_artifact_name: ${{ steps.candidate-artifact.outputs.artifact_name }}
+    steps:
+      - name: Reject a non-canonical tag before checkout
+        env:
+          PROMOTION_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: test "$PROMOTION_TAG" = "v0.1.4"
+
+      - name: Check out the exact source tag without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: v0.1.4
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Validate exact manual inputs
+        env:
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+          EVIDENCE_SHA256: ${{ inputs.evidence_sha256 }}
+          PROMOTION_CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node scripts/stable-promotion-policy.mjs inputs \
+            --candidate-run-id "$CANDIDATE_RUN_ID" \
+            --tag "$PROMOTION_TAG" \
+            --evidence-sha256 "$EVIDENCE_SHA256" \
+            --confirmation "$PROMOTION_CONFIRMATION" > normalized-inputs.json
+
+      - name: Bind tag commit to the candidate source SHA
+        id: source
+        env:
+          PROMOTION_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          TAG_SHA="$(git rev-parse HEAD)"
+          test "$TAG_SHA" = "$(git rev-parse "refs/tags/$PROMOTION_TAG^{commit}")"
+          TAG_SHA="$TAG_SHA" PROMOTION_TAG="$PROMOTION_TAG" STABLE_VERSION="$STABLE_VERSION" node --input-type=module -e 'import { validateTagSource } from "./scripts/stable-promotion-policy.mjs"; validateTagSource({ tag: process.env.PROMOTION_TAG, tagSha: process.env.TAG_SHA, sourceSha: process.env.TAG_SHA, packageVersion: process.env.STABLE_VERSION });'
+          echo "source_sha=$TAG_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Query and validate the exact candidate workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh api "repos/$SOURCE_REPOSITORY/actions/runs/$CANDIDATE_RUN_ID" > candidate-run.json
+          node scripts/stable-promotion-policy.mjs run \
+            --metadata candidate-run.json \
+            --candidate-run-id "$CANDIDATE_RUN_ID" \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" > candidate-run-normalized.json
+
+      - name: Query and validate one unexpired exact candidate artifact
+        id: candidate-artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          gh api "repos/$SOURCE_REPOSITORY/actions/runs/$CANDIDATE_RUN_ID/artifacts?per_page=100" > candidate-artifacts.json
+          artifact_json="$(node scripts/stable-promotion-policy.mjs artifacts \
+            --metadata candidate-artifacts.json \
+            --candidate-run-id "$CANDIDATE_RUN_ID" \
+            --source-sha "$SOURCE_SHA")"
+          artifact_id="$(node --input-type=module -e 'const value = JSON.parse(process.argv[1]); console.log(value.artifactId);' "$artifact_json")"
+          artifact_name="$(node --input-type=module -e 'const value = JSON.parse(process.argv[1]); console.log(value.expectedName);' "$artifact_json")"
+          echo "artifact_id=$artifact_id" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+
+      - name: Download the exact candidate artifact into a fresh directory
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.candidate-artifact.outputs.artifact_id }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rm -rf candidate-archive candidate-assets
+          mkdir -p candidate-archive
+          gh api --method GET -H "Accept: application/vnd.github+json" \
+            "repos/$SOURCE_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip" > candidate-archive/candidate.zip
+          unzip -q candidate-archive/candidate.zip -d candidate-archive/extracted
+          if test -d candidate-archive/extracted/candidate-assets; then
+            mv candidate-archive/extracted/candidate-assets candidate-assets
+          else
+            mv candidate-archive/extracted candidate-assets
+          fi
+
+      - name: Bind evidence sidecar and rerun Task 5A verification
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          EVIDENCE_SHA256: ${{ inputs.evidence_sha256 }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node scripts/stable-promotion-policy.mjs sidecar \
+            --path candidate-assets/release-evidence.sha256 \
+            --evidence-sha256 "$EVIDENCE_SHA256"
+          node scripts/release-candidate-evidence.mjs verify \
+            --assets-dir candidate-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" > candidate-evidence-verification.json
+          node scripts/stable-promotion-policy.mjs assets \
+            --assets-dir candidate-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" \
+            --evidence-sha256 "$EVIDENCE_SHA256" > candidate-asset-policy.json
+
+      - name: Print sanitized preflight summary
+        shell: bash
+        run: |
+          {
+            echo "### Stable promotion preflight"
+            echo "- candidate run: ${{ inputs.candidate_run_id }}"
+            echo "- source SHA: ${{ steps.source.outputs.source_sha }}"
+            echo "- candidate artifact: ${{ steps.candidate-artifact.outputs.artifact_name }}"
+            echo "- evidence SHA-256: ${{ inputs.evidence_sha256 }}"
+            echo "- promotion environment: not entered until this preflight succeeds"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  stable-promotion:
+    name: Create, verify, publish and attest stable Release
+    needs: preflight
+    if: ${{ needs.preflight.result == 'success' }}
+    environment: stable-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Reject a non-canonical tag before checkout
+        env:
+          PROMOTION_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: test "$PROMOTION_TAG" = "v0.1.4"
+
+      - name: Check out the same source tag without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: v0.1.4
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Rebind tag and candidate run before stable promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+          EVIDENCE_SHA256: ${{ inputs.evidence_sha256 }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse "refs/tags/$PROMOTION_TAG^{commit}")" = "$SOURCE_SHA"
+          gh api "repos/$SOURCE_REPOSITORY/actions/runs/$CANDIDATE_RUN_ID" > candidate-run.json
+          node scripts/stable-promotion-policy.mjs run \
+            --metadata candidate-run.json \
+            --candidate-run-id "$CANDIDATE_RUN_ID" \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" > candidate-run-normalized.json
+          gh api "repos/$SOURCE_REPOSITORY/actions/runs/$CANDIDATE_RUN_ID/artifacts?per_page=100" > candidate-artifacts.json
+          node scripts/stable-promotion-policy.mjs artifacts \
+            --metadata candidate-artifacts.json \
+            --candidate-run-id "$CANDIDATE_RUN_ID" \
+            --source-sha "$SOURCE_SHA" > artifact-policy.json
+          ARTIFACT_ID="$(node --input-type=module -e 'const value = JSON.parse(await import("node:fs/promises").then(({ readFile }) => readFile("artifact-policy.json", "utf8"))); console.log(value.artifactId);')"
+          rm -rf candidate-archive candidate-assets
+          mkdir -p candidate-archive
+          gh api --method GET -H "Accept: application/vnd.github+json" \
+            "repos/$SOURCE_REPOSITORY/actions/artifacts/$ARTIFACT_ID/zip" > candidate-archive/candidate.zip
+          unzip -q candidate-archive/candidate.zip -d candidate-archive/extracted
+          if test -d candidate-archive/extracted/candidate-assets; then
+            mv candidate-archive/extracted/candidate-assets candidate-assets
+          else
+            mv candidate-archive/extracted candidate-assets
+          fi
+          node scripts/stable-promotion-policy.mjs sidecar \
+            --path candidate-assets/release-evidence.sha256 \
+            --evidence-sha256 "$EVIDENCE_SHA256"
+          node scripts/release-candidate-evidence.mjs verify \
+            --assets-dir candidate-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" > candidate-evidence-verification.json
+          node scripts/stable-promotion-policy.mjs assets \
+            --assets-dir candidate-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" \
+            --evidence-sha256 "$EVIDENCE_SHA256" > candidate-asset-policy.json
+
+      - name: Create contents-only delivery App token after every preflight check
+        id: delivery-app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.TRIO_DELIVERY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TRIO_DELIVERY_APP_PRIVATE_KEY }}
+          owner: ksaeil2001
+          repositories: trio-releases
+          permission-contents: write
+
+      - name: Reject an existing target tag or Release
+        env:
+          GH_TOKEN: ${{ steps.delivery-app.outputs.token }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          api_base="https://api.github.com/repos/$DELIVERY_REPOSITORY"
+          for endpoint in "releases/tags/$PROMOTION_TAG" "git/ref/tags/$PROMOTION_TAG"; do
+            http_status="$(curl --silent --show-error --output target-state.json --write-out '%{http_code}' \
+              --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer $GH_TOKEN" \
+              --header "X-GitHub-Api-Version: 2022-11-28" "$api_base/$endpoint")"
+            if test "$http_status" != "404"; then
+              echo "Target $endpoint already exists or could not be checked (HTTP $http_status)." >&2
+              exit 1
+            fi
+          done
+
+      - name: Create draft release with exact release note and no generated notes
+        env:
+          GH_TOKEN: ${{ steps.delivery-app.outputs.token }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          const version = process.env.STABLE_VERSION;
+          const tag = process.env.PROMOTION_TAG;
+          const body = await readFile("candidate-assets/RELEASE_NOTES.md", "utf8");
+          await writeFile("release-request.json", JSON.stringify({
+            tag_name: tag,
+            name: `Trio v${version}`,
+            body,
+            draft: true,
+            prerelease: false,
+            generate_release_notes: false
+          }));
+          NODE
+          gh api --method POST "repos/$DELIVERY_REPOSITORY/releases" \
+            --input release-request.json > draft-release.json
+          node --input-type=module <<'NODE' > release-id.txt
+          import { readFile } from "node:fs/promises";
+          import { validateReleaseMetadata } from "./scripts/stable-promotion-policy.mjs";
+          const value = JSON.parse(await readFile("draft-release.json", "utf8"));
+          const expectedBody = await readFile("candidate-assets/RELEASE_NOTES.md", "utf8");
+          validateReleaseMetadata(value, {
+            tag: process.env.PROMOTION_TAG,
+            version: process.env.STABLE_VERSION,
+            expectedBody,
+            expectedDraft: true
+          });
+          if (!Number.isSafeInteger(value.id) || value.id <= 0) throw new Error("Draft Release ID is invalid.");
+          console.log(value.id);
+          NODE
+
+      - name: Upload exact validated assets without a glob
+        env:
+          GH_TOKEN: ${{ steps.delivery-app.outputs.token }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          RELEASE_ID="$(cat release-id.txt)"
+          upload_asset() {
+            local path="$1"
+            local name="$(basename "$path")"
+            test -f "$path"
+            test ! -L "$path"
+            gh api --method POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/octet-stream" \
+              "repos/$DELIVERY_REPOSITORY/releases/$RELEASE_ID/assets?name=$name" \
+              --input "$path" > /dev/null
+          }
+          upload_asset "candidate-assets/Trio-Setup-0.1.4.exe"
+          upload_asset "candidate-assets/Trio-Setup-0.1.4.exe.blockmap"
+          upload_asset "candidate-assets/latest.yml"
+          upload_asset "candidate-assets/Trio-0.1.4.AppImage"
+          upload_asset "candidate-assets/SHA256SUMS"
+          upload_asset "candidate-assets/trio-0.1.4.cdx.json"
+          upload_asset "candidate-assets/THIRD_PARTY_NOTICES.md"
+          upload_asset "candidate-assets/RELEASE_NOTES.md"
+          upload_asset "candidate-assets/release-evidence.json"
+          upload_asset "candidate-assets/release-evidence.sha256"
+
+      - name: Authenticated re-query and re-download of the exact draft assets
+        env:
+          GH_TOKEN: ${{ steps.delivery-app.outputs.token }}
+          SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+          EVIDENCE_SHA256: ${{ inputs.evidence_sha256 }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+          DELIVERY_REPOSITORY: "ksaeil2001/trio-releases"
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          RELEASE_ID="$(cat release-id.txt)"
+          gh api "repos/$DELIVERY_REPOSITORY/releases/$RELEASE_ID" > draft-requery.json
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          import { validateReleaseAssetRecords } from "./scripts/stable-promotion-policy.mjs";
+          import { validateReleaseMetadata } from "./scripts/stable-promotion-policy.mjs";
+          const release = JSON.parse(await readFile("draft-requery.json", "utf8"));
+          const candidatePolicy = JSON.parse(await readFile("candidate-asset-policy.json", "utf8"));
+          const expectedRecords = candidatePolicy.assetRecords;
+          const expectedBody = await readFile("candidate-assets/RELEASE_NOTES.md", "utf8");
+          validateReleaseMetadata(release, {
+            tag: process.env.PROMOTION_TAG,
+            version: process.env.STABLE_VERSION,
+            expectedBody,
+            expectedDraft: true
+          });
+          validateReleaseAssetRecords(release.assets, expectedRecords, {
+            repository: process.env.DELIVERY_REPOSITORY,
+            tag: process.env.PROMOTION_TAG
+          });
+          const names = expectedRecords.map(({ name }) => name).sort((a, b) => a.localeCompare(b));
+          const map = new Map(release.assets.map((asset) => [asset.name, asset]));
+          const orderedRecords = expectedRecords
+            .slice()
+            .sort((a, b) => a.name.localeCompare(b.name));
+          const assetLines = orderedRecords.map(({ name, size }) => {
+            const asset = map.get(name);
+            if (!asset || !Number.isSafeInteger(asset.id) || asset.id <= 0) {
+              throw new Error(`Draft Release asset is missing a valid ID: ${name}`);
+            }
+            return `${name}\t${asset.id}\t${size}`;
+          });
+          await writeFile("authenticated-asset-map.tsv", `${assetLines.join("\n")}\n`);
+          await writeFile("authenticated-api-asset-records.json", JSON.stringify(expectedRecords));
+          await writeFile("expected-asset-records.json", JSON.stringify(expectedRecords));
+          await writeFile("expected-assets.json", JSON.stringify(names));
+          NODE
+          rm -rf authenticated-assets
+          mkdir -p authenticated-assets
+          while IFS=$'\t' read -r name asset_id expected_size; do
+            test -n "$name"
+            test "$name" != "*"
+            test "$asset_id" -gt 0
+            test "$expected_size" -ge 0
+            gh api --method GET -H "Accept: application/octet-stream" \
+              "repos/$DELIVERY_REPOSITORY/releases/assets/$asset_id" > "authenticated-assets/$name"
+          done < authenticated-asset-map.tsv
+          node --input-type=module <<'NODE'
+          import { lstat, readFile } from "node:fs/promises";
+          const expected = JSON.parse(await readFile("expected-asset-records.json", "utf8"));
+          const apiRecords = JSON.parse(await readFile("authenticated-api-asset-records.json", "utf8"));
+          const apiByName = new Map(apiRecords.map(({ name, size }) => [name, size]));
+          for (const { name, size } of expected) {
+            const stat = await lstat(`authenticated-assets/${name}`);
+            if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`Unsafe authenticated asset: ${name}`);
+            if (stat.size !== size || stat.size !== apiByName.get(name)) {
+              throw new Error(`Authenticated asset byte length does not match candidate/API size: ${name}`);
+            }
+          }
+          NODE
+          node scripts/release-candidate-evidence.mjs verify \
+            --assets-dir authenticated-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" > authenticated-evidence-verification.json
+          node scripts/stable-promotion-policy.mjs assets \
+            --assets-dir authenticated-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" \
+            --evidence-sha256 "$EVIDENCE_SHA256" > authenticated-asset-policy.json
+
+      - name: Publish exact draft release
+        env:
+          GH_TOKEN: ${{ steps.delivery-app.outputs.token }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+          DELIVERY_REPOSITORY: "ksaeil2001/trio-releases"
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          RELEASE_ID="$(cat release-id.txt)"
+          gh api --method PATCH "repos/$DELIVERY_REPOSITORY/releases/$RELEASE_ID" \
+            -F draft=false > published-release.json
+          node --input-type=module <<'NODE'
+          import { readFile } from "node:fs/promises";
+          import { validateReleaseAssetRecords, validateReleaseMetadata } from "./scripts/stable-promotion-policy.mjs";
+          const release = JSON.parse(await readFile("published-release.json", "utf8"));
+          const candidatePolicy = JSON.parse(await readFile("candidate-asset-policy.json", "utf8"));
+          const expectedBody = await readFile("candidate-assets/RELEASE_NOTES.md", "utf8");
+          validateReleaseMetadata(release, {
+            tag: process.env.PROMOTION_TAG,
+            version: process.env.STABLE_VERSION,
+            expectedBody,
+            expectedDraft: false
+          });
+          validateReleaseAssetRecords(release.assets, candidatePolicy.assetRecords, {
+            repository: process.env.DELIVERY_REPOSITORY,
+            tag: process.env.PROMOTION_TAG
+          });
+          NODE
+
+      - name: Anonymous release verification and rollback published release to draft in the same step
+        env:
+          GH_TOKEN: ${{ steps.delivery-app.outputs.token }}
+          SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+          EVIDENCE_SHA256: ${{ inputs.evidence_sha256 }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          RELEASE_ID="$(cat release-id.txt)"
+          PROMOTION_OK=0
+          rollback_published_release() {
+            local status="$?"
+            if test "$PROMOTION_OK" -ne 1; then
+              echo "Anonymous verification failed; Rollback published release to draft." >&2
+              if ! gh api --method PATCH "repos/$DELIVERY_REPOSITORY/releases/$RELEASE_ID" -F draft=true > /dev/null; then
+                echo "Rollback to draft also failed; manual intervention is required." >&2
+                exit 1
+              fi
+            fi
+            exit "$status"
+          }
+          trap rollback_published_release EXIT
+          unset GITHUB_TOKEN
+          curl --fail --silent --show-error --location \
+            "https://api.github.com/repos/$DELIVERY_REPOSITORY/releases/tags/$PROMOTION_TAG" > anonymous-release.json
+          curl --fail --silent --show-error --location \
+            "https://github.com/$DELIVERY_REPOSITORY/releases/tag/$PROMOTION_TAG" > anonymous-release.html
+          node scripts/stable-promotion-policy.mjs release-metadata \
+            --metadata anonymous-release.json \
+            --expected-body-path candidate-assets/RELEASE_NOTES.md \
+            --tag "$PROMOTION_TAG" \
+            --version "$STABLE_VERSION" \
+            --expected-draft false > anonymous-release-metadata.json
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from "node:fs/promises";
+          import { validateReleaseAssetRecords } from "./scripts/stable-promotion-policy.mjs";
+          const release = JSON.parse(await readFile("anonymous-release.json", "utf8"));
+          const candidatePolicy = JSON.parse(await readFile("candidate-asset-policy.json", "utf8"));
+          const expectedRecords = candidatePolicy.assetRecords;
+          validateReleaseAssetRecords(release.assets, expectedRecords, {
+            repository: process.env.DELIVERY_REPOSITORY,
+            tag: process.env.PROMOTION_TAG
+          });
+          const records = expectedRecords.slice().sort((a, b) => a.name.localeCompare(b.name));
+          const map = new Map(release.assets.map((asset) => [asset.name, asset]));
+          await writeFile("anonymous-asset-records.json", JSON.stringify(records));
+          await writeFile("anonymous-asset-map.tsv", records.map(({ name, size }) => `${name}\t${size}\t${map.get(name).browser_download_url}`).join("\n") + "\n");
+          await writeFile("anonymous-asset-names.txt", records.map(({ name }) => name).join("\n") + "\n");
+          NODE
+          rm -rf anonymous-assets
+          mkdir -p anonymous-assets
+          while IFS=$'\t' read -r name expected_size browser_download_url; do
+            test -n "$name"
+            test "$name" != "*"
+            test "$expected_size" -ge 0
+            curl --fail --silent --show-error --location \
+              "$browser_download_url" > "anonymous-assets/$name"
+          done < anonymous-asset-map.tsv
+          node --input-type=module <<'NODE'
+          import { lstat, readFile } from "node:fs/promises";
+          const expected = JSON.parse(await readFile("anonymous-asset-records.json", "utf8"));
+          for (const { name, size } of expected) {
+            const stat = await lstat(`anonymous-assets/${name}`);
+            if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`Unsafe anonymous asset: ${name}`);
+            if (stat.size !== size) throw new Error(`Anonymous asset byte length does not match candidate/API size: ${name}`);
+          }
+          NODE
+          node scripts/release-candidate-evidence.mjs verify \
+            --assets-dir anonymous-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" > anonymous-evidence-verification.json
+          node scripts/stable-promotion-policy.mjs assets \
+            --assets-dir anonymous-assets \
+            --source-sha "$SOURCE_SHA" \
+            --version "$STABLE_VERSION" \
+            --evidence-sha256 "$EVIDENCE_SHA256" > anonymous-asset-policy.json
+          PROMOTION_OK=1
+
+      - name: Dispatch public provenance workflow with the exact payload
+        env:
+          GH_TOKEN: ${{ steps.delivery-app.outputs.token }}
+          SOURCE_SHA: ${{ needs.preflight.outputs.source_sha }}
+          EVIDENCE_SHA256: ${{ inputs.evidence_sha256 }}
+          PROMOTION_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node scripts/stable-promotion-policy.mjs dispatch \
+            --tag "$PROMOTION_TAG" \
+            --version "$STABLE_VERSION" \
+            --source-sha "$SOURCE_SHA" \
+            --evidence-sha256 "$EVIDENCE_SHA256" > dispatch-request.json
+          gh api --method POST "repos/$DELIVERY_REPOSITORY/dispatches" \
+            --input dispatch-request.json
+
+      - name: Print sanitized stable promotion summary
+        shell: bash
+        run: |
+          {
+            echo "### Trio v0.1.4 stable promotion"
+            echo "- candidate run: ${{ inputs.candidate_run_id }}"
+            echo "- source SHA: ${{ needs.preflight.outputs.source_sha }}"
+            echo "- tag: ${{ inputs.tag }}"
+            echo "- evidence SHA-256: ${{ inputs.evidence_sha256 }}"
+            echo "- delivery repository: $DELIVERY_REPOSITORY"
+            echo "- anonymous metadata and asset verification: completed by the promotion step"
+            echo "- public attestation: dispatched; completion must be observed separately"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "resourceId": "pretendard-ko-fallback",
+  "role": "font_ko_fallback",
+  "version": "1.3.9",
+  "compatiblePipelineVersions": [
+    "1.0.0"
+  ],
+  "files": [
+    {
+      "relativePath": "PretendardVariable.ttf",
+      "byteSize": 6739336,
+      "sha256": "3090ccde0442bb347aa7685d9ba8b17436a60682df6e8f92a9a670de14056e22"
+    },
+    {
+      "relativePath": "LICENSE.txt",
+      "byteSize": 4419,
+      "sha256": "b04538c9abec39a3db75108cf0af0fd9c77032fe8aa2cf38345b4d250e98e38e"
+    }
+  ],
+  "licenseFiles": [
+    "LICENSE.txt"
+  ]
+}

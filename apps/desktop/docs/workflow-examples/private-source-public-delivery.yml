@@ -1,0 +1,257 @@
+# FUTURE / NON-MVP: historical multi-platform example; not an active MVP workflow.
+# macOS is excluded by docs/operations/mvp-platform-scope.md.
+# TEMPLATE ONLY — copy through GitHub's web UI after all prerequisites in
+# docs/operations/public-delivery-workflow.md are satisfied.
+#
+# Source repository:   ksaeil2001/trio (private)
+# Delivery repository: ksaeil2001/trio-releases (public; binaries + notes only)
+#
+# This template deliberately has no vendor-specific cloud-signing command. Do
+# not enable the stable job until the protected `stable-release` environment
+# holds the signing integration and `npm run dist:win` emits a signed NSIS
+# installer whose latest.yml checksum matches the installer.
+
+name: Package and promote public Trio delivery
+
+on:
+  push:
+    tags:
+      - "v*"
+# The default token remains unable to write outside this private source repo.
+permissions:
+  contents: read
+
+concurrency:
+  group: trio-public-delivery-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  DELIVERY_REPOSITORY: ksaeil2001/trio-releases
+  NODE_VERSION: "24.11.1"
+
+jobs:
+  classify:
+    name: Classify source tag without promoting it
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.value }}
+      channel: ${{ steps.channel.outputs.value }}
+    steps:
+      - id: tag
+        shell: bash
+        run: |
+          value="$GITHUB_REF_NAME"
+          test -n "$value"
+          printf 'value=%s\n' "$value" >> "$GITHUB_OUTPUT"
+
+      - id: channel
+        shell: bash
+        run: |
+          tag="${{ steps.tag.outputs.value }}"
+          if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            printf 'value=stable\n' >> "$GITHUB_OUTPUT"
+          elif [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(preview|dev)\.[0-9]+$ ]]; then
+            printf 'value=preview\n' >> "$GITHUB_OUTPUT"
+          else
+            echo "Unsupported release tag: $tag" >&2
+            exit 1
+          fi
+
+  preview-package:
+    name: Package unsigned preview for private QA
+    needs: classify
+    if: needs.classify.outputs.channel == 'preview'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            command: npm.cmd run dist:win
+            artifact: trio-preview-windows-x64
+          - runner: macos-15-intel
+            command: npm run dist:mac:future
+            artifact: trio-preview-macos-x64
+          - runner: ubuntu-latest
+            command: npm run dist:linux
+            artifact: trio-preview-linux-x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ needs.classify.outputs.tag }}
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes xvfb
+      - run: npm ci
+      - run: npm run typecheck
+      - run: ${{ matrix.command }}
+      - run: npm run smoke:package
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.artifact }}-${{ github.run_number }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.yml
+          if-no-files-found: error
+          retention-days: 14
+
+  package-signed-windows-stable:
+    name: Build, sign, smoke-test, and verify Windows stable candidate
+    needs: classify
+    if: needs.classify.outputs.channel == 'stable'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    # This protected environment must require reviewers and is the ONLY job
+    # allowed to read cloud-signing credentials or request an OIDC token.
+    environment: stable-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ needs.classify.outputs.tag }}
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+      # REQUIRED BEFORE ENABLEMENT:
+      # Configure the selected cloud-signing provider as an electron-builder
+      # signing hook. The signing must occur inside `npm run dist:win`, before
+      # latest.yml is final, rather than signing the finished installer later.
+      - name: Package Windows NSIS installer through cloud signing hook
+        shell: pwsh
+        run: npm.cmd run dist:win
+
+      - name: Smoke test packaged signed app
+        shell: pwsh
+        run: npm.cmd run smoke:package
+
+      # REQUIRED BEFORE ENABLEMENT:
+      # Implement this script. It must fail closed unless the installer has a
+      # valid expected publisher/timestamp/signature and every entry in
+      # latest.yml matches a real signed file's name, size, and SHA-512.
+      - name: Verify signed updater bundle
+        shell: pwsh
+        run: node scripts/ci-verify-signed-windows-release.mjs --directory release
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trio-windows-stable-signed-${{ github.run_number }}
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
+          if-no-files-found: error
+          retention-days: 14
+
+  promote-windows-stable:
+    name: Draft, verify, then publish public Windows stable release
+    needs:
+      - classify
+      - package-signed-windows-stable
+    if: needs.classify.outputs.channel == 'stable'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: stable-release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ needs.classify.outputs.tag }}
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: trio-windows-stable-signed-${{ github.run_number }}
+          path: release-assets
+
+      - name: Re-check signed public bundle inputs
+        shell: bash
+        run: |
+          test -f release-assets/latest.yml
+          test -n "$(find release-assets -maxdepth 1 -type f -name '*.exe' -print -quit)"
+          node scripts/ci-verify-signed-windows-release.mjs --directory release-assets
+
+      # The App is installed only on `trio-releases` with Contents: write.
+      # Its client ID is a variable; its private key is an Actions secret.
+      - name: Mint least-privilege delivery repository token
+        id: delivery-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ vars.TRIO_DELIVERY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TRIO_DELIVERY_APP_PRIVATE_KEY }}
+          owner: ksaeil2001
+          repositories: trio-releases
+          permission-contents: write
+
+      - name: Create an unpublished public delivery release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.delivery-token.outputs.token }}
+          TAG: ${{ needs.classify.outputs.tag }}
+        run: |
+          notes_file="$(mktemp)"
+          cat > "$notes_file" <<EOF
+          ## Trio ${TAG} — Windows x64
+
+          This release contains a Windows x64 NSIS installer and updater metadata.
+          It was built from private source commit ${GITHUB_SHA} after package smoke and signing-bundle verification.
+          EOF
+          if gh release view "$TAG" --repo "$DELIVERY_REPOSITORY" >/dev/null 2>&1; then
+            gh release view "$TAG" --repo "$DELIVERY_REPOSITORY" --json isDraft --jq '.isDraft' | grep -x true
+            gh release upload "$TAG" release-assets/* --clobber --repo "$DELIVERY_REPOSITORY"
+          else
+            gh release create "$TAG" release-assets/* \
+              --repo "$DELIVERY_REPOSITORY" \
+              --title "Trio ${TAG} — Windows x64" \
+              --notes-file "$notes_file" \
+              --draft
+          fi
+
+      - name: Check the draft asset list through the delivery repository API
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.delivery-token.outputs.token }}
+          TAG: ${{ needs.classify.outputs.tag }}
+        run: |
+          gh api "repos/$DELIVERY_REPOSITORY/releases/tags/$TAG" \
+            --jq '.draft == true and ([.assets[].name] | index("latest.yml") != null)' \
+            | grep -x true
+
+      # Publishing is the last irreversible visibility transition. Keep it in
+      # the protected environment so reviewers see all preceding checks.
+      - name: Publish the verified public delivery release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.delivery-token.outputs.token }}
+          TAG: ${{ needs.classify.outputs.tag }}
+        run: |
+          release_id="$(gh api "repos/$DELIVERY_REPOSITORY/releases/tags/$TAG" --jq '.id')"
+          gh api --method PATCH "repos/$DELIVERY_REPOSITORY/releases/$release_id" -f draft=false >/dev/null
+
+      - name: Verify anonymous metadata reachability
+        shell: bash
+        env:
+          TAG: ${{ needs.classify.outputs.tag }}
+        run: |
+          url="https://github.com/$DELIVERY_REPOSITORY/releases/download/$TAG/latest.yml"
+          curl --fail --location --silent --show-error "$url" --output latest.yml
+          test -s latest.yml

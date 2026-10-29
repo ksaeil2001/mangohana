@@ -1,0 +1,543 @@
+/* Stitch A uses the existing page navigator, image surface and selection editor.
+   Theme colors continue to come from the user's current Trio theme. */
+.stitch-workbench .top-settings-panel:has(.stitch-project-settings) {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100dvh - 140px);
+  padding: 0;
+  overflow: auto;
+  border-radius: 6px;
+}
+.stitch-workbench .stitch-project-settings { padding: 0; border: 0; background: var(--trio-panel); font-size: 14px; }
+.stitch-project-settings-header { padding: 20px 24px; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-project-settings-header span { color: var(--trio-muted); font-size: 12px; }
+.stitch-project-settings-header h2 { margin: 4px 0 8px; font-size: 20px; font-weight: 500; }
+.stitch-project-settings-header p { margin: 0; color: var(--trio-muted); font-size: 12px; }
+.stitch-project-settings .settings-nav-tabs { flex-wrap: wrap; padding: 12px 24px; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-project-settings .settings-tab-panel { padding: 20px 24px; }
+.stitch-project-settings .project-setting-property { display: grid; grid-template-columns: minmax(100px, 0.4fr) minmax(0, 1fr); align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-project-settings :is(input, select, textarea) { min-width: 0; max-width: 100%; font-size: 14px; }
+.stitch-project-settings .file-path { overflow-wrap: anywhere; }
+.stitch-workbench .manual-dialogue-form { padding: 16px 0; border-top: 1px solid var(--trio-border-soft); }
+.stitch-workbench .manual-dialogue-form label { display: block; margin-bottom: 8px; color: var(--trio-text); font-size: 14px; }
+.stitch-workbench .processing-queue-panel { border-radius: 0; box-shadow: none; }
+.stitch-workbench .processing-queue-header { padding-bottom: 12px; border-bottom: 1px solid var(--trio-border-soft); }
+.stitch-workbench .page-dialogue-targets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.stitch-workbench .page-dialogue-target {
+  position: absolute;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  pointer-events: auto;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.stitch-workbench .page-dialogue-target:is(:hover, [aria-pressed="true"]) {
+  border-color: var(--trio-accent);
+  background: transparent;
+  box-shadow: 0 0 0 1px var(--trio-panel);
+}
+
+.stitch-workbench .page-dialogue-target:focus-visible {
+  outline: 3px solid var(--trio-accent);
+  outline-offset: 3px;
+}
+
+.stitch-workbench .typesetting-box-rotate-handle {
+  color: var(--trio-on-accent);
+}
+
+.stitch-workbench .page-dialogue-target span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 2px 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--trio-text);
+  background: var(--trio-panel);
+  opacity: 0;
+}
+
+.stitch-workbench .page-dialogue-target:is(:hover, :focus-visible, [aria-pressed="true"]) span {
+  opacity: 1;
+}
+
+.focus-deck-shell.stitch-workbench[data-layout-tier] {
+  --focus-pages-width: 112px;
+  --focus-edge-control-size: 32px;
+  --focus-paper: var(--trio-panel);
+  min-width: 0;
+  height: 100vh;
+  grid-template-rows: minmax(var(--trio-toolbar-height), auto) minmax(0, 1fr) 34px auto !important;
+  background: var(--trio-bg);
+  color: var(--trio-text);
+  font-size: max(14px, var(--trio-text-body));
+}
+
+.focus-deck-shell.stitch-workbench[data-layout-tier]:not(.results-collapsed) {
+  grid-template-rows: minmax(var(--trio-toolbar-height), auto) minmax(0, 1fr) minmax(34px, min(240px, 28vh)) auto !important;
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-top-bar {
+  height: auto;
+  min-height: var(--trio-toolbar-height);
+  flex-wrap: wrap;
+  gap: var(--trio-space-1);
+  overflow: visible;
+  background: var(--trio-panel);
+  color: var(--trio-text);
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-top-bar > .app-top-bar {
+  flex: 1 1 640px;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: var(--trio-toolbar-height);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--trio-space-1) var(--trio-space-2);
+  padding: var(--trio-space-1) var(--trio-space-2);
+}
+
+.stitch-workbench :is(.top-file-actions, .top-page-actions) {
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+  gap: var(--trio-space-1);
+}
+
+.stitch-workbench .workspace-product-type {
+  display: inline-block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--trio-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.stitch-workbench :is(.top-file-actions, .top-page-actions) > button {
+  min-height: 32px;
+  padding: var(--trio-space-1) var(--trio-space-2);
+  font-size: max(12px, var(--trio-text-caption));
+}
+
+.stitch-workbench .focus-deck-workflow-label {
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
+.focus-deck-shell.stitch-workbench[data-layout-tier] > .focus-deck-workspace {
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: var(--focus-edge-control-size) auto minmax(0, 1fr) var(--focus-edge-control-size);
+  overflow: hidden;
+}
+
+.focus-deck-shell.stitch-workbench.pages-collapsed[data-layout-tier] > .focus-deck-workspace {
+  grid-template-columns: var(--focus-edge-control-size) minmax(0, 1fr) var(--focus-edge-control-size);
+}
+
+.stitch-workbench :is(.focus-deck-pages-edge, .focus-deck-inspector-edge) {
+  background: var(--trio-panel);
+}
+
+.stitch-workbench .focus-deck-panel-toggle {
+  min-height: 32px;
+  color: var(--trio-text);
+  font-size: max(12px, var(--trio-text-caption));
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-pages {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--trio-panel);
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-pages > .left-drawer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.focus-deck-shell.stitch-workbench :is(.left-navigator, .workspace-navigator) {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--trio-space-1);
+  width: 100%;
+  min-width: 0;
+  padding: var(--trio-space-1);
+  border-right: 0;
+  border-bottom: 1px solid var(--trio-border-soft);
+}
+
+.focus-deck-shell.stitch-workbench :is(.left-navigator, .workspace-navigator) button {
+  min-width: 0;
+  min-height: 32px;
+  padding: var(--trio-space-1);
+  font-size: max(12px, var(--trio-text-caption));
+  line-height: 1.5;
+  color: var(--trio-text);
+  white-space: normal;
+}
+
+.stitch-workbench .workspace-navigator-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--trio-space-1);
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+
+.stitch-workbench .workspace-navigator-content > .page-strip-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 0;
+}
+
+.stitch-workbench .page-strip {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.stitch-workbench :is(.import-panel, .image-import-panel) {
+  flex: 0 0 auto;
+}
+
+.stitch-workbench :is(.import-panel, .image-import-panel) > button {
+  min-height: 32px;
+  padding: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.stitch-workbench .import-panel p,
+.stitch-workbench .image-import-panel:has(> button:not(:disabled)) p {
+  display: none;
+}
+
+.focus-deck-shell.stitch-workbench .page-strip-row {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--trio-space-1);
+  padding: var(--trio-space-1);
+}
+
+.stitch-workbench .page-strip-thumbnail {
+  width: min(72px, 100%);
+  height: 96px;
+}
+
+.stitch-workbench .page-strip-info {
+  width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.stitch-workbench :is(.page-strip-heading, .page-strip-filters) {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.stitch-workbench .page-strip-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.stitch-workbench .page-strip-filters button {
+  min-width: 0;
+  min-height: 32px;
+  white-space: normal;
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-workspace .resizable-workspace {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.stitch-workbench :is(.focus-deck-canvas, .workspace-main, .image-canvas-shell, .page-image-panel) {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stitch-workbench .page-image-panel:not(.editor-open) {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.stitch-workbench .page-image-stage {
+  grid-row: 2;
+  grid-column: 1;
+  container-type: size;
+  min-width: 0;
+  min-height: 0;
+}
+
+.stitch-workbench .page-image-toolbar {
+  grid-row: 1;
+  grid-column: 1;
+  position: relative !important;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.stitch-workbench .page-image-stage-fit .page-image-media.has-image-aspect {
+  flex: 0 0 auto;
+  width: min(100cqw, calc(100cqh * var(--image-aspect)));
+  height: min(100cqh, calc(100cqw / var(--image-aspect)));
+  aspect-ratio: var(--image-aspect);
+}
+
+.stitch-workbench .page-image-stage-fit .page-image-media img {
+  width: 100%;
+  height: 100%;
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-editor > .right-inspector {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--trio-panel);
+  color: var(--trio-text);
+}
+
+.focus-deck-shell.stitch-workbench .right-inspector :is(.guided-work-panel, .guided-work-content, .stage-editor, .translation-work-surface, .issue-line-editor-surface) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stitch-workbench .stage-editor :is(.line-detail-panel, .speech-review-panel) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.focus-deck-shell.stitch-workbench .stage-editor .guided-primary-action {
+  position: static;
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--trio-space-2);
+  margin-top: auto;
+  padding: var(--trio-space-2);
+  border-top: 1px solid var(--trio-border-soft);
+  background: var(--trio-panel);
+}
+
+.stitch-workbench .guided-primary-action button {
+  min-width: 0;
+  min-height: 36px;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.stitch-workbench .inspector-capabilities > summary {
+  min-height: 32px;
+  padding: var(--trio-space-1);
+  color: var(--trio-warning);
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.focus-deck-shell.stitch-workbench :is(p, input, textarea, select, .source-editor, .user-translation-editor, .neighbour-translation) {
+  font-size: max(14px, var(--trio-text-body));
+  line-height: 1.6;
+}
+
+.focus-deck-shell.stitch-workbench .semantic-overlay .semantic-overlay-label,
+.focus-deck-shell.stitch-workbench :is(label, small, .studio-field-language, .keyboard-hint, .page-strip-info, .page-strip-info strong) {
+  font-size: max(12px, var(--trio-text-caption));
+}
+
+.stitch-workbench :is(.studio-field-language, .keyboard-hint, .translation-neighbours strong, .neighbour-translation) {
+  color: var(--trio-muted);
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-filmstrip {
+  grid-row: 3;
+  height: 100%;
+  min-height: 34px;
+  max-height: min(240px, 28vh);
+  grid-template-rows: 34px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.focus-deck-shell.stitch-workbench.results-collapsed .focus-deck-filmstrip {
+  grid-template-rows: 34px;
+}
+
+.focus-deck-shell.stitch-workbench .focus-deck-results-content {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.stitch-workbench .focus-deck-results-content .bottom-line-panel {
+  min-height: 0;
+  max-height: none;
+}
+
+.stitch-workbench .focus-deck-status-bar {
+  grid-row: 4;
+  min-width: 0;
+  background: var(--trio-panel);
+  color: var(--trio-text);
+}
+
+.stitch-workbench .workbench-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--trio-space-2) var(--trio-space-4);
+  min-height: 28px;
+  padding: var(--trio-space-1) var(--trio-space-3);
+  border-top: 1px solid var(--trio-border-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.stitch-workbench .workbench-status > :last-child {
+  margin-left: auto;
+}
+
+/* Preserve every mounted view while releasing the hidden editor's grid tracks.
+   Explicit display is needed because older stage rules set display:flex/grid. */
+.focus-deck-shell.stitch-workbench .focus-deck-workspace .resizable-workspace.inspector-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.stitch-workbench :is(.focus-deck-editor, .focus-deck-resize-handle, .focus-deck-inspector-edge, .focus-deck-filmstrip)[hidden] {
+  display: none !important;
+}
+
+.focus-deck-shell.stitch-workbench.reading-mode[data-layout-tier] {
+  grid-template-rows: minmax(var(--trio-toolbar-height), auto) minmax(0, 1fr) 0 auto !important;
+}
+
+.focus-deck-shell.stitch-workbench.reading-mode[data-layout-tier] > .focus-deck-workspace {
+  grid-template-columns: var(--focus-edge-control-size) auto minmax(0, 1fr);
+}
+
+.focus-deck-shell.stitch-workbench.reading-mode.pages-collapsed[data-layout-tier] > .focus-deck-workspace {
+  grid-template-columns: var(--focus-edge-control-size) minmax(0, 1fr);
+}
+
+/* The start surface has no page/editor tracks or results/status rows. */
+.focus-deck-shell.stitch-workbench.empty-workspace[data-layout-tier] {
+  grid-template-rows: minmax(var(--trio-toolbar-height), auto) minmax(0, 1fr) !important;
+}
+
+.focus-deck-shell.stitch-workbench.empty-workspace[data-layout-tier] > .focus-deck-workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1200px) {
+  .focus-deck-shell.stitch-workbench[data-layout-tier] .focus-deck-pages {
+    width: var(--focus-pages-width);
+  }
+
+  .focus-deck-shell.stitch-workbench[data-layout-tier] .focus-deck-pages:has(.navigator-context, .navigator-settings) {
+    width: 260px;
+  }
+
+  .focus-deck-shell.stitch-workbench[data-layout-tier] .focus-deck-workspace .resizable-workspace:not(.inspector-collapsed) {
+    grid-template-columns: minmax(0, 1fr) var(--focus-resizer-width) minmax(0, var(--focus-editor-width));
+  }
+}
+
+@media (max-width: 1199.98px) {
+  .focus-deck-shell.stitch-workbench[data-layout-tier] .focus-deck-pages {
+    width: min(260px, 30vw);
+  }
+
+  .focus-deck-shell.stitch-workbench[data-layout-tier] .focus-deck-workspace .resizable-workspace:not(.inspector-collapsed) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, min(var(--focus-editor-width), 44vw));
+  }
+
+  .stitch-workbench .focus-deck-resize-handle {
+    display: none;
+  }
+
+  .stitch-workbench .focus-deck-editor {
+    grid-column: 2;
+    grid-row: 1;
+    height: 100%;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .focus-deck-shell.stitch-workbench .focus-deck-top-bar > .app-top-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stitch-workbench .top-page-actions {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .focus-deck-shell.stitch-workbench[data-layout-tier] .focus-deck-workspace .resizable-workspace:not(.inspector-collapsed) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(140px, 40%) minmax(0, 1fr);
+  }
+
+  .focus-deck-shell.stitch-workbench .resizable-workspace > .focus-deck-editor {
+    grid-column: 1;
+    grid-row: 2;
+    height: 100%;
+  }
+
+  .focus-deck-shell.stitch-workbench :is(.left-navigator, .workspace-navigator) button {
+    min-height: 44px;
+  }
+}

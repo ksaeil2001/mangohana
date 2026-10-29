@@ -1,0 +1,54 @@
+{
+  "license": "CC0-1.0",
+  "description": "Synthetic high-contrast OCR smoke fixtures authored for TRIO. SVG sources are rasterized to PNG in memory by the smoke command.",
+  "fixtures": [
+    {
+      "id": "english-horizontal",
+      "file": "english-horizontal.svg",
+      "width": 800,
+      "height": 320,
+      "orientation": "horizontal",
+      "expectedText": "HELLO WORLD"
+    },
+    {
+      "id": "japanese-horizontal",
+      "file": "japanese-horizontal.svg",
+      "width": 800,
+      "height": 320,
+      "orientation": "horizontal",
+      "expectedText": "こんにちは"
+    },
+    {
+      "id": "japanese-vertical",
+      "file": "japanese-vertical.svg",
+      "width": 320,
+      "height": 800,
+      "orientation": "vertical",
+      "expectedText": "日本語"
+    },
+    {
+      "id": "japanese-furigana",
+      "file": "japanese-furigana.svg",
+      "width": 800,
+      "height": 320,
+      "orientation": "horizontal",
+      "requiredText": ["日本語", "にほんご"]
+    },
+    {
+      "id": "small-japanese",
+      "file": "small-japanese.svg",
+      "width": 800,
+      "height": 320,
+      "orientation": "horizontal",
+      "expectedText": "こんにちは"
+    },
+    {
+      "id": "multiple-regions",
+      "file": "multiple-regions.svg",
+      "width": 800,
+      "height": 800,
+      "orientation": "horizontal",
+      "expectedText": "HELLO\nWORLD"
+    }
+  ]
+}

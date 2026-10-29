@@ -1,0 +1,28 @@
+# GitHub generates release notes from pull requests between version tags.
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - skip-changelog
+    authors:
+      - github-actions[bot]
+      - dependabot[bot]
+  categories:
+    - title: "새 기능"
+      labels:
+        - feature
+        - enhancement
+        - feat
+    - title: "수정 및 안정성 개선"
+      labels:
+        - bug
+        - fix
+    - title: "문서 및 유지보수"
+      labels:
+        - documentation
+        - docs
+        - maintenance
+        - chore
+    - title: "기타 변경"
+      labels:
+        - "*"

@@ -1,0 +1,740 @@
+name: Trio private transition update QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      transition_source_ref:
+        description: "Exact immutable tag ref containing the v0.1.3 updater backport; no ref is created here."
+        type: string
+        required: true
+        default: "refs/tags/v0.1.3-transition.1"
+      baseline_source_sha:
+        description: "Full SHA of the original v0.1.3 source baseline."
+        type: string
+        required: true
+      transition_source_sha:
+        description: "Full SHA of the transition source ref to package."
+        type: string
+        required: true
+      release_tooling_sha:
+        description: "Full SHA of the immutable source revision containing release validation tooling."
+        type: string
+        required: true
+      preview_candidate_run_id:
+        description: "Exact successful package-release workflow run ID for v0.1.4-preview.1."
+        type: string
+        required: true
+      preview_evidence_sha256:
+        description: "Lowercase SHA-256 of the private preview candidate evidence JSON."
+        type: string
+        required: true
+      transition_tag:
+        description: "Private transition package tag used for policy validation."
+        type: string
+        required: true
+        default: "v0.1.3-transition.1"
+      candidate_tag:
+        description: "Immutable signed preview candidate consumed by the transition feed."
+        type: string
+        required: true
+        default: "v0.1.4-preview.1"
+      transition_version:
+        description: "Package version embedded in the transition baseline."
+        type: string
+        required: true
+        default: "0.1.3-transition.1"
+      transition_candidate_confirmation:
+        description: "Explicit confirmation required for private transition packaging."
+        type: string
+        required: true
+        default: "RUN TRANSITION QA"
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  NODE_VERSION: "22.14.0"
+
+jobs:
+  transition-package:
+    name: Signed Windows transition baseline package
+    environment: transition-qa
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Check out the exact transition source ref without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.transition_source_ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out the pinned release tooling without replacing package source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.release_tooling_sha }}
+          path: .trio-release-tooling
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Fetch and bind the exact preview candidate workflow run and artifact
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          RELEASE_TOOLING_SHA: ${{ inputs.release_tooling_sha }}
+          APPROVED_RELEASE_TOOLING_SHA: ${{ vars.TRIO_APPROVED_RELEASE_TOOLING_SHA }}
+          PREVIEW_RUN_ID: ${{ inputs.preview_candidate_run_id }}
+          PREVIEW_EVIDENCE_SHA256: ${{ inputs.preview_evidence_sha256 }}
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:APPROVED_RELEASE_TOOLING_SHA)) { throw 'The approved release tooling SHA is not configured.' }
+          if ($env:RELEASE_TOOLING_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'The release tooling SHA must be a full commit SHA.' }
+          if ($env:APPROVED_RELEASE_TOOLING_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'The approved release tooling SHA must be a full commit SHA.' }
+          if ($env:RELEASE_TOOLING_SHA -cne $env:APPROVED_RELEASE_TOOLING_SHA.ToLowerInvariant()) { throw 'release_tooling_sha does not match the approved Environment SHA.' }
+          if ($env:PREVIEW_RUN_ID -notmatch '^[1-9][0-9]*$') { throw 'The preview candidate run ID must be a positive integer.' }
+          if ($env:PREVIEW_EVIDENCE_SHA256 -notmatch '^[a-f0-9]{64}$') { throw 'preview_evidence_sha256 must be lowercase SHA-256.' }
+          if ($env:CANDIDATE_TAG -cne 'v0.1.4-preview.1') { throw 'Only v0.1.4-preview.1 is supported as the transition candidate.' }
+
+          $headers = @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = 'application/vnd.github+json'
+            'X-GitHub-Api-Version' = '2022-11-28'
+          }
+          try {
+            $run = Invoke-RestMethod -Uri "https://api.github.com/repos/$env:EXPECTED_REPOSITORY/actions/runs/$env:PREVIEW_RUN_ID" -Headers $headers -ErrorAction Stop
+            $artifactsResponse = Invoke-RestMethod -Uri "https://api.github.com/repos/$env:EXPECTED_REPOSITORY/actions/runs/$env:PREVIEW_RUN_ID/artifacts?per_page=100" -Headers $headers -ErrorAction Stop
+          } catch {
+            throw 'The exact preview candidate workflow run or artifact metadata could not be fetched.'
+          }
+          if ([string]$run.repository.full_name -cne $env:EXPECTED_REPOSITORY) { throw 'The preview candidate workflow run belongs to the wrong repository.' }
+          if ([string]$run.path -cne '.github/workflows/package-release.yml') { throw 'The preview candidate workflow run uses the wrong workflow path.' }
+          if ([string]$run.event -cne 'workflow_dispatch' -or [string]$run.status -cne 'completed' -or [string]$run.conclusion -cne 'success') { throw 'The preview candidate workflow run is not a successful manual completion.' }
+          if ([string]$run.head_sha -notmatch '^[0-9a-fA-F]{40}$') { throw 'The preview candidate workflow run head SHA is invalid.' }
+          if ($run.head_sha -cne $env:RELEASE_TOOLING_SHA.ToLowerInvariant()) { throw 'The preview candidate workflow run head SHA does not match release_tooling_sha.' }
+
+          $artifacts = @($artifactsResponse.artifacts)
+          if ($artifacts.Count -ne 1) { throw 'The preview candidate workflow run does not have exactly one artifact.' }
+          $expectedArtifactName = "trio-preview-transition-candidate-$($env:RELEASE_TOOLING_SHA.ToLowerInvariant())-$($env:PREVIEW_RUN_ID)"
+          $artifact = $artifacts[0]
+          if ([string]$artifact.name -cne $expectedArtifactName) { throw 'The preview candidate artifact name is not bound to source SHA and run ID.' }
+          if ($artifact.expired -eq $true) { throw 'The preview candidate artifact has expired.' }
+          if ([string]$artifact.workflow_run.id -cne $env:PREVIEW_RUN_ID) { throw 'The preview candidate artifact is associated with the wrong workflow run.' }
+          if ([string]$artifact.workflow_run.head_sha -cne ([string]$run.head_sha)) { throw 'The preview candidate artifact head SHA does not match the workflow run.' }
+          if ([int64]$artifact.workflow_run.repository_id -ne [int64]$run.repository.id) { throw 'The preview candidate artifact belongs to the wrong repository.' }
+          if (-not [string]::IsNullOrWhiteSpace([string]$artifact.workflow_run.repository.full_name) -and [string]$artifact.workflow_run.repository.full_name -cne $env:EXPECTED_REPOSITORY) { throw 'The preview candidate artifact belongs to the wrong repository.' }
+          if ([string]::IsNullOrWhiteSpace([string]$artifact.expires_at) -or ([DateTimeOffset]::Parse([string]$artifact.expires_at) -le [DateTimeOffset]::UtcNow)) { throw 'The preview candidate artifact is expired.' }
+          if ([int64]$artifact.size_in_bytes -le 0) { throw 'The preview candidate artifact is empty.' }
+          @{
+            runId = [string]$run.id
+            headSha = ([string]$run.head_sha).ToLowerInvariant()
+            artifactId = [string]$artifact.id
+            artifactName = [string]$artifact.name
+          } | ConvertTo-Json -Compress | Set-Content -NoNewline 'preview-run-binding.json'
+          "PREVIEW_ARTIFACT_ID=$([string]$artifact.id)" | Add-Content $env:GITHUB_ENV
+          "PREVIEW_ARTIFACT_NAME=$([string]$artifact.name)" | Add-Content $env:GITHUB_ENV
+
+      - name: Download the exact preview candidate artifact by ID
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ env.PREVIEW_ARTIFACT_ID }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.preview_candidate_run_id }}
+          github-token: ${{ github.token }}
+          path: private-preview-candidate
+
+      - name: Verify private preview evidence sidecar before reading evidence
+        shell: pwsh
+        env:
+          PREVIEW_EVIDENCE_SHA256: ${{ inputs.preview_evidence_sha256 }}
+          RELEASE_TOOLING_SHA: ${{ inputs.release_tooling_sha }}
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # The sidecar and input digest are checked before reading private candidate evidence.
+          $evidenceFiles = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'private-preview-candidate') -Recurse -File -Filter 'transition-candidate-evidence.json')
+          $sidecarFiles = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'private-preview-candidate') -Recurse -File -Filter 'transition-candidate-evidence.sha256')
+          if ($evidenceFiles.Count -ne 1 -or $sidecarFiles.Count -ne 1) { throw 'The private preview artifact must contain exactly one evidence JSON and sidecar.' }
+          $sidecarDigest = (Get-Content -Raw -LiteralPath $sidecarFiles[0].FullName).Trim()
+          if ($sidecarDigest -notmatch '^[a-f0-9]{64}$') { throw 'The private preview evidence sidecar is not lowercase SHA-256.' }
+          if ($env:PREVIEW_EVIDENCE_SHA256 -cne $sidecarDigest) { throw 'The private preview evidence digest does not match preview_evidence_sha256.' }
+          $actualEvidenceDigest = (Get-FileHash -LiteralPath $evidenceFiles[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualEvidenceDigest -cne $sidecarDigest) { throw 'The private preview evidence JSON does not match its sidecar.' }
+          $evidenceText = Get-Content -Raw -LiteralPath $evidenceFiles[0].FullName
+          $privateEvidence = $evidenceText | ConvertFrom-Json
+          if ([string]$privateEvidence.schemaVersion -cne 'trio.transition-candidate-evidence.v1') { throw 'The private preview evidence schema is unsupported.' }
+          if ($privateEvidence.sourceSha -cne $env:RELEASE_TOOLING_SHA.ToLowerInvariant()) { throw 'The private preview evidence source SHA does not match release_tooling_sha.' }
+          if ([string]$privateEvidence.version -cne '0.1.4-preview.1' -or [string]$privateEvidence.tag -cne $env:CANDIDATE_TAG) { throw 'The private preview evidence version or tag is invalid.' }
+          $privateAssets = @($privateEvidence.updaterAssets)
+          if ($privateAssets.Count -ne 3) { throw 'The private preview evidence must contain exactly three updater assets.' }
+          $expectedAssetNames = @('latest.yml', 'Trio-Setup-0.1.4-preview.1.exe', 'Trio-Setup-0.1.4-preview.1.exe.blockmap')
+          foreach ($asset in $privateAssets) {
+            $assetKeys = @($asset.PSObject.Properties.Name)
+            $assetKey = ($assetKeys | Sort-Object) -join ','
+            if ($assetKeys.Count -ne 4 -or $assetKey -cne 'name,sha256,sha512,size' -or [string]$asset.name -notin $expectedAssetNames -or [int64]$asset.size -le 0 -or [string]$asset.sha256 -notmatch '^[a-f0-9]{64}$' -or [string]$asset.sha512 -notmatch '^[A-Za-z0-9+/]+={0,2}$') { throw 'The private preview evidence contains an invalid updater asset record.' }
+          }
+          $toolingRecords = @($privateEvidence.releaseToolingFiles)
+          $invalidToolingRecords = @()
+          foreach ($record in $toolingRecords) {
+            $recordKeys = @($record.PSObject.Properties.Name)
+            $recordKey = ($recordKeys | Sort-Object) -join ','
+            if ($recordKeys.Count -ne 2 -or $recordKey -cne 'name,sha256' -or [string]$record.name -match '^(?:[A-Za-z]:|/|\\\\)' -or [string]$record.sha256 -notmatch '^[a-f0-9]{64}$') { $invalidToolingRecords += $record }
+          }
+          if ($toolingRecords.Count -lt 1 -or $invalidToolingRecords.Count -gt 0) { throw 'The private preview evidence contains invalid release tooling records.' }
+          if ($evidenceText -match '(?i)(?:https?://|[A-Za-z]:\\|raw.?log|credential|secret|token|password)') { throw 'The private preview evidence is not sanitized.' }
+          "PRIVATE_EVIDENCE_PATH=$($evidenceFiles[0].FullName)" | Add-Content $env:GITHUB_ENV
+          "PRIVATE_SIDECAR_PATH=$($sidecarFiles[0].FullName)" | Add-Content $env:GITHUB_ENV
+
+      - name: Bind the transition ref to the v0.1.3 baseline and fixed preview target
+        shell: pwsh
+        env:
+          BASELINE_SOURCE_SHA: ${{ inputs.baseline_source_sha }}
+          TRANSITION_SOURCE_REF: ${{ inputs.transition_source_ref }}
+          TRANSITION_SOURCE_SHA: ${{ inputs.transition_source_sha }}
+          RELEASE_TOOLING_SHA: ${{ inputs.release_tooling_sha }}
+          TRANSITION_TAG: ${{ inputs.transition_tag }}
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+          TRANSITION_VERSION: ${{ inputs.transition_version }}
+          TRANSITION_CONFIRMATION: ${{ inputs.transition_candidate_confirmation }}
+        run: |
+          if ($env:BASELINE_SOURCE_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'The v0.1.3 baseline SHA must be a full commit SHA.' }
+          if ($env:TRANSITION_SOURCE_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'The transition source SHA must be a full commit SHA.' }
+          if ($env:RELEASE_TOOLING_SHA -notmatch '^[0-9a-fA-F]{40}$') { throw 'The release tooling SHA must be a full commit SHA.' }
+          if ($env:TRANSITION_SOURCE_REF -cne 'refs/tags/v0.1.3-transition.1') { throw 'The transition source ref must be refs/tags/v0.1.3-transition.1.' }
+          if ($env:TRANSITION_TAG -cne 'v0.1.3-transition.1') { throw 'Only v0.1.3-transition.1 is supported by this private QA workflow.' }
+          if ($env:CANDIDATE_TAG -cne 'v0.1.4-preview.1') { throw 'Only v0.1.4-preview.1 is supported as the transition candidate.' }
+          if ($env:TRANSITION_VERSION -cne '0.1.3-transition.1') { throw 'The transition package version must be 0.1.3-transition.1.' }
+          if ($env:TRANSITION_CONFIRMATION -cne 'RUN TRANSITION QA') { throw 'Transition QA confirmation is invalid.' }
+
+          $head = (git rev-parse HEAD).Trim()
+          if ($head -cne $env:TRANSITION_SOURCE_SHA.ToLowerInvariant()) { throw 'The checked-out transition source does not match transition_source_sha.' }
+          $tagCommitOutput = git rev-parse "refs/tags/$($env:TRANSITION_TAG)^{commit}" 2>$null
+          if ($LASTEXITCODE -ne 0) { throw 'The v0.1.3 transition tag ref could not be resolved.' }
+          $tagCommit = ([string]($tagCommitOutput | Select-Object -First 1)).Trim()
+          if ($tagCommit -cne $env:TRANSITION_SOURCE_SHA.ToLowerInvariant()) { throw 'The transition tag ref does not match transition_source_sha.' }
+          $toolingPath = (Resolve-Path '.trio-release-tooling').Path
+          $toolingHead = (git -C .trio-release-tooling rev-parse HEAD).Trim()
+          if ($toolingHead -cne $env:RELEASE_TOOLING_SHA.ToLowerInvariant()) { throw 'The pinned release tooling checkout does not match release_tooling_sha.' }
+          $requiredToolingFiles = @(
+            'scripts/release-channel-policy.mjs',
+            'scripts/verify-windows-signing.ps1',
+            'scripts/verify-packaged-pretendard.mjs',
+            'scripts/setup-esigner-cka.ps1',
+            'package.json',
+            'package-lock.json'
+          )
+          foreach ($requiredToolingFile in $requiredToolingFiles) {
+            if (-not (Test-Path -LiteralPath (Join-Path $toolingPath $requiredToolingFile) -PathType Leaf)) { throw 'The pinned release tooling checkout is incomplete.' }
+          }
+          $baselineTagCommitOutput = git rev-parse "refs/tags/v0.1.3^{commit}" 2>$null
+          if ($LASTEXITCODE -ne 0) { throw 'The v0.1.3 baseline tag ref could not be resolved.' }
+          $baselineTagCommit = ([string]($baselineTagCommitOutput | Select-Object -First 1)).Trim()
+          if ($baselineTagCommit -cne $env:BASELINE_SOURCE_SHA.ToLowerInvariant()) { throw 'The v0.1.3 baseline tag does not match baseline_source_sha.' }
+          git cat-file -e "$($env:BASELINE_SOURCE_SHA)^{commit}"
+          if ($LASTEXITCODE -ne 0) { throw 'The v0.1.3 baseline SHA is not present in the checked-out history.' }
+          git merge-base --is-ancestor $env:BASELINE_SOURCE_SHA $head
+          if ($LASTEXITCODE -ne 0) { throw 'The transition source is not based on the declared v0.1.3 source baseline.' }
+
+          node $toolingPath/scripts/release-channel-policy.mjs --tag $env:TRANSITION_TAG
+          if ($LASTEXITCODE -ne 0) { throw 'Transition tag policy rejected the private QA candidate.' }
+
+          $packageVersion = node --input-type=module -e 'import packageJson from "./package.json" with { type: "json" }; console.log(packageJson.version)'
+          if ($packageVersion.Trim() -cne $env:TRANSITION_VERSION) { throw 'The checked-out package version does not match the transition version.' }
+          $font = Get-Content -Raw 'src/main/autoUpdater.ts'
+          if ($font -notmatch 'TRIO_TRANSITION_QA_FEED_URL') { throw 'Main-owned transition QA feed constant is missing.' }
+          if ($font -notmatch [regex]::Escape($env:CANDIDATE_TAG)) { throw 'The Main-owned transition QA feed does not point at the fixed preview candidate.' }
+          git diff --exit-code
+          if ($LASTEXITCODE -ne 0) { throw 'The transition source checkout is not clean.' }
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Verify transition source and tooling integrity before install/build
+        shell: pwsh
+        env:
+          TRANSITION_SOURCE_SHA: ${{ inputs.transition_source_sha }}
+          RELEASE_TOOLING_SHA: ${{ inputs.release_tooling_sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sourcePath = $env:GITHUB_WORKSPACE
+          $toolingPath = (Resolve-Path (Join-Path $sourcePath '.trio-release-tooling')).Path
+          $integrityVerifier = Join-Path $toolingPath 'scripts/verify-git-source-integrity.mjs'
+          if (-not (Test-Path -LiteralPath $integrityVerifier -PathType Leaf)) { throw 'The pinned release tooling integrity verifier is missing.' }
+          New-Item -ItemType Directory -Path (Join-Path $sourcePath 'transition-verification') -Force | Out-Null
+          & node $integrityVerifier `
+            --repo $sourcePath `
+            --expected-head $env:TRANSITION_SOURCE_SHA `
+            --output (Join-Path $sourcePath 'transition-verification/source-integrity-before.json')
+          if ($LASTEXITCODE -ne 0) { throw 'Transition source integrity failed before install/build.' }
+          & node $integrityVerifier `
+            --repo $toolingPath `
+            --expected-head $env:RELEASE_TOOLING_SHA `
+            --output (Join-Path $sourcePath 'transition-verification/tooling-integrity-before.json')
+          if ($LASTEXITCODE -ne 0) { throw 'Release tooling integrity failed before install/build.' }
+
+      - name: Install dependencies and run updater policy regression
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $toolingPath = (Resolve-Path '.trio-release-tooling').Path
+          Push-Location $toolingPath
+          try {
+            npm.cmd ci --ignore-scripts
+            $toolingExitCode = $LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          if ($toolingExitCode -ne 0) { throw 'The pinned release tooling dependency install failed.' }
+          $toolingYamlModule = Join-Path $toolingPath 'node_modules/js-yaml/dist/js-yaml.mjs'
+          if (-not (Test-Path -LiteralPath $toolingYamlModule -PathType Leaf)) { throw 'The pinned js-yaml dependency is missing.' }
+
+          Push-Location $env:GITHUB_WORKSPACE
+          try {
+            npm.cmd ci
+            $sourceExitCode = $LASTEXITCODE
+          } finally {
+            Pop-Location
+          }
+          if ($sourceExitCode -ne 0) { throw 'The transition package dependency install failed.' }
+          Push-Location $env:GITHUB_WORKSPACE
+           try {
+             npm.cmd run typecheck
+            if ($LASTEXITCODE -ne 0) { throw 'Transition package typecheck failed.' }
+            npm.cmd run test:release-policy
+            if ($LASTEXITCODE -ne 0) { throw 'Transition package release policy tests failed.' }
+            npm.cmd test -- tests/main/autoUpdater.test.ts tests/main/electronUpdaterInterop.test.ts
+            if ($LASTEXITCODE -ne 0) { throw 'Transition package updater tests failed.' }
+           } finally {
+             Pop-Location
+           }
+
+      - name: Verify the fixed preview Release, latest.yml, bytes and publisher
+        shell: pwsh
+        env:
+          CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+          EXPECTED_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expectedVersion = '0.1.4-preview.1'
+          $expectedInstallerName = 'Trio-Setup-0.1.4-preview.1.exe'
+          $expectedBlockmapName = "$expectedInstallerName.blockmap"
+          $sourcePath = $env:GITHUB_WORKSPACE
+          $toolingPath = (Resolve-Path (Join-Path $sourcePath '.trio-release-tooling')).Path
+          $toolingYamlModule = Join-Path $toolingPath 'node_modules/js-yaml/dist/js-yaml.mjs'
+          if (-not (Test-Path -LiteralPath $toolingYamlModule -PathType Leaf)) { throw 'The pinned js-yaml dependency is missing.' }
+          $feedSource = Get-Content -Raw (Join-Path $sourcePath 'src/main/autoUpdater.ts')
+          $feedMatch = [regex]::Match($feedSource, 'TRIO_TRANSITION_QA_FEED_URL\s*=\s*"(?<url>[^"]+)"')
+          if (-not $feedMatch.Success) { throw 'Main-owned transition QA feed constant is missing.' }
+          $feedUrl = $feedMatch.Groups['url'].Value
+          $expectedFeedUrl = "https://github.com/ksaeil2001/trio-releases/releases/download/$($env:CANDIDATE_TAG)/"
+          if ($feedUrl -cne $expectedFeedUrl) { throw 'The Main-owned transition QA feed does not match the fixed candidate tag.' }
+          if ([string]::IsNullOrWhiteSpace($env:EXPECTED_PUBLISHER_SUBJECT)) { throw 'The expected Windows publisher is not configured.' }
+
+          $verificationDirectory = Join-Path $sourcePath 'transition-verification'
+          $temporaryDirectory = Join-Path $env:RUNNER_TEMP "trio-transition-feed-$($env:GITHUB_RUN_ID)"
+          New-Item -ItemType Directory -Path $verificationDirectory -Force | Out-Null
+          New-Item -ItemType Directory -Path $temporaryDirectory -Force | Out-Null
+
+          function Download-CandidateAsset([string]$assetName) {
+            $destination = Join-Path $temporaryDirectory $assetName
+            try {
+              Invoke-WebRequest -Uri "$feedUrl$assetName" -Headers @{ Accept = 'application/octet-stream' } -OutFile $destination -UseBasicParsing -ErrorAction Stop
+            } catch {
+              throw "The transition candidate asset could not be downloaded: $assetName."
+            }
+            if (-not (Test-Path -LiteralPath $destination -PathType Leaf)) { throw "The transition candidate asset is missing after download: $assetName." }
+            return $destination
+          }
+
+          try {
+            try {
+              $release = Invoke-RestMethod `
+                -Uri "https://api.github.com/repos/ksaeil2001/trio-releases/releases/tags/$($env:CANDIDATE_TAG)" `
+                -Headers @{ Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' } `
+                -ErrorAction Stop
+            } catch {
+              throw 'The transition candidate GitHub Release metadata could not be fetched.'
+            }
+            if ($release.tag_name -cne $env:CANDIDATE_TAG -or $release.draft -ne $false -or $release.prerelease -ne $true) {
+              throw 'The transition candidate Release tag or prerelease state is invalid.'
+            }
+
+            $expectedAssetNames = @('latest.yml', $expectedInstallerName, $expectedBlockmapName)
+            $releaseAssets = @($release.assets)
+            $assetNames = @($releaseAssets | ForEach-Object { [string]$_.name })
+            if ($assetNames.Count -ne $expectedAssetNames.Count) { throw 'The transition candidate Release contains an unexpected asset set.' }
+            foreach ($expectedAssetName in $expectedAssetNames) {
+              if ($assetNames -notcontains $expectedAssetName) { throw "The transition candidate Release is missing an expected asset: $expectedAssetName." }
+            }
+
+             $metadataPath = Download-CandidateAsset 'latest.yml'
+             $installerPath = Download-CandidateAsset $expectedInstallerName
+             $blockmapPath = Download-CandidateAsset $expectedBlockmapName
+             $privateEvidence = Get-Content -Raw -LiteralPath $env:PRIVATE_EVIDENCE_PATH | ConvertFrom-Json
+             $privateAssetNames = @($privateEvidence.updaterAssets | ForEach-Object { [string]$_.name })
+             $privateAssetKey = ($privateAssetNames | Sort-Object) -join ','
+             $expectedAssetKey = ($expectedAssetNames | Sort-Object) -join ','
+             if ($privateAssetNames.Count -ne 3 -or $privateAssetKey -cne $expectedAssetKey) { throw 'The private preview evidence asset set is not exactly the required three files.' }
+             function Get-Sha512Base64([string]$path) {
+               return [Convert]::ToBase64String([Convert]::FromHexString((Get-FileHash -LiteralPath $path -Algorithm SHA512).Hash))
+             }
+             function Assert-PublicAssetMatchesPrivate {
+               param(
+                 [Parameter(Mandatory = $true)][string]$AssetName,
+                 [Parameter(Mandatory = $true)][string]$PublicPath,
+                 [Parameter(Mandatory = $true)][object[]]$PrivateRecords
+               )
+               $privateRecord = @($PrivateRecords | Where-Object { [string]$_.name -ceq $AssetName })
+               if ($privateRecord.Count -ne 1) { throw 'The public preview asset does not match private evidence.' }
+               if (-not (Test-Path -LiteralPath $PublicPath -PathType Leaf)) { throw 'The public preview asset is missing after download.' }
+               $publicFile = Get-Item -LiteralPath $PublicPath
+               if ([int64]$privateRecord[0].size -le 0 -or [int64]$publicFile.Length -le 0) { throw 'The public preview asset does not match private evidence.' }
+               $publicSha256 = (Get-FileHash -LiteralPath $PublicPath -Algorithm SHA256).Hash.ToLowerInvariant()
+               $publicSha512 = Get-Sha512Base64 $PublicPath
+               if ([int64]$privateRecord[0].size -ne [int64]$publicFile.Length -or [string]$privateRecord[0].sha256 -cne $publicSha256 -or [string]$privateRecord[0].sha512 -cne $publicSha512) {
+                 throw 'The public preview asset does not match private evidence.'
+               }
+             }
+             $publicAssetPaths = @{
+               'latest.yml' = $metadataPath
+               $expectedInstallerName = $installerPath
+               $expectedBlockmapName = $blockmapPath
+             }
+             foreach ($assetName in $expectedAssetNames) {
+               Assert-PublicAssetMatchesPrivate `
+                 -AssetName $assetName `
+                 -PublicPath $publicAssetPaths[$assetName] `
+                 -PrivateRecords @($privateEvidence.updaterAssets)
+             }
+             $strictYamlScript = @'
+          import { readFileSync } from "node:fs";
+          import { pathToFileURL } from "node:url";
+
+          const metadataPath = process.argv[1];
+          const expectedInstallerName = process.argv[2];
+          const yamlModulePath = process.argv[3];
+          const { default: yaml } = await import(pathToFileURL(yamlModulePath).href);
+          const metadataText = readFileSync(metadataPath, "utf8").replace(/^\uFEFF/, "");
+          const root = yaml.load(metadataText, { schema: yaml.JSON_SCHEMA, json: false });
+          const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+          const requireExactKeys = (value, allowedKeys) => {
+            if (!isObject(value)) throw new Error("mapping expected");
+            const keys = Object.keys(value);
+            if (keys.length !== allowedKeys.length || keys.some((key) => !allowedKeys.includes(key))) {
+              throw new Error("unexpected metadata key");
+            }
+          };
+
+          requireExactKeys(root, ["version", "files", "path", "sha512", "releaseDate"]);
+          const rootKeys = Object.keys(root);
+          if (rootKeys.includes("packages")) throw new Error("packages are not allowed");
+          if (root.version !== "0.1.4-preview.1") throw new Error("version mismatch");
+          if (!Array.isArray(root.files) || root.files.length !== 1) throw new Error("exactly one file is required");
+          const file = root.files[0];
+          requireExactKeys(file, ["url", "sha512", "size"]);
+          if (file.url !== expectedInstallerName || root.path !== expectedInstallerName) throw new Error("installer reference mismatch");
+          if (typeof root.sha512 !== "string" || file.sha512 !== root.sha512) throw new Error("sha512 mismatch");
+          if (!Number.isSafeInteger(file.size) || file.size <= 0) throw new Error("invalid installer size");
+          if (typeof root.releaseDate !== "string" || root.releaseDate.length === 0) throw new Error("releaseDate is required");
+
+          process.stdout.write(JSON.stringify({
+            version: root.version,
+            installerName: file.url,
+            installerSha512: file.sha512,
+            installerSize: file.size,
+            path: root.path,
+            rootSha512: root.sha512,
+            releaseDate: root.releaseDate
+          }));
+          '@
+            try {
+              $metadataOutput = & node --input-type=module -e $strictYamlScript -- $metadataPath $expectedInstallerName $toolingYamlModule 2>$null
+              $metadataExitCode = $LASTEXITCODE
+              if ($metadataExitCode -ne 0) { throw 'strict YAML parser rejected metadata' }
+              $metadataJson = ($metadataOutput -join "`n").Trim()
+              if ([string]::IsNullOrWhiteSpace($metadataJson)) { throw 'strict YAML parser returned no metadata' }
+              $metadata = $metadataJson | ConvertFrom-Json
+            } catch {
+              throw 'The transition candidate latest.yml failed strict YAML schema validation.'
+            }
+
+            $metadataVersion = [string]$metadata.version
+            $metadataUrl = [string]$metadata.installerName
+            $metadataSha512 = [string]$metadata.installerSha512
+            $metadataSize = [int64]$metadata.installerSize
+            $metadataPathValue = [string]$metadata.path
+            $rootSha512 = [string]$metadata.rootSha512
+            if ($metadataVersion -cne $expectedVersion) { throw 'The transition candidate metadata version does not match v0.1.4-preview.1.' }
+            if ($metadataUrl -cne $expectedInstallerName -or $metadataPathValue -cne $expectedInstallerName) { throw 'The transition candidate metadata references an unexpected installer filename.' }
+            if ($metadataSha512 -cne $rootSha512) { throw 'The transition candidate metadata has inconsistent SHA-512 values.' }
+
+            $installerFile = Get-Item -LiteralPath $installerPath
+            if ($installerFile.Length -ne $metadataSize) { throw 'The transition candidate installer size does not match latest.yml.' }
+            $installerSha512 = [Convert]::ToBase64String([Convert]::FromHexString((Get-FileHash -LiteralPath $installerPath -Algorithm SHA512).Hash))
+            if ($installerSha512 -cne $metadataSha512) { throw 'The transition candidate installer digest does not match latest.yml.' }
+
+            $metadataFile = Get-Item -LiteralPath $metadataPath
+            $blockmapFile = Get-Item -LiteralPath $blockmapPath
+            $metadataSha256 = (Get-FileHash -LiteralPath $metadataPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $installerSha256 = (Get-FileHash -LiteralPath $installerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $blockmapSha256 = (Get-FileHash -LiteralPath $blockmapPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $blockmapSha512 = [Convert]::ToBase64String([Convert]::FromHexString((Get-FileHash -LiteralPath $blockmapPath -Algorithm SHA512).Hash))
+            foreach ($releaseAsset in $releaseAssets) {
+              if ([string]$releaseAsset.browser_download_url -cne "$feedUrl$([string]$releaseAsset.name)") { throw 'The transition candidate asset URL does not match the fixed QA feed.' }
+              $downloadedPath = switch ([string]$releaseAsset.name) {
+                'latest.yml' { $metadataPath; break }
+                $expectedInstallerName { $installerPath; break }
+                $expectedBlockmapName { $blockmapPath; break }
+              }
+              if ([int64]$releaseAsset.size -ne (Get-Item -LiteralPath $downloadedPath).Length) { throw 'The transition candidate asset size does not match GitHub Release metadata.' }
+            }
+
+            # The preview feed exposes only the NSIS installer; reuse the existing
+            # verifier rather than duplicating a weaker signature check. The
+            # candidate evidence consumes nsisInstallerVerified specifically.
+            $candidateSigningPath = Join-Path $verificationDirectory 'candidate-windows-signing.json'
+            & "$toolingPath/scripts/verify-windows-signing.ps1" `
+              -PackageDirectory $temporaryDirectory `
+              -AppExecutable $installerPath `
+              -NsisInstaller $installerPath `
+              -ExpectedPublisherSubject $env:EXPECTED_PUBLISHER_SUBJECT `
+              -OutputPath $candidateSigningPath
+            if ($LASTEXITCODE -ne 0) { throw 'The transition candidate installer signing verification failed.' }
+            $candidateSigning = Get-Content -Raw $candidateSigningPath | ConvertFrom-Json
+            if (-not $candidateSigning.expectedPublisherMatched -or -not $candidateSigning.authenticodeChainValid -or -not $candidateSigning.timestampValid -or $candidateSigning.digestAlgorithm -cne 'SHA-256' -or -not $candidateSigning.nsisInstallerVerified) {
+              throw 'The transition candidate signing evidence is incomplete.'
+            }
+
+            $candidateEvidence = [ordered]@{
+              candidateTag = [string]$release.tag_name
+              candidateVersion = $metadataVersion
+              candidateMetadataFilename = 'latest.yml'
+              candidateInstallerFilename = $expectedInstallerName
+              candidateBlockmapFilename = $expectedBlockmapName
+              candidateMetadataSha256 = $metadataSha256
+              candidateMetadataSize = $metadataFile.Length
+              candidateInstallerSha256 = $installerSha256
+              candidateInstallerSha512 = $installerSha512
+              candidateInstallerSize = $installerFile.Length
+              candidateBlockmapSha256 = $blockmapSha256
+              candidateBlockmapSha512 = $blockmapSha512
+              candidateBlockmapSize = $blockmapFile.Length
+              expectedPublisher = $env:EXPECTED_PUBLISHER_SUBJECT
+              candidatePublisherMatched = [bool]$candidateSigning.expectedPublisherMatched
+              candidateAuthenticodeChainValid = [bool]$candidateSigning.authenticodeChainValid
+              candidateDigestAlgorithm = [string]$candidateSigning.digestAlgorithm
+              candidateTimestampValid = [bool]$candidateSigning.timestampValid
+            }
+            $candidateEvidence | ConvertTo-Json -Compress | Set-Content -NoNewline (Join-Path $verificationDirectory 'candidate.json')
+          } finally {
+            Remove-Item -LiteralPath $temporaryDirectory -Recurse -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Configure SSL.com eSigner CKA for the private transition package
+        shell: pwsh
+        env:
+          TRIO_ESIGNER_CKA_URL: ${{ vars.TRIO_ESIGNER_CKA_URL }}
+          TRIO_ESIGNER_CKA_SHA256: ${{ vars.TRIO_ESIGNER_CKA_SHA256 }}
+          TRIO_ESIGNER_CKA_CONFIGURATOR: ${{ vars.TRIO_ESIGNER_CKA_CONFIGURATOR }}
+          TRIO_ESIGNER_CKA_API_TOKEN: ${{ secrets.TRIO_ESIGNER_CKA_API_TOKEN }}
+          TRIO_ESIGNER_CKA_CLIENT_SECRET: ${{ secrets.TRIO_ESIGNER_CKA_CLIENT_SECRET }}
+          TRIO_ESIGNER_CKA_CREDENTIAL: ${{ secrets.TRIO_ESIGNER_CKA_CREDENTIAL }}
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $toolingPath = (Resolve-Path '.trio-release-tooling').Path
+          $setupPath = Join-Path $toolingPath 'scripts/setup-esigner-cka.ps1'
+          if (-not (Test-Path -LiteralPath $setupPath -PathType Leaf)) { throw 'The pinned release tooling checkout is incomplete.' }
+          & $setupPath
+          if ($LASTEXITCODE -ne 0) { throw 'The pinned eSigner setup failed.' }
+
+      - name: Build the signed transition NSIS package without publishing
+        shell: pwsh
+        env:
+          CSC_NAME: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Push-Location $env:GITHUB_WORKSPACE
+          try {
+            npm.cmd run build
+            if ($LASTEXITCODE -ne 0) { throw 'Transition package build failed.' }
+            npx --no-install electron-builder --win nsis --x64 --publish never
+            if ($LASTEXITCODE -ne 0) { throw 'Transition package packaging failed.' }
+          } finally {
+            Pop-Location
+          }
+
+      - name: Verify Authenticode and packaged transition resources
+        shell: pwsh
+        env:
+          TRIO_WINDOWS_PUBLISHER_SUBJECT: ${{ vars.TRIO_WINDOWS_PUBLISHER_SUBJECT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sourcePath = $env:GITHUB_WORKSPACE
+          $toolingPath = (Resolve-Path (Join-Path $sourcePath '.trio-release-tooling')).Path
+          $toolingVerifierPath = "$toolingPath/scripts/verify-packaged-pretendard.mjs"
+          $toolingSigningPath = "$toolingPath/scripts/verify-windows-signing.ps1"
+          foreach ($requiredPath in @($toolingVerifierPath, $toolingSigningPath)) {
+            if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw 'The pinned release tooling checkout is incomplete.' }
+          }
+          $version = (node --input-type=module -e 'import packageJson from "./package.json" with { type: "json" }; console.log(packageJson.version)').Trim()
+          New-Item -ItemType Directory -Path (Join-Path $sourcePath 'transition-verification') -Force | Out-Null
+          $verifierWrapper = @'
+          import { execFile as execFileCallback } from "node:child_process";
+          import { promisify } from "node:util";
+          import { resolve } from "node:path";
+          import { pathToFileURL } from "node:url";
+
+          const execFile = promisify(execFileCallback);
+          const [toolVerifierPath, sourceRoot, resourcesPath, outputPath] = process.argv.slice(1);
+          const tool = await import(pathToFileURL(toolVerifierPath).href);
+          const authoritative = await import(pathToFileURL(resolve(sourceRoot, "dist-electron/src/main/productionTypesetFontResource.js")).href);
+          const result = await tool.verifyPackagedPretendard({
+            resourcesPath,
+            outputPath,
+            initializeResource: (path, options) => authoritative.initializeProductionTypesetFontResource(path, options),
+            runGlyphRegression: async () => {
+              try {
+                await execFile(process.execPath, [
+                  resolve(sourceRoot, "node_modules/vitest/vitest.mjs"),
+                  "run",
+                  resolve(sourceRoot, "tests/renderer/productionTypesetFont.test.ts"),
+                  resolve(sourceRoot, "tests/renderer/typesettingReadiness.test.ts"),
+                  "--reporter=dot"
+                ], { cwd: sourceRoot, windowsHide: true });
+                return true;
+              } catch {
+                return false;
+              }
+            }
+          });
+          process.stdout.write(JSON.stringify({ pretendardVerified: true, resourceHash: result.packagedFontHash }));
+          '@
+          $pretendardOutput = Join-Path $sourcePath 'transition-verification/pretendard.json'
+          $pretendardResult = & node --input-type=module -e $verifierWrapper -- $toolingVerifierPath $sourcePath (Join-Path $sourcePath 'release/win-unpacked/resources') $pretendardOutput 2>$null
+          if ($LASTEXITCODE -ne 0) { throw 'The pinned Pretendard verifier failed.' }
+          if ([string]::IsNullOrWhiteSpace(($pretendardResult -join "`n").Trim())) { throw 'The pinned Pretendard verifier returned no evidence.' }
+          & $toolingSigningPath `
+            -PackageDirectory $sourcePath `
+            -AppExecutable (Join-Path $sourcePath 'release/win-unpacked/Trio.exe') `
+            -NsisInstaller (Join-Path $sourcePath "release/Trio-Setup-$version.exe") `
+            -OutputPath (Join-Path $sourcePath 'transition-verification/windows.json')
+          if ($LASTEXITCODE -ne 0) { throw 'The pinned Windows signing verifier failed.' }
+
+      - name: Run packaged smoke test
+        shell: pwsh
+        run: npm.cmd run smoke:package
+
+      - name: Verify source and tooling integrity after build/signing/Pretendard/package smoke
+        shell: pwsh
+        env:
+          TRANSITION_SOURCE_SHA: ${{ inputs.transition_source_sha }}
+          RELEASE_TOOLING_SHA: ${{ inputs.release_tooling_sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sourcePath = $env:GITHUB_WORKSPACE
+          $toolingPath = (Resolve-Path (Join-Path $sourcePath '.trio-release-tooling')).Path
+          $integrityVerifier = Join-Path $toolingPath 'scripts/verify-git-source-integrity.mjs'
+          if (-not (Test-Path -LiteralPath $integrityVerifier -PathType Leaf)) { throw 'The pinned release tooling integrity verifier is missing.' }
+          & node $integrityVerifier `
+            --repo $sourcePath `
+            --expected-head $env:TRANSITION_SOURCE_SHA `
+            --output (Join-Path $sourcePath 'transition-verification/source-integrity-after.json')
+          if ($LASTEXITCODE -ne 0) { throw 'Transition source integrity failed after build/signing/Pretendard/package smoke.' }
+          & node $integrityVerifier `
+            --repo $toolingPath `
+            --expected-head $env:RELEASE_TOOLING_SHA `
+            --output (Join-Path $sourcePath 'transition-verification/tooling-integrity-after.json')
+          if ($LASTEXITCODE -ne 0) { throw 'Release tooling integrity failed after build/signing/Pretendard/package smoke.' }
+
+      - name: Write sanitized transition evidence
+        shell: pwsh
+        env:
+          BASELINE_SOURCE_SHA: ${{ inputs.baseline_source_sha }}
+          TRANSITION_SOURCE_SHA: ${{ inputs.transition_source_sha }}
+          RELEASE_TOOLING_SHA: ${{ inputs.release_tooling_sha }}
+          TRANSITION_TAG: ${{ inputs.transition_tag }}
+          PREVIEW_RUN_ID: ${{ inputs.preview_candidate_run_id }}
+          PREVIEW_EVIDENCE_SHA256: ${{ inputs.preview_evidence_sha256 }}
+        run: |
+          $candidatePath = Join-Path $PWD 'transition-verification/candidate.json'
+          if (-not (Test-Path -LiteralPath $candidatePath -PathType Leaf)) { throw 'Verified transition candidate evidence is missing.' }
+          $candidate = Get-Content -Raw $candidatePath | ConvertFrom-Json
+          $privateEvidence = Get-Content -Raw -LiteralPath $env:PRIVATE_EVIDENCE_PATH | ConvertFrom-Json
+          $sourceIntegrityBefore = Get-Content -Raw (Join-Path $PWD 'transition-verification/source-integrity-before.json') | ConvertFrom-Json
+          $toolingIntegrityBefore = Get-Content -Raw (Join-Path $PWD 'transition-verification/tooling-integrity-before.json') | ConvertFrom-Json
+          $sourceIntegrityAfter = Get-Content -Raw (Join-Path $PWD 'transition-verification/source-integrity-after.json') | ConvertFrom-Json
+          $toolingIntegrityAfter = Get-Content -Raw (Join-Path $PWD 'transition-verification/tooling-integrity-after.json') | ConvertFrom-Json
+          foreach ($integrity in @($sourceIntegrityBefore, $toolingIntegrityBefore, $sourceIntegrityAfter, $toolingIntegrityAfter)) {
+            if ([string]$integrity.schemaVersion -cne 'trio.git-source-integrity.v1' -or $integrity.clean -ne $true -or [string]$integrity.headSha -notmatch '^[0-9a-f]{40}$' -or [string]$integrity.treeSha -notmatch '^[0-9a-f]{40}$') { throw 'The final source or release tooling integrity evidence is invalid.' }
+          }
+          if ($sourceIntegrityBefore.headSha -cne $env:TRANSITION_SOURCE_SHA.ToLowerInvariant() -or $sourceIntegrityAfter.headSha -cne $env:TRANSITION_SOURCE_SHA.ToLowerInvariant() -or $toolingIntegrityBefore.headSha -cne $env:RELEASE_TOOLING_SHA.ToLowerInvariant() -or $toolingIntegrityAfter.headSha -cne $env:RELEASE_TOOLING_SHA.ToLowerInvariant()) { throw 'The final source or release tooling integrity SHA binding is invalid.' }
+          if ($sourceIntegrityBefore.treeSha -cne $sourceIntegrityAfter.treeSha -or $toolingIntegrityBefore.treeSha -cne $toolingIntegrityAfter.treeSha) { throw 'The source or release tooling tracked tree changed during the package lifecycle.' }
+          $evidence = [ordered]@{
+            baselineSourceSha = $env:BASELINE_SOURCE_SHA
+            transitionSourceSha = $env:TRANSITION_SOURCE_SHA
+            releaseToolingSha = $env:RELEASE_TOOLING_SHA
+            releaseToolingPath = '.trio-release-tooling'
+            previewCandidateRunId = $env:PREVIEW_RUN_ID
+            previewCandidateArtifactName = $env:PREVIEW_ARTIFACT_NAME
+            previewEvidenceSha256 = $env:PREVIEW_EVIDENCE_SHA256
+            previewCandidateSourceSha = $privateEvidence.sourceSha
+            previewUpdaterAssets = $privateEvidence.updaterAssets
+            previewReleaseToolingFiles = $privateEvidence.releaseToolingFiles
+            transitionTag = $env:TRANSITION_TAG
+            candidateTag = $candidate.candidateTag
+            candidateVersion = $candidate.candidateVersion
+            candidateMetadataFilename = $candidate.candidateMetadataFilename
+            candidateInstallerFilename = $candidate.candidateInstallerFilename
+            candidateBlockmapFilename = $candidate.candidateBlockmapFilename
+            candidateMetadataSha256 = $candidate.candidateMetadataSha256
+            candidateMetadataSize = $candidate.candidateMetadataSize
+            candidateInstallerSha256 = $candidate.candidateInstallerSha256
+            candidateInstallerSha512 = $candidate.candidateInstallerSha512
+            candidateInstallerSize = $candidate.candidateInstallerSize
+            candidateBlockmapSha256 = $candidate.candidateBlockmapSha256
+            candidateBlockmapSha512 = $candidate.candidateBlockmapSha512
+            candidateBlockmapSize = $candidate.candidateBlockmapSize
+            expectedPublisher = $candidate.expectedPublisher
+            candidatePublisherMatched = $candidate.candidatePublisherMatched
+            candidateAuthenticodeChainValid = $candidate.candidateAuthenticodeChainValid
+            candidateDigestAlgorithm = $candidate.candidateDigestAlgorithm
+            candidateTimestampValid = $candidate.candidateTimestampValid
+            baselineBitIdenticalToHistoricalV013 = $false
+            sourceIntegrityBefore = $sourceIntegrityBefore
+            sourceIntegrityAfter = $sourceIntegrityAfter
+            releaseToolingIntegrityBefore = $toolingIntegrityBefore
+            releaseToolingIntegrityAfter = $toolingIntegrityAfter
+            sourceIntegrity = $sourceIntegrityAfter
+            releaseToolingIntegrity = $toolingIntegrityAfter
+          }
+          $evidence | ConvertTo-Json -Compress | Set-Content -NoNewline 'transition-verification/transition.json'
+
+      - name: Upload private transition QA evidence and signed installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trio-transition-qa-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            release/Trio-Setup-*.exe
+            release/Trio-Setup-*.exe.blockmap
+            release/latest.yml
+            transition-verification/candidate.json
+            transition-verification/candidate-windows-signing.json
+            transition-verification/windows.json
+            transition-verification/pretendard.json
+            transition-verification/source-integrity-before.json
+            transition-verification/tooling-integrity-before.json
+            transition-verification/source-integrity-after.json
+            transition-verification/tooling-integrity-after.json
+            transition-verification/transition.json
+          if-no-files-found: error
+          retention-days: 30

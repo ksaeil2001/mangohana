@@ -1,0 +1,263 @@
+/* Manga studio presentation. Geometry, image transforms and panel preferences
+   remain owned by the existing workspace components. */
+.focus-deck-shell :is(.focus-deck-top-bar, .focus-deck-pages, .focus-deck-editor, .focus-deck-filmstrip) {
+  border-color: var(--trio-border-soft);
+}
+.focus-deck-shell :is(.top-file-actions, .top-page-actions) button {
+  border-color: transparent;
+  background: transparent;
+  font-weight: 500;
+}
+.focus-deck-shell :is(.top-file-actions, .top-page-actions) button:hover:not(:disabled) {
+  background: var(--trio-panel-raised);
+}
+.focus-deck-shell .top-page-actions strong { font-family: var(--trio-font-mono); font-variant-numeric: tabular-nums; }
+.focus-deck-shell .workspace-navigator {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-width: 0;
+  border-right: 0;
+  border-bottom: 1px solid var(--trio-border-soft);
+  padding: 4px;
+}
+.focus-deck-shell .workspace-navigator button { flex: 1; min-height: 32px; border-left: 0; }
+.focus-deck-shell .workspace-navigator button[aria-pressed="true"] { box-shadow: inset 0 -2px var(--trio-accent); }
+.focus-deck-shell .left-drawer { display: flex; flex-direction: column; }
+.focus-deck-shell .workspace-navigator-content { min-height: 0; overflow: auto; padding: 8px; }
+.focus-deck-shell :is(.import-panel, .image-import-panel) { padding: 6px 0; border: 0; margin: 0; }
+.focus-deck-shell :is(.import-panel, .image-import-panel) p { margin: 5px 0; font-size: var(--trio-text-secondary); line-height: calc(20 / 13); color: var(--trio-muted); }
+.focus-deck-shell .import-panel > button,
+.focus-deck-shell .image-import-panel > button { width: 100%; }
+
+/* Page rail: page identity, a real preview, and review count in one target. */
+.focus-deck-shell .page-strip-panel { border: 0; padding: 12px 0 0; background: transparent; }
+.page-strip-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.page-strip-heading h2 { margin: 0; font-size: 13px; }
+.page-strip-heading > span { color: var(--trio-muted); font: 12px var(--trio-font-mono); }
+.page-strip-filters { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0; }
+.page-strip-filters button { flex: 1; min-width: 0; min-height: var(--trio-control-compact); padding: var(--trio-space-1) var(--trio-space-2); border: 1px solid transparent; background: transparent; color: var(--trio-muted); font-size: var(--trio-text-secondary); border-radius: 4px; line-height: calc(20 / 13); font-weight: var(--trio-weight-medium); white-space: normal; overflow-wrap: anywhere; }
+.page-strip-filters button[aria-pressed="true"] { background: var(--trio-accent-soft); color: var(--trio-accent); }
+.focus-deck-shell .page-strip { display: grid; gap: 4px; padding: 0; border: 0; list-style: none; }
+.focus-deck-shell .page-strip-row {
+  display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center;
+  width: 100%; gap: 10px; padding: 8px; text-align: left; white-space: normal; overflow-wrap: anywhere;
+  border: 1px solid transparent; border-radius: 0; background: transparent; color: var(--trio-text);
+}
+.focus-deck-shell .page-strip-row:hover { background: var(--trio-panel-raised); }
+.focus-deck-shell .page-strip-row.selected { background: var(--trio-accent-soft); border-left-color: var(--trio-accent); box-shadow: inset 2px 0 var(--trio-accent); }
+.page-strip-thumbnail { display: grid; place-items: center; width: 52px; height: 70px; overflow: hidden; background: var(--trio-canvas); border: 1px solid var(--trio-border-soft); color: var(--trio-on-canvas); font: 14px var(--trio-font-mono); }
+.page-strip-thumbnail img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.page-strip-info { display: grid; gap: 4px; min-width: 0; font-size: var(--trio-text-caption); color: var(--trio-muted); line-height: 1.5; font-weight: var(--trio-weight-regular); }
+.page-strip-info strong { color: var(--trio-text); font-size: 13px; }
+.page-strip-info .page-strip-image-state { font-size: var(--trio-text-caption); line-height: 1.5; }
+.page-strip-status[data-needs-review="true"] { color: var(--trio-warning); }
+.page-strip-status[data-needs-review="true"]::before { content: "! "; font-weight: 600; }
+
+/* Docked tools leave the page clear, with a restrained active state. */
+.focus-deck-shell .page-image-toolbar { border-color: var(--trio-border-soft); border-radius: 4px; box-shadow: var(--trio-shadow-control); }
+.focus-deck-shell .page-image-tool-group { border-radius: 3px; background: transparent; }
+.focus-deck-shell .page-image-tool-group > button { font-weight: 500; }
+.focus-deck-shell .page-image-stage { border-color: var(--trio-border-soft); }
+.focus-deck-shell .semantic-overlay:not(.is-selected):not(.semantic-overlay-inpainting-mask):not(.semantic-overlay-preserve) { background-image: none; background-color: transparent; }
+.focus-deck-shell .semantic-overlay:not(.is-selected) .semantic-overlay-label { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.focus-deck-shell .semantic-overlay.is-selected { outline-offset: 2px; }
+
+/* The inspector is a continuous editing surface rather than nested cards. */
+.focus-deck-shell .right-inspector :is(.guided-work-panel, .stage-editor, .line-detail-panel) { border-radius: 0; box-shadow: none; }
+.focus-deck-shell .stage-editor[data-stage="translation"] .line-detail-panel { background: transparent; border: 0; padding: 10px; }
+.focus-deck-shell .line-detail-heading { flex-wrap: wrap; min-width: 0; overflow-wrap: anywhere; border-bottom: 1px solid var(--trio-border-soft); padding-bottom: 8px; }
+.focus-deck-shell .line-detail-heading h2 { font-size: 14px; font-weight: 600; }
+.studio-editor-toolbar { position: static; padding: 6px 0; background: var(--trio-panel); border-bottom: 1px solid var(--trio-border-soft); }
+.studio-editor-toolbar .line-navigation-actions { display: flex; gap: var(--trio-space-1); padding: 0; margin: 0; }
+.studio-editor-toolbar .line-navigation-actions button { flex: 1; min-height: var(--trio-control-compact); padding: var(--trio-space-1) var(--trio-space-2); font-size: var(--trio-text-secondary); line-height: calc(20 / 13); font-weight: var(--trio-weight-medium); background: transparent; border: 1px solid var(--trio-border-soft); border-radius: 4px; color: var(--trio-text); }
+.studio-translation-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.studio-translation-actions > button:first-child { flex: 1; }
+.studio-field-language { margin-left: 7px; color: var(--trio-subtle); font-weight: 400; font-size: var(--trio-text-caption); line-height: 1.5; }
+.focus-deck-shell .stage-editor[data-stage="translation"] .focus-editor { display: flex; flex-direction: column; gap: 12px; }
+.focus-deck-shell .stage-editor[data-stage="translation"] .focus-editor > label { width: 100%; min-width: 0; padding: 0; border: 0; background: transparent; }
+.focus-deck-shell .focus-editor > .context-target { outline: none; }
+.focus-deck-shell .focus-editor :is(input, textarea) { font-weight: 400; }
+.focus-deck-shell .focus-editor > label > div:has(> span) { flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
+.focus-deck-shell .focus-editor > label > div:has(> span) > span { min-width: 0; overflow-wrap: anywhere; }
+.focus-deck-shell .focus-editor > label > div:has(> span) > div { flex-wrap: wrap; margin-left: auto; max-width: 100%; }
+.focus-deck-shell .trio-inline-clear-btn { min-width: 28px; min-height: 28px; padding: 0 var(--trio-space-2); font-weight: var(--trio-weight-medium); border: 1px solid var(--trio-border); border-radius: var(--trio-radius-control); background: transparent; color: var(--trio-muted); }
+.focus-deck-shell .stage-editor[data-stage="translation"] .source-editor { min-height: 76px; height: 84px; font-size: 14px; line-height: 1.7; background: var(--trio-bg); }
+.focus-deck-shell .stage-editor[data-stage="translation"] .user-translation-editor { min-height: 100px; height: 112px; font-size: 15px; line-height: 1.7; border-left: 2px solid var(--trio-accent); }
+.focus-deck-shell .translation-neighbours { border-color: var(--trio-border-soft); }
+.focus-deck-shell .stage-editor[data-stage="translation"] .guided-primary-action { background: transparent; border-color: transparent; border-top-color: var(--trio-border-soft); }
+.focus-deck-shell .line-meta-details { border: 0; border-top: 1px solid var(--trio-border-soft); border-radius: 0; background: transparent; }
+.focus-deck-shell .line-meta-details > summary { font-size: 12px; padding: 8px 0; }
+.focus-deck-shell .translation-ownership-badge { border-radius: 3px; font-weight: 500; }
+.focus-deck-shell .dialogue-filmstrip-item { border-radius: 0; border-color: transparent; background: transparent; box-shadow: none; }
+.focus-deck-shell .dialogue-filmstrip-item[aria-current="true"] { border-left-color: var(--trio-accent); background: var(--trio-accent-soft); }
+
+/* The start screen uses the same compact, editorial workspace language. */
+.trio-home-root-container .trio-welcome-title { font-size: 22px; }
+.trio-home-root-container .trio-hero-banner-card { padding: 20px; border-radius: 6px; background: var(--trio-panel); box-shadow: none; }
+.trio-home-root-container .trio-hero-headline { font-size: 17px; color: var(--trio-text); }
+.trio-home-root-container .trio-hero-title-row > svg { display: none; }
+.trio-home-root-container .trio-hero-subtext { color: var(--trio-muted); }
+.trio-home-root-container .trio-hero-features-grid { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--trio-border-soft); gap: 8px; }
+.trio-home-root-container .trio-hero-sub-card { border: 0; border-radius: 3px; padding: 8px; background: transparent; }
+.trio-home-root-container .trio-hero-sub-card:hover { background: var(--trio-panel-raised); }
+
+@media (max-width: 760px) {
+  .focus-deck-shell .studio-editor-toolbar { position: static; }
+  .focus-deck-shell .inkline-command-bar.app-top-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; padding: 6px 8px; }
+  .focus-deck-shell .top-page-actions { grid-column: 2; grid-row: 1; }
+  .focus-deck-shell .top-page-actions button { padding: 4px; font-size: var(--trio-text-secondary); line-height: calc(20 / 13); }
+  .focus-deck-shell .top-file-actions { grid-column: 1 / -1; grid-row: 2; width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+  .focus-deck-shell .top-file-actions > button { flex-shrink: 0; }
+  .focus-deck-shell .focus-deck-workspace { overflow-y: auto; align-items: start; }
+  .focus-deck-shell[data-workspace-stage="translation"] .focus-deck-workspace .resizable-workspace:not(.inspector-collapsed) {
+    height: auto; min-height: 880px; grid-template-rows: 240px 640px; overflow: visible;
+  }
+  .focus-deck-shell[data-workspace-stage="translation"] .focus-deck-editor { height: 640px; }
+  .focus-deck-shell .workspace-precision-notice { margin: 0; font-size: var(--trio-text-secondary); line-height: calc(20 / 13); font-weight: var(--trio-weight-regular); }
+  .focus-deck-shell .stage-editor[data-stage="translation"] .source-editor { height: 72px; }
+  .trio-home-root-container .trio-hero-banner-card { padding: 16px; }
+}
+@media (pointer: coarse) {
+  .focus-deck-shell :is(.page-strip-filters button, .line-navigation-actions button, .studio-translation-actions button, .workspace-navigator button) { min-height: 44px; }
+}
+
+/* Workbench repeated records: shared visual grammar, separate interaction models.
+   A reserved leading edge never competes with the existing focus-visible outline.
+   Only real status/actions occupy slots; no placeholder badges or hidden actions. */
+:is(.page-strip-panel .page-strip-row, .dialogue-table .line-list-row,
+    .dialogue-filmstrip .dialogue-filmstrip-item, .issue-line-panel .issue-line-row,
+    .ocr-candidate-panel .ocr-candidate-row, .speech-review-dialog .speech-review-item,
+    .processing-queue-pages li) {
+  min-width: 0;
+  min-height: 48px;
+  border: 0;
+  border-block-start: 1px solid var(--trio-border-soft);
+  border-inline-start: 3px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--trio-text);
+  font-size: var(--trio-text-secondary);
+  font-weight: var(--trio-weight-regular);
+  line-height: calc(20 / 13);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+:is(.page-strip-panel .page-strip-row, .dialogue-table .line-list-row,
+    .dialogue-filmstrip .dialogue-filmstrip-item, .issue-line-panel .issue-line-row):hover {
+  background: var(--trio-panel-raised);
+}
+:is(.page-strip-panel .page-strip-row.selected, .dialogue-table .line-list-row.selected,
+    .dialogue-filmstrip .dialogue-filmstrip-item[aria-current="true"],
+    .issue-line-panel .issue-line-row.selected, .speech-review-dialog .speech-review-item.active,
+    .processing-queue-pages li[aria-current="true"]) {
+  background: var(--trio-accent-soft);
+  border-inline-start-color: var(--trio-accent);
+  box-shadow: none;
+}
+.page-strip-panel .page-strip,
+.speech-review-dialog .speech-review-group-list,
+.issue-line-panel, .ocr-candidate-panel, .processing-queue-pages { gap: 0; }
+.page-strip-panel .page-strip-row { padding: 8px; }
+.page-strip-info strong { font-weight: var(--trio-weight-medium); }
+
+/* Comparison previews retain three content columns; status has its own axis. */
+.dialogue-table :is(.line-list-header, .line-list-row) {
+  grid-template-columns: minmax(64px, .45fr) minmax(0, 1.8fr) minmax(0, 1.5fr) minmax(88px, .65fr);
+}
+.dialogue-table .line-list-row { align-items: start; }
+.dialogue-table :is(.line-list-row > div, .line-list-header > span) { border-right: 0; }
+.dialogue-table :is(.line-list-id, .line-list-copy, .line-list-state, .line-list-status) {
+  min-width: 0;
+  padding: 8px;
+  align-content: start;
+}
+.dialogue-table .line-list-status { display: grid; gap: 4px; font-size: var(--trio-text-caption); }
+.dialogue-table .line-list-warnings { grid-column: 2 / -1; display: grid; gap: 4px; padding: 0 8px 8px; font-size: var(--trio-text-caption); }
+.dialogue-table .line-list-status[data-status="complete"] > span { color: var(--trio-success); }
+.dialogue-table .line-list-status[data-status="review"] > span,
+.dialogue-table .line-list-warning { color: var(--trio-warning); }
+.dialogue-table :is(.line-list-status small, .line-list-id span, .line-list-id small) {
+  font-size: var(--trio-text-caption);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.dialogue-table :is(.line-list-id strong, .line-list-state strong) { font-weight: var(--trio-weight-medium); }
+.dialogue-table :is(.line-list-copy p, .line-text-sample) { font-size: var(--trio-text-secondary); line-height: calc(20 / 13); }
+.dialogue-table .line-field-label {
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--trio-muted);
+  font-size: var(--trio-text-caption);
+}
+.dialogue-table .line-list-meta { flex-wrap: wrap; }
+.dialogue-table .line-list-meta span { white-space: normal; }
+.dialogue-table .selected :is(.line-list-copy p, .line-text-sample) {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  white-space: pre-wrap;
+}
+
+/* Filmstrip remains horizontal navigation, with a consistent top status slot. */
+.dialogue-filmstrip { gap: 0; }
+.dialogue-filmstrip > li { min-width: 0; }
+.dialogue-filmstrip .dialogue-filmstrip-item { height: 100%; align-content: start; gap: 4px; }
+.dialogue-filmstrip-meta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 6em); align-items: start; }
+.dialogue-filmstrip-meta strong { font-weight: var(--trio-weight-medium); }
+.dialogue-filmstrip .dialogue-filmstrip-status { text-align: end; white-space: normal; }
+.dialogue-filmstrip-text { font-size: var(--trio-text-secondary); line-height: calc(20 / 13); }
+.dialogue-filmstrip-speaker {
+  color: var(--trio-muted);
+  font-size: var(--trio-text-caption);
+  font-weight: var(--trio-weight-regular);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Review reason is primary; prose never becomes a pill or an ellipsis. */
+.issue-line-panel .issue-line-row { grid-template-columns: 3em minmax(0, 1fr) 6em; align-items: start; }
+.issue-line-id { font-weight: var(--trio-weight-medium); }
+.issue-line-reasons { display: flex; flex-wrap: wrap; justify-content: start; gap: 4px 12px; }
+.issue-line-reasons span { border: 0; border-radius: 0; padding: 0; background: transparent; color: var(--trio-text); font-size: var(--trio-text-secondary); }
+.issue-line-copy small { overflow: visible; white-space: normal; font-size: var(--trio-text-caption); }
+.issue-line-context { color: var(--trio-muted); font-size: var(--trio-text-secondary); white-space: pre-wrap; }
+.issue-line-status { color: var(--trio-warning); font-size: var(--trio-text-caption); text-align: end; }
+
+/* Read-only OCR summary does not acquire a checkbox or an invented selection. */
+.ocr-candidate-panel .ocr-candidate-row { grid-template-columns: 3em minmax(0, 1fr) 8em; gap: 8px; align-items: start; }
+.ocr-candidate-id { font-weight: var(--trio-weight-medium); }
+.ocr-candidate-copy { display: grid; min-width: 0; gap: 4px; }
+.ocr-candidate-copy p { margin: 0; white-space: pre-wrap; }
+.ocr-candidate-confidence { text-align: end; }
+
+/* Editable candidates keep inclusion, active target and confidence independent. */
+.speech-review-dialog .speech-review-item,
+.speech-review-dialog.speech-review-panel .speech-review-item { grid-template-columns: minmax(0, 1fr) minmax(0, 8em); gap: 8px; padding: 8px; }
+.speech-review-dialog .speech-review-check { grid-column: 1; grid-row: 1; flex-wrap: wrap; min-width: 0; }
+.speech-review-dialog .speech-review-confidence { grid-column: 2; grid-row: 1; text-align: end; color: var(--trio-muted); font-size: var(--trio-text-caption); }
+.speech-review-dialog .speech-review-item :is(textarea, .speech-review-speaker, .speaker-review-source, .speech-review-item-meta, .speech-review-item-notes) {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
+}
+.speech-review-dialog .speech-review-item textarea { width: 100%; font-size: var(--trio-text-secondary); }
+.speech-review-dialog .speech-review-item-meta span { border: 0; padding: 0; border-radius: 0; background: transparent; }
+.speech-review-dialog .speech-review-item-meta { gap: 4px 12px; }
+.speech-review-dialog .speech-review-item-notes { margin: 0; white-space: pre-wrap; font-size: var(--trio-text-caption); }
+.speech-review-dialog .speech-review-speaker-candidates button { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+
+/* Queue is a vertical work list. Action space is stable even without retry. */
+.processing-queue-pages { grid-template-columns: minmax(0, 1fr); }
+.processing-queue-pages li { grid-template-columns: 4em minmax(0, 1fr) 6em minmax(0, 12em); gap: 8px; align-items: start; }
+.processing-queue-page-number { grid-column: 1; font-weight: var(--trio-weight-medium); }
+.processing-queue-page-stage { grid-column: 2; }
+.processing-queue-page-status { grid-column: 3; font-weight: var(--trio-weight-regular); font-size: var(--trio-text-caption); }
+.processing-queue-pages :is(.processing-queue-page-number, .processing-queue-page-stage, .processing-queue-page-status) { grid-row: 1; white-space: normal; }
+.processing-queue-pages li > button { grid-column: 4; grid-row: 1; justify-self: end; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.processing-queue-page-error { grid-column: 2 / -1; grid-row: 2; overflow: visible; white-space: pre-wrap; font-size: var(--trio-text-caption); }
+.processing-queue-page-error > span { display: block; margin-top: 4px; }
