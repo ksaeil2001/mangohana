@@ -30,19 +30,25 @@ export type AppShellProps = {
   unavailableRecentProjectId?: string | null;
 };
 
-const NAV_ITEMS: { id: NavId; label: string; title: string; icon: string }[] = [
+const PRIMARY_NAV_ITEMS: { id: NavId; label: string; title: string; icon: string }[] = [
   { id: "home", label: "홈", title: "작업 시작", icon: "M3 10 12 3l9 7v10H3ZM9 20v-7h6v7" },
   { id: "projects", label: "프로젝트", title: "프로젝트 관리", icon: "M3 5h7l2 3h9v12H3Z" },
-  { id: "files", label: "파일", title: "프로젝트 파일", icon: "M6 3h8l4 4v14H6ZM14 3v5h4M9 12h6M9 16h6" },
-  { id: "ai", label: "AI 번역", title: "AI 작업 준비", icon: "m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z" },
-  { id: "tools", label: "편집 도구", title: "도구와 내보내기", icon: "m14 4 6 6M4 20l10-10M15 3l6 6-4 4-6-6ZM3 17l4 4" },
-  { id: "dictionary", label: "용어 사전", title: "용어와 캐릭터", icon: "M4 4h7v16H4ZM13 4h7v16h-7M7 8h1M16 8h1M7 12h1M16 12h1" },
   { id: "settings", label: "설정", title: "환경 설정", icon: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" }
 ];
 
+const ALL_NAV_ITEMS: { id: NavId; label: string; title: string }[] = [
+  ...PRIMARY_NAV_ITEMS,
+  { id: "dictionary", label: "캐릭터", title: "캐릭터와 말투" },
+  { id: "ai", label: "AI 번역", title: "AI 작업 준비" },
+  { id: "tools", label: "편집 도구", title: "도구와 내보내기" },
+  { id: "files", label: "파일", title: "프로젝트 파일" }
+];
+
+const NAV_ITEMS = ALL_NAV_ITEMS;
+
 const MAIN_ARIA_LABELS: Record<NavId, string> = {
   home: "홈 대시보드", projects: "프로젝트 관리", files: "파일 탐색기", ai: "AI 번역 대시보드",
-  tools: "도구 및 유틸리티", dictionary: "용어 사전 및 캐릭터 관리", settings: "환경 설정"
+  tools: "도구 및 유틸리티", dictionary: "캐릭터 관리", settings: "환경 설정"
 };
 
 export function AppShell(props: AppShellProps) {
@@ -94,7 +100,7 @@ export function AppShell(props: AppShellProps) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <button type="button" className="mangohana-brand" aria-label="망고하나 홈으로 이동" onClick={() => navigate("home")}>
-              <img src={mangohanaMark} width="32" height="32" alt="" />
+              <img src={mangohanaMark} width="28" height="28" alt="" />
               <span>망고하나</span>
             </button>
             <span className="mangohana-location"><span aria-hidden="true">/</span><strong>{NAV_ITEMS.find((item) => item.id === props.activeNav)?.title}</strong></span>
@@ -117,7 +123,7 @@ export function AppShell(props: AppShellProps) {
             <button type="button" className="trio-header-projects-link" aria-label="프로젝트 목록으로 이동" onClick={() => navigate("projects")}>
               프로젝트 목록
             </button>
-            {props.onResumeWorkspace && <Button onClick={props.onResumeWorkspace}>작업대로 돌아가기</Button>}
+            {props.onResumeWorkspace && <Button variant="primary" onClick={props.onResumeWorkspace}>작업대로 돌아가기</Button>}
             {props.backwardCompatSlot}
           </div>
         </header>
@@ -128,17 +134,27 @@ export function AppShell(props: AppShellProps) {
               navigationToggleRef.current?.focus();
             }
           }}>
-            <span className="mangohana-rail-label">나의 작업실</span>
+            <span className="mangohana-rail-label">핵심 메뉴</span>
             <nav className="trio-sidebar-nav-section" aria-label="메뉴">
-              <ul className="trio-nav-list">
-                {NAV_ITEMS.map((item) => <li key={item.id}>
+              <ul className="trio-nav-list trio-nav-list--primary" aria-label="핵심 메뉴">
+                {PRIMARY_NAV_ITEMS.map((item) => <li key={item.id}>
                   <button type="button" className={`trio-nav-item ${props.activeNav === item.id ? "active" : ""}`}
                     aria-current={props.activeNav === item.id ? "page" : undefined} onClick={() => navigate(item.id)}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={item.icon} /></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={item.icon} /></svg>
                     <span>{item.label}</span>
                   </button>
                 </li>)}
               </ul>
+              {props.onResumeWorkspace && (
+                <div className="mangohana-rail-workspace" style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--trio-border-soft)" }}>
+                  <button type="button" className="trio-nav-item trio-nav-item--workspace" onClick={props.onResumeWorkspace}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="m14 4 6 6M4 20l10-10M15 3l6 6-4 4-6-6ZM3 17l4 4" />
+                    </svg>
+                    <span>작업실로 복귀</span>
+                  </button>
+                </div>
+              )}
             </nav>
             <div className="mangohana-rail-support">
               <button type="button" className="mangohana-support-link" onClick={props.onOpenPreparation}>

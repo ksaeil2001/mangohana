@@ -112,7 +112,6 @@ const projectApi: ElectronProjectApi = {
     ipcRenderer.on("app-update:state", wrapped);
     return () => ipcRenderer.removeListener("app-update:state", wrapped);
   },
-  extractGlossaryProposals: (args) => ipcRenderer.invoke("project:extractGlossaryProposals", args),
   inspectInpaintingQa: (args) => ipcRenderer.invoke("project:inspectInpaintingQa", args),
   runBatchJob: (args) => ipcRenderer.invoke("batch:run", args),
   cancelBatchJob: (args) => ipcRenderer.invoke("batch:cancel", args),

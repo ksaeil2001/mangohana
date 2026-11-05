@@ -4,13 +4,40 @@ import { configDefaults, defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react()],
   base: "./",
+  optimizeDeps: {
+    entries: ["index.html"],
+    include: [
+      "react",
+      "react-dom",
+      "react-dom/client",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime"
+    ]
+  },
   server: {
     strictPort: true,
     // Allows the temporary Manus preview proxy during local UI verification.
-    allowedHosts: [".manus.computer"]
+    allowedHosts: [".manus.computer"],
+    watch: {
+      ignored: [
+        "**/artifacts/**",
+        "**/.worktrees/**",
+        "**/release/**",
+        "**/dist-electron/**",
+        "**/dist-renderer/**",
+        "**/resources/**",
+        "**/review-captures*/**"
+      ]
+    },
+    warmup: {
+      clientFiles: [
+        "./index.html",
+        "./src/renderer/App.tsx"
+      ]
+    }
   },
   test: {
-    exclude: [...configDefaults.exclude, "**/.worktrees/**"],
+    exclude: [...configDefaults.exclude, "**/.worktrees/**", "**/artifacts/**"],
     environment: "jsdom",
     globals: true,
     setupFiles: ["./tests/setup.ts"],

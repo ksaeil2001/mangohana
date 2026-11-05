@@ -705,7 +705,6 @@ export function createBatchExecutionCoordinator(deps: {
               dialogueLines: newLines,
               targetLineId: line.id,
               characters: targetProject.characters,
-              dictionaryTerms: targetProject.dictionaryTerms,
               stylePreset: validatedConfig.speechStylePreset
             };
             const payload = buildTranslationContextPayload(payloadArgs);
@@ -1379,7 +1378,6 @@ function createQueueExecutionConfig(
   return {
     targetPages: [pageNumber],
     runOcr: false,
-    runGlossary: false,
     runTranslate: stage === "translation",
     runInpaint: false,
     runTypeset: stage === "typesetting",

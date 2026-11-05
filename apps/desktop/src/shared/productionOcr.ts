@@ -32,6 +32,30 @@ export const PRODUCTION_OCR_CONTRACT = Object.freeze({
   normalization: "NFKC_JAPANESE_QUOTES"
 } as const);
 
+export const MANGA_OCR_MODELS = Object.freeze({
+  detector: Object.freeze({
+    modelId: "Kellenok/PP-OCRv6_manga",
+    revision: "c94f4a20677f1ba0c90625bccf42ea980f24e2f4"
+  }),
+  recognizer: Object.freeze({
+    modelId: "JustANormalTinkerer/hayai-ocr-v2.5-nova",
+    revision: "2803d0dc005fa4396ab1e7c5a472d2c450a247f7"
+  }),
+  // Internal composition identity, not an upstream model repository.
+  compositeDetector: Object.freeze({ modelId: "trio/ppocr-manga-assisted", revision: "1" })
+} as const);
+
+export type ProductionOcrModelIdentity = Readonly<{ modelId: string; revision: string }>;
+export type ProductionOcrDetectionModelIdentity =
+  | Pick<typeof PRODUCTION_OCR_CONTRACT.detector, "modelId" | "revision">
+  | typeof MANGA_OCR_MODELS.detector;
+export type ProductionOcrDetectorIdentity =
+  | ProductionOcrDetectionModelIdentity
+  | typeof MANGA_OCR_MODELS.compositeDetector;
+export type ProductionOcrRecognizerIdentity =
+  | Pick<typeof PRODUCTION_OCR_CONTRACT.recognizer, "modelId" | "revision">
+  | typeof MANGA_OCR_MODELS.recognizer;
+
 export type ProductionOcrOrientation = "horizontal" | "vertical" | "unknown";
 
 export type ProductionOcrPoint = Readonly<{
@@ -48,6 +72,10 @@ export type ProductionOcrPixelBbox = Readonly<{
 
 export type ProductionOcrDetection = Readonly<{
   detectionId: string;
+  /** Absent on legacy PP detections; support from Manga does not change the source. */
+  sourceModel?: ProductionOcrDetectionModelIdentity;
+  /** Independent model confirmation; the quad and score still belong to sourceModel. */
+  supportedBy?: ProductionOcrDetectionModelIdentity;
   sourceQuadPx: readonly [
     ProductionOcrPoint,
     ProductionOcrPoint,
@@ -68,6 +96,10 @@ export type ProductionOcrGroup = Readonly<{
   sourceDetectionIds: readonly string[];
   memberQuadsPx: readonly ProductionOcrDetection["sourceQuadPx"][];
   memberScores: readonly number[];
+  /** Parallel to sourceDetectionIds, memberQuadsPx and memberScores. */
+  memberModels?: readonly ProductionOcrDetectionModelIdentity[];
+  /** Parallel support identities; null means no independent confirmation for that member. */
+  memberSupportModels?: readonly (ProductionOcrDetectionModelIdentity | null)[];
   groupBboxPx: ProductionOcrPixelBbox;
   bbox: NormalizedBbox;
   polygon: readonly [PolygonPoint, PolygonPoint, PolygonPoint, PolygonPoint];
@@ -78,6 +110,13 @@ export type ProductionOcrGroup = Readonly<{
   imageHeight: number;
 }>;
 
+export type ProductionOcrAdditionalPaddingPx = Readonly<{
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}>;
+
 export type ProductionOcrCropTransform = Readonly<{
   sourceBboxPx: ProductionOcrPixelBbox;
   cropBboxPx: ProductionOcrPixelBbox;
@@ -85,18 +124,24 @@ export type ProductionOcrCropTransform = Readonly<{
   rotationDegrees: 0;
   imageWidth: number;
   imageHeight: number;
+  /** Actual extra integer pixels beyond the default 8% crop, after image-bound clipping. */
+  additionalPaddingPx?: ProductionOcrAdditionalPaddingPx;
 }>;
 
 export type ProductionOcrProvenance = Readonly<{
   contractVersion: 1;
-  detectorModelId: typeof PRODUCTION_OCR_CONTRACT.detector.modelId;
-  detectorRevision: typeof PRODUCTION_OCR_CONTRACT.detector.revision;
-  recognizerModelId: typeof PRODUCTION_OCR_CONTRACT.recognizer.modelId;
-  recognizerRevision: typeof PRODUCTION_OCR_CONTRACT.recognizer.revision;
+  detectorModelId: ProductionOcrDetectorIdentity["modelId"];
+  detectorRevision: ProductionOcrDetectorIdentity["revision"];
+  recognizerModelId: ProductionOcrRecognizerIdentity["modelId"];
+  recognizerRevision: ProductionOcrRecognizerIdentity["revision"];
   groupId: string;
   sourceDetectionIds: readonly string[];
   sourceQuadsPx: readonly ProductionOcrDetection["sourceQuadPx"][];
   sourceDetectionScores: readonly number[];
+  /** Omission is supported only for legacy PP/Baberu provenance. */
+  sourceDetectionModels?: readonly ProductionOcrDetectionModelIdentity[];
+  /** Parallel to sourceDetectionModels; only a PP source supported by pinned Manga is allowed. */
+  sourceDetectionSupportModels?: readonly (ProductionOcrDetectionModelIdentity | null)[];
   orientation: ProductionOcrOrientation;
   cropTransform: ProductionOcrCropTransform;
   confidenceSource: "detector_min";

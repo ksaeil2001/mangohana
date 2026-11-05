@@ -34,6 +34,7 @@ export type BatchAutomationModalProps = {
   projectSessionId?: string | null;
   sessionGeneration?: number;
   pageCount: number;
+  targetPages?: BatchPipelineConfig["targetPages"];
   isOpen: boolean;
   onClose: () => void;
   onOpenProcessingQueue?: () => void;
@@ -53,6 +54,7 @@ export function BatchAutomationModal({
   projectSessionId,
   sessionGeneration = 0,
   pageCount,
+  targetPages = "all",
   isOpen,
   onClose,
   onOpenProcessingQueue,
@@ -232,7 +234,8 @@ export function BatchAutomationModal({
     cancelMessageRef.current = null;
     pausePromiseRef.current = null;
     controlSequenceRef.current += 1;
-    const initial = createInitialBatchProgress(pageCount, config);
+    const runConfig = { ...config, targetPages };
+    const initial = createInitialBatchProgress(pageCount, runConfig);
     setProgress(initial);
 
     const runBatchJob = window.projectApi?.runBatchJob;
@@ -274,7 +277,7 @@ export function BatchAutomationModal({
       const result = await runBatchJob({
         project: projectSessionId ? undefined : project,
         projectSessionId: projectSessionId ?? undefined,
-        config,
+        config: runConfig,
         pageCount,
         requestId
       });
@@ -419,39 +422,34 @@ export function BatchAutomationModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="trio-modal-header">
-          <div><p className="stitch-dialog-kicker">번역 작업 / 일괄 처리</p><h3 id="batch-modal-title">전 페이지 일괄 자동화</h3></div>
+          <div>
+            <h3 id="batch-modal-title">일괄 작업</h3>
+          </div>
           {!isRunning && (
-            <button type="button" className="trio-modal-close" aria-label="닫기" onClick={onClose}>
+            <button type="button" className="trio-modal-close" aria-label="닫기" onClick={onClose} title="닫기 (Esc)">
               ✕
             </button>
           )}
         </div>
 
         <div className="trio-modal-body">
-          {!isRunning && displayedProgress.stage === "idle" && hasUnfinishedQueue ? <p role="status" className="stitch-batch-condition">진행 중이거나 일시정지된 작업이 있습니다. 작업 큐에서 재개하거나 취소한 뒤 새 일괄 작업을 시작하세요.</p> : null}
-          <ol className="stitch-batch-steps" aria-label="일괄 처리 단계">
-            <li aria-current={!isRunning && displayedProgress.stage === "idle" ? "step" : undefined}>01 실행 설정</li>
-            <li aria-current={isRunning ? "step" : undefined}>02 진행 확인</li>
-            <li aria-current={!isRunning && displayedProgress.stage !== "idle" ? "step" : undefined}>03 결과 검수</li>
-          </ol>
+          {!isRunning && displayedProgress.stage === "idle" && hasUnfinishedQueue ? (
+            <p role="status" className="stitch-batch-condition">
+              진행 중이거나 일시정지된 작업이 있습니다. 작업 큐에서 재개하거나 취소한 뒤 새 일괄 작업을 시작하세요.
+            </p>
+          ) : null}
           <div className="stitch-batch-plan">
             <section className="stitch-batch-scope" aria-labelledby="batch-scope-heading">
               <span className="stitch-dialog-kicker">실행 범위</span>
-              <h4 id="batch-scope-heading">전체 {pageCount}개 페이지</h4>
-              <dl>
-                <div><dt>번역 준비</dt><dd>OCR 대사 확인 · AI 번역은 검토용 제안</dd></div>
-                <div><dt>식자 준비</dt><dd>사용자가 확정한 번역에만 적용</dd></div>
-                <div><dt>페이지별 작업</dt><dd>OCR·인페인팅은 페이지별 실행</dd></div>
-              </dl>
-              <p>덮어쓰기 꺼짐: 기존 번역은 건너뜀 · 확정 번역은 식자 재계산 가능</p>
+              <h4 id="batch-scope-heading">{targetPages === "all" ? `전체 ${pageCount}개 페이지` : `선택한 ${targetPages.length}개 페이지`}</h4>
+              {targetPages !== "all" && <p>대상 페이지 {targetPages.join(", ")}</p>}
+              <p>기존 번역은 유지합니다. AI 번역은 검토용 제안이며, 자동 식자는 확정된 번역에 적용합니다.</p>
+              <p>OCR·인페인팅은 페이지별 실행</p>
             </section>
             <section className="stitch-batch-config" aria-labelledby="batch-config-heading">
               <h4 id="batch-config-heading">실행할 작업</h4>
-              <fieldset disabled={isRunning}>
-                <legend>단계 설정</legend>
-                <label className="checkbox-row"><input type="checkbox" checked={false} disabled />말풍선 OCR (작업대 개별)</label>
+              <fieldset disabled={isRunning} aria-labelledby="batch-config-heading">
                 <label className="checkbox-row"><input type="checkbox" checked={config.runTranslate} onChange={(event) => setConfig((previous) => ({ ...previous, runTranslate: event.target.checked }))} />AI 문맥 번역</label>
-                <label className="checkbox-row"><input type="checkbox" checked={false} disabled />배경 인페인팅 (작업대 개별)</label>
                 <label className="checkbox-row"><input type="checkbox" checked={config.runTypeset} onChange={(event) => setConfig((previous) => ({ ...previous, runTypeset: event.target.checked }))} />지능형 자동 식자</label>
                 <label className="stitch-batch-preset" htmlFor="batch-speech-preset">번역 말투 프리셋
                   <select id="batch-speech-preset" className="trio-select" value={config.speechStylePreset} onChange={(event) => setConfig((previous) => ({ ...previous, speechStylePreset: event.target.value as MangaSpeechStylePreset }))}>
@@ -467,8 +465,13 @@ export function BatchAutomationModal({
           {(isRunning || displayedProgress.stage !== "idle") && (
             <section className="stitch-batch-progress" aria-label={isRunning ? "실행 진행" : "실행 결과"} data-stage={displayedProgress.stage}>
               <h4>{isRunning ? "실행 진행" : isPaused ? "일시정지 결과" : "실행 결과"}</h4>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "var(--trio-text-caption)", marginBottom: "var(--trio-space-1)" }}>
-                <span role="status">{displayedProgress.currentMessage}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "var(--trio-text-caption)", marginBottom: "var(--trio-space-2)" }}>
+                <span role="status" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {isRunning && (
+                    <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--trio-accent)", display: "inline-block" }} />
+                  )}
+                  {displayedProgress.currentMessage}
+                </span>
                 <strong>{displayedProgress.percent}%</strong>
               </div>
               <div
@@ -477,19 +480,20 @@ export function BatchAutomationModal({
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label="일괄 처리 진행률"
-                style={{ width: "100%", height: "8px", background: "var(--trio-border-soft)", borderRadius: "var(--trio-radius-sm)", overflow: "hidden" }}
+                style={{ width: "100%", height: "10px", background: "var(--trio-border-soft)", borderRadius: "9999px", overflow: "hidden" }}
               >
                 <div
                   style={{
                     width: `${displayedProgress.percent}%`,
                     height: "100%",
+                    borderRadius: "9999px",
                     background:
                       displayedProgress.stage === "error" || displayedProgress.stage === "failed"
                         ? "var(--trio-error)"
                         : displayedProgress.stage === "partial"
                           ? "var(--trio-warning)"
                           : "var(--trio-accent)",
-                    transition: "width 0.3s ease"
+                    transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                   }}
                 />
               </div>
@@ -499,15 +503,9 @@ export function BatchAutomationModal({
 
           {errorSummaries.length > 0 ? (
             <section
+              className="stitch-batch-errors"
               aria-label="일괄 처리 오류 요약"
               role="alert"
-              style={{
-                marginTop: "var(--trio-space-3)",
-                padding: "var(--trio-space-2) var(--trio-space-3)",
-                border: "1px solid var(--trio-warning)",
-                borderRadius: "var(--trio-radius-sm)",
-                background: "var(--trio-warning-soft)"
-              }}
             >
               <strong style={{ display: "block", fontSize: "var(--trio-text-caption)" }}>
                 확인이 필요한 오류 {errorSummaries.length}건
@@ -515,16 +513,16 @@ export function BatchAutomationModal({
               <ul style={{ margin: "var(--trio-space-1) 0 0", paddingLeft: "var(--trio-space-4)", fontSize: "var(--trio-text-caption)", lineHeight: 1.5 }}>
                 {errorSummaries.map((summary) => (
                   <li key={summary.key}>
-                    <strong>{summary.label}</strong>
+                    <strong className="error-page-tag">{summary.label}</strong>
                     {summary.messages.map((message) => (
-                      <span key={message} style={{ display: "block", marginLeft: "var(--trio-space-2)" }}>{message}</span>
+                      <span key={message} style={{ display: "inline-block", marginRight: "var(--trio-space-2)" }}>{message}</span>
                     ))}
                     {summary.additionalCount > 0 ? ` (외 ${summary.additionalCount}건)` : ""}
                   </li>
                 ))}
               </ul>
               {failedQueuePageCount > 0 ? (
-                <p style={{ margin: "var(--trio-space-1) 0 0", fontSize: "var(--trio-text-caption)" }}>
+                <p style={{ margin: "var(--trio-space-2) 0 0", fontSize: "var(--trio-text-caption)", color: "var(--trio-muted)" }}>
                   저장된 작업 큐에 실패 페이지 {failedQueuePageCount}개가 있습니다. 오류를 확인한 뒤 페이지별로 재시도할 수 있습니다.
                 </p>
               ) : null}
@@ -540,7 +538,7 @@ export function BatchAutomationModal({
                   <Button type="button" variant="secondary" disabled={!actualQueueId || isPausePending || isCancelRequested || finalResponseReceivedRef.current || !window.projectApi?.updateProcessingQueue} onClick={handlePause}>
                     일시정지
                   </Button>
-                  {!actualQueueId ? <span role="status">작업 큐를 준비 중입니다. 실제 큐를 확인한 뒤 일시정지할 수 있습니다.</span> : null}
+                  {!actualQueueId ? <span role="status" style={{ fontSize: "12px", color: "var(--trio-muted)" }}>작업 큐를 준비 중입니다. 실제 큐를 확인한 뒤 일시정지할 수 있습니다.</span> : null}
                 </>
               ) : null}
               <Button type="button" variant="secondary" disabled={isCancelRequested} onClick={() => void handleCancel()}>
@@ -571,11 +569,12 @@ export function BatchAutomationModal({
               <Button
                 type="button"
                 variant="primary"
+                aria-label="⚡ 일괄 처리 시작"
                 onClick={handleStartBatch}
                 disabled={!hasRunnableStage || hasUnfinishedQueue}
                 title={hasUnfinishedQueue ? "기존 작업을 작업 큐에서 재개하거나 취소하세요" : hasRunnableStage ? undefined : "번역 또는 식자 중 적어도 하나를 선택하세요"}
               >
-                ⚡ 일괄 처리 시작
+                일괄 처리 시작
               </Button>
             </>
           )}

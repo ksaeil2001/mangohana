@@ -1,7 +1,6 @@
-import type { CharacterProfile, DialogueType, DictionaryTerm } from "../projectTypes.js";
+import type { CharacterProfile, DialogueType } from "../projectTypes.js";
 
 export type TranslationQaIssueType =
-  | "GLOSSARY_MISMATCH"
   | "SPEECH_STYLE_MISMATCH"
   | "UNTRANSLATED_ARTIFACT"
   | "BRACKET_MISMATCH"
@@ -14,7 +13,6 @@ export type TranslationQaIssue = {
   severity: TranslationQaSeverity;
   message: string;
   detail?: string;
-  suggestedFix?: string;
 };
 
 export type TranslationQaReport = {
@@ -26,7 +24,6 @@ export type TranslationQaReport = {
 export type InspectTranslationQaArgs = {
   sourceText: string;
   translatedText: string;
-  matchedTerms?: readonly DictionaryTerm[];
   speakerProfile?: CharacterProfile;
   dialogueType?: DialogueType;
 };
@@ -35,12 +32,12 @@ const JAPANESE_CHAR_REGEX = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
 const REASONING_TAG_REGEX = /<think>|<\/think>|```/i;
 
 /**
- * Inspects translation quality and consistency according to Glossarion rules.
+ * Inspects translation artifacts, speech style, and formatting consistency.
  */
 export function inspectTranslationQuality(
   args: InspectTranslationQaArgs
 ): TranslationQaReport {
-  const { sourceText, translatedText, matchedTerms = [], speakerProfile, dialogueType } = args;
+  const { sourceText, translatedText, speakerProfile, dialogueType } = args;
   const issues: TranslationQaIssue[] = [];
 
   const trimmedSource = sourceText?.trim() ?? "";
@@ -85,28 +82,7 @@ export function inspectTranslationQuality(
     });
   }
 
-  // 3. Glossary & Terminology Compliance
-  for (const term of matchedTerms) {
-    const termSrc = term.source.trim();
-    const termDst = term.target.trim();
-    if (!termSrc || !termDst) continue;
-
-    // Check if source text actually contains the term
-    if (trimmedSource.toLowerCase().includes(termSrc.toLowerCase())) {
-      // Check if translation contains target
-      if (!trimmedTrans.toLowerCase().includes(termDst.toLowerCase())) {
-        issues.push({
-          type: "GLOSSARY_MISMATCH",
-          severity: "warning",
-          message: `지정된 용어집 단어 '${termSrc} -> ${termDst}'이(가) 번역문에 반영되지 않았습니다.`,
-          detail: `기대 번역어: ${termDst}`,
-          suggestedFix: termDst
-        });
-      }
-    }
-  }
-
-  // 4. Speaker Tone & Speech Style Consistency
+  // 3. Speaker Tone & Speech Style Consistency
   if (speakerProfile?.speechStyle) {
     const style = speakerProfile.speechStyle.toLowerCase();
 
@@ -145,7 +121,7 @@ export function inspectTranslationQuality(
     }
   }
 
-  // 5. Bracket and Quote Balance
+  // 4. Bracket and Quote Balance
   const openJpQuote = (trimmedTrans.match(/「/g) || []).length;
   const closeJpQuote = (trimmedTrans.match(/」/g) || []).length;
   if (openJpQuote !== closeJpQuote) {

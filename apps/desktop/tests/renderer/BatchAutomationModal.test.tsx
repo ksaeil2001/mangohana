@@ -100,6 +100,20 @@ describe("BatchAutomationModal", () => {
     expect(openQueue).toHaveBeenCalledOnce();
   });
 
+  it("sends only the pages shown in the selected scope", async () => {
+    const run = gate<BatchResult>();
+    const runBatchJob = vi.fn().mockReturnValue(run.promise);
+    window.projectApi = { runBatchJob } as never;
+    render(<BatchAutomationModal project={mockProject} pageCount={5} targetPages={[2, 5]} isOpen
+      onClose={vi.fn()} onApplyBatchProject={vi.fn()} />);
+
+    expect(screen.getByRole("heading", { name: "선택한 2개 페이지" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "⚡ 일괄 처리 시작" }));
+    expect(runBatchJob).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      config: expect.objectContaining({ targetPages: [2, 5] })
+    }));
+  });
+
   it("uses only matching actual queue metadata for pause and preserves cancel text over progress and late pause errors", async () => {
     const run = gate<BatchResult>();
     const pause = gate<never>();
@@ -299,14 +313,11 @@ describe("BatchAutomationModal", () => {
       />
     );
 
-    expect(screen.getByRole("heading", { name: "전 페이지 일괄 자동화" })).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: /전 페이지 일괄 자동화/ })).toHaveClass("stitch-dialog--batch");
-    expect(screen.getByLabelText("말풍선 OCR (작업대 개별)")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "일괄 작업" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /일괄 작업/ })).toHaveClass("stitch-dialog--batch");
     expect(screen.getByLabelText("AI 문맥 번역")).toBeInTheDocument();
-    expect(screen.getByLabelText("배경 인페인팅 (작업대 개별)")).toBeInTheDocument();
     expect(screen.getByLabelText("지능형 자동 식자")).toBeInTheDocument();
-    expect(screen.getByText("OCR 대사 확인 · AI 번역은 검토용 제안")).toBeInTheDocument();
-    expect(screen.getByText("사용자가 확정한 번역에만 적용")).toBeInTheDocument();
+    expect(screen.getByText(/AI 번역은 검토용 제안/)).toBeInTheDocument();
   });
 
   it("does not start batch processing when translation and typesetting are both off", async () => {
@@ -410,8 +421,6 @@ describe("BatchAutomationModal", () => {
       />
     );
 
-    expect(screen.getByLabelText("말풍선 OCR (작업대 개별)")).toBeDisabled();
-    expect(screen.getByLabelText("배경 인페인팅 (작업대 개별)")).toBeDisabled();
     expect(screen.getByText("OCR·인페인팅은 페이지별 실행")).toBeInTheDocument();
   });
 

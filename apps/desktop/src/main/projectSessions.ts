@@ -1561,7 +1561,6 @@ function validateAndFilterBatchPatch(
           dialogueLines: validationProject.dialogueLines,
           targetLineId: update.id,
           characters: validationProject.characters,
-          dictionaryTerms: validationProject.dictionaryTerms,
           stylePreset: update.stylePreset ?? patch.speechStylePreset
         });
         if (currentFingerprint === update.expectedTranslationFingerprint) {

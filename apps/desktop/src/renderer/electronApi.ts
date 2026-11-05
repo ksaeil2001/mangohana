@@ -23,24 +23,13 @@ import type {
 } from "../shared/speechBubbleExtraction.js";
 import type { EnvironmentPreparationSnapshot } from "../shared/environmentPreparation.js";
 import type { AutoUpdateState } from "../shared/autoUpdateStatus.js";
-import type { GlossaryExtractionResult } from "../shared/glossaryPipeline.js";
 import type { InpaintingQaResult } from "../shared/inpaintingQa.js";
-import type {
-  CharacterProfile,
-  DictionaryTerm
-} from "../shared/projectTypes.js";
+import type { CharacterProfile } from "../shared/projectTypes.js";
 import type { BatchProgressEvent, ProcessingQueueActionArgs, ProcessingQueueActionResult } from "../shared/processingQueue.js";
 import type { RenderReadinessReport } from "../shared/renderReadiness.js";
 import type { ProjectImageExportResult } from "../main/projectImageExport.js";
 
-import type {
-  DialogueTurnContext,
-  FuzzyTmCandidate,
-  InspectTranslationQaArgs,
-  TranslationContextPayload,
-  TranslationMemoryEntry,
-  TranslationQaReport
-} from "../shared/translationContext.js";
+import type { FuzzyTmCandidate, InspectTranslationQaArgs, TranslationContextPayload, TranslationMemoryEntry, TranslationQaReport } from "../shared/translationContext.js";
 
 export type ProjectFileResult = {
   filePath: string;
@@ -68,7 +57,7 @@ export type ElectronProjectApi = {
     pageNumber: number;
     radius?: number;
   }) => Promise<number[]>;
-  saveProjectAs?: (args: { projectSessionId: string; filePath?: string }) => Promise<ProjectSaveResult | null>;
+  saveProjectAs?: (args: { projectSessionId: string; filePath?: string; silentDefault?: boolean }) => Promise<ProjectSaveResult | null>;
 
   rekeyProject?: (args: { projectSessionId: string; newPassword: string }) => Promise<ProjectSaveResult>;
   closeProject?: (args: { projectSessionId: string }) => Promise<void>;
@@ -160,7 +149,6 @@ export type ElectronProjectApi = {
     sourceLanguage?: "ja" | "en" | "auto";
     previousContext?: string[];
     characterNotes?: string;
-    glossaryNotes?: string;
     systemPrompt?: string;
     temperature?: number;
   }) => Promise<string>;
@@ -210,7 +198,6 @@ export type ElectronProjectApi = {
     projectSessionId?: string;
     dialogueLines?: DialogueLine[];
     characters?: CharacterProfile[];
-    dictionaryTerms?: DictionaryTerm[];
     targetLineId: string;
     stylePreset?: string;
   }) => Promise<TranslationContextPayload>;
@@ -223,12 +210,6 @@ export type ElectronProjectApi = {
   installAutoUpdate?: () => Promise<AutoUpdateState>;
   openAutoUpdateRelease?: () => Promise<void>;
   onAutoUpdateState?: (listener: (state: AutoUpdateState) => void) => () => void;
-  extractGlossaryProposals?: (args: {
-    projectSessionId?: string;
-    dialogueLines?: DialogueLine[];
-    existingCharacters?: CharacterProfile[];
-    existingTerms?: DictionaryTerm[];
-  }) => Promise<GlossaryExtractionResult>;
   inspectInpaintingQa?: (args: {
     projectSessionId?: string;
     pageImageId?: string;

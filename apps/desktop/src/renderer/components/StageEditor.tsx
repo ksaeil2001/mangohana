@@ -1,6 +1,6 @@
 import { Button } from "./Ui.js";
 import { useEffect, useRef, useState, type FormEvent, type Ref } from "react";
-import type { CharacterProfile, DialogueLine, DictionaryTerm } from "../../shared/projectTypes";
+import type { CharacterProfile, DialogueLine } from "../../shared/projectTypes";
 import type { SpeechBubbleExtractionResult } from "../../shared/speechBubbleExtraction";
 import type { GuidedStage } from "../guidedWorkflow";
 import type { IssueEditor } from "../issueEditorState";
@@ -27,7 +27,7 @@ type Props = {
   onMoveLine: (direction: 1 | -1) => void;
   canMovePrevious: boolean;
   canMoveNext: boolean;
-  onApproveTranslation: () => void;
+  onApproveTranslation: (advance?: boolean) => void;
   onPostponeTranslation?: () => void;
   hasActionableProjectLines: boolean;
   hasProjectLines?: boolean;
@@ -42,7 +42,6 @@ type Props = {
   issueContextId?: string | null;
   dialogueLines?: readonly DialogueLine[];
   characters?: readonly CharacterProfile[];
-  dictionaryTerms?: readonly DictionaryTerm[];
   onRequestAiTranslation?: (line: DialogueLine) => Promise<void>;
   onCancelAiTranslation?: () => void;
   isTranslating?: boolean;
@@ -55,8 +54,6 @@ type Props = {
   onUserTranslationFocus?: () => void;
   projectEditingDisabled?: boolean;
 };
-
-
 
 export function StageEditor(props: Props) {
   const errorRef = useRef<HTMLDivElement>(null);
@@ -159,6 +156,7 @@ function TranslationSection(props: Props & { context?: IssueEditor }) {
           <LineDetailPanel
             context={props.context ?? "translation"}
             line={props.line}
+            onApproveTranslation={props.onApproveTranslation}
             onUpdateLine={props.onUpdateLine}
             onDeleteLine={props.onDeleteLine}
             onMoveLine={props.onMoveLine}
@@ -166,7 +164,6 @@ function TranslationSection(props: Props & { context?: IssueEditor }) {
             canMoveNext={props.canMoveNext}
             dialogueLines={props.dialogueLines}
             characters={props.characters}
-            dictionaryTerms={props.dictionaryTerms}
             onRequestAiTranslation={props.onRequestAiTranslation}
             onCancelAiTranslation={props.onCancelAiTranslation}
             isTranslating={props.isTranslating}
@@ -182,7 +179,7 @@ function TranslationSection(props: Props & { context?: IssueEditor }) {
               data-primary-action={props.error ? undefined : "true"}
               disabled={props.busy || Boolean(props.error) || props.projectEditingDisabled || !canConfirmTranslation(props.line)}
               title={!canConfirmTranslation(props.line) ? "확정할 번역문을 먼저 입력하거나 제안을 만드세요." : undefined}
-              onClick={props.onApproveTranslation}
+              onClick={() => props.onApproveTranslation()}
             >
               {!props.line.userTranslation && props.line.aiTranslation?.trim() ? "제안 채택 및 검수 확정" : "검수 확정"}
             </button>
@@ -210,6 +207,7 @@ function IssueLineEditorSurface(props: Props & { editor: IssueEditor }) {
       <LineDetailPanel
         context={props.editor}
         line={props.line}
+        onApproveTranslation={props.onApproveTranslation}
         onUpdateLine={props.onUpdateLine}
         onDeleteLine={props.onDeleteLine}
         onMoveLine={props.onMoveLine}
@@ -217,7 +215,6 @@ function IssueLineEditorSurface(props: Props & { editor: IssueEditor }) {
         canMoveNext={props.canMoveNext}
         dialogueLines={props.dialogueLines}
         characters={props.characters}
-        dictionaryTerms={props.dictionaryTerms}
         onRequestAiTranslation={props.onRequestAiTranslation}
         onCancelAiTranslation={props.onCancelAiTranslation}
         isTranslating={props.isTranslating}
@@ -225,7 +222,6 @@ function IssueLineEditorSurface(props: Props & { editor: IssueEditor }) {
         onUserTranslationFocus={props.onUserTranslationFocus}
         disabled={props.projectEditingDisabled}
       />
-
 
       {props.editor === "translation" ? (
         <div className="guided-primary-action">
@@ -236,7 +232,7 @@ function IssueLineEditorSurface(props: Props & { editor: IssueEditor }) {
             data-primary-action={props.error ? undefined : "true"}
             disabled={props.busy || Boolean(props.error) || props.projectEditingDisabled || !props.line || !canConfirmTranslation(props.line)}
             title={!props.line || !canConfirmTranslation(props.line) ? "확정할 번역문을 먼저 입력하거나 제안을 만드세요." : undefined}
-            onClick={props.onApproveTranslation}
+            onClick={() => props.onApproveTranslation()}
           >
             {!props.line?.userTranslation && props.line?.aiTranslation?.trim() ? "제안 채택 및 검수 확정" : "검수 확정"}
           </button>

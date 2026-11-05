@@ -2,12 +2,10 @@ import type {
   CharacterProfile,
   DialogueLine,
   DialogueType,
-  DictionaryTerm,
   SourceLanguage
 } from "../projectTypes.js";
-import { type ScoredTurnContext, selectRelevantDialogueContext } from "./contextSelector.js";
-import { type FuzzyTmCandidate, createTranslationMemory } from "./translationMemory.js";
-import { type ConditionalDictionaryTerm, createTrieMatcher } from "./trieMatcher.js";
+import { selectRelevantDialogueContext } from "./contextSelector.js";
+import { createTranslationMemory } from "./translationMemory.js";
 
 export type TranslationSourceItem = {
   id: string;
@@ -29,13 +27,6 @@ export type ContextTurnItem = {
   direction?: "previous" | "next";
 };
 
-export type MatchedGlossaryEntry = {
-  source: string;
-  target: string;
-  note?: string;
-  isConditional?: boolean;
-};
-
 export type TranslationContextPayload = {
   version: "1.0";
   source: TranslationSourceItem;
@@ -46,7 +37,6 @@ export type TranslationContextPayload = {
   };
   entities: {
     speakerProfile?: CharacterProfile;
-    matchedGlossary: MatchedGlossaryEntry[];
     fuzzyTmMatches: Array<{
       sourceText: string;
       targetTranslation: string;
@@ -68,7 +58,6 @@ export type BuildPayloadArgs = {
   dialogueLines: readonly DialogueLine[];
   targetLineId: string;
   characters?: readonly CharacterProfile[];
-  dictionaryTerms?: readonly (DictionaryTerm | ConditionalDictionaryTerm)[];
   recentHistory?: readonly ContextTurnItem[];
   stylePreset?: string;
   maxPreviousTurns?: number;
@@ -84,7 +73,6 @@ export function buildTranslationContextPayload(args: BuildPayloadArgs): Translat
     dialogueLines,
     targetLineId,
     characters = [],
-    dictionaryTerms = [],
     recentHistory = [],
     stylePreset,
     maxPreviousTurns = 4,
@@ -134,27 +122,7 @@ export function buildTranslationContextPayload(args: BuildPayloadArgs): Translat
     });
   }
 
-  // 3. GalTransl: Trie-based conditional glossary matching
-  const trie = createTrieMatcher(dictionaryTerms);
-  const textPool = [
-    targetLine.sourceText,
-    ...previousTurns.map((t) => t.sourceText),
-    ...nextTurns.map((t) => t.sourceText)
-  ].join(" ");
-
-  const matchedTerms = trie.findMatches(textPool, {
-    speaker: targetLine.speaker,
-    dialogueType: targetLine.dialogueType
-  });
-
-  const matchedGlossary: MatchedGlossaryEntry[] = matchedTerms.map((t) => ({
-    source: t.source,
-    target: t.target,
-    note: t.note,
-    isConditional: Boolean(t.condition?.speaker || t.condition?.dialogueType)
-  }));
-
-  // 4. Supervertaler: Fuzzy Translation Memory search
+  // 3. Supervertaler: Fuzzy Translation Memory search
   const tm = createTranslationMemory(dialogueLines);
   const fuzzyCandidates = tm.findFuzzy(targetLine.sourceText, {
     excludeLineId: targetLine.id,
@@ -170,7 +138,7 @@ export function buildTranslationContextPayload(args: BuildPayloadArgs): Translat
     speaker: c.entry.speaker
   }));
 
-  // 5. Assemble Payload
+  // 4. Assemble Payload
   return {
     version: "1.0",
     source: {
@@ -189,7 +157,6 @@ export function buildTranslationContextPayload(args: BuildPayloadArgs): Translat
     },
     entities: {
       speakerProfile,
-      matchedGlossary,
       fuzzyTmMatches
     },
     constraints: {

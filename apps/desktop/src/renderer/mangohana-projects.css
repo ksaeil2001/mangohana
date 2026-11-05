@@ -1,0 +1,126 @@
+.mangohana-shell.stitch-suite[data-stitch-screen="projects"] .stitch-suite-header-actions > :is(.stitch-project-switcher, .trio-header-projects-link) {
+  display: none;
+}
+
+.stitch-suite .mangohana-projects .trio-page-header-row {
+  margin-bottom: 20px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.mangohana-projects-register {
+  border: 1px solid var(--trio-border-soft);
+  border-radius: 6px;
+  background: var(--trio-panel);
+  overflow: hidden;
+}
+
+.mangohana-projects-toolbar,
+.mangohana-projects-title,
+.mangohana-projects-filter,
+.mangohana-projects-empty,
+.mangohana-projects-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.mangohana-projects-toolbar {
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.mangohana-projects-title h2 {
+  margin: 0;
+  font-size: var(--trio-text-body);
+  font-weight: 600;
+}
+
+.mangohana-projects-title span,
+.mangohana-projects-note,
+.mangohana-projects-empty,
+.mangohana-projects-table time {
+  color: var(--trio-muted);
+  font-size: var(--trio-text-caption);
+}
+
+.mangohana-projects-filter {
+  min-width: 0;
+}
+
+.mangohana-projects-filter :is(input, select) {
+  min-height: 32px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--trio-border);
+  border-radius: 4px;
+  background: var(--trio-canvas);
+  color: var(--trio-text);
+  font: inherit;
+}
+
+.mangohana-projects-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.mangohana-projects-table :is(th, td) {
+  padding: 8px 16px;
+  border-top: 1px solid var(--trio-border-soft);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.mangohana-projects-table th {
+  background: var(--trio-panel-raised);
+  color: var(--trio-muted);
+  font-size: var(--trio-text-caption);
+  font-weight: 600;
+}
+
+.mangohana-projects-table th:last-child {
+  width: min(35%, 12rem);
+}
+
+.mangohana-projects-table time {
+  font-variant-numeric: tabular-nums;
+}
+
+.mangohana-projects-open {
+  max-width: 100%;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--trio-text);
+  text-align: left;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-weight: 600;
+}
+
+.mangohana-projects-open:hover:not(:disabled) {
+  color: var(--trio-accent);
+  text-decoration: underline;
+}
+
+.mangohana-projects-open:disabled {
+  color: var(--trio-muted);
+}
+
+.mangohana-projects-empty {
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--trio-border-soft);
+}
+
+.mangohana-projects-empty p {
+  margin: 0;
+}
+
+.mangohana-projects > .trio-feedback {
+  margin-bottom: 12px;
+}

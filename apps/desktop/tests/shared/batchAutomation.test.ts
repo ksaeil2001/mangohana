@@ -122,6 +122,14 @@ describe("batchAutomation", () => {
   });
 
   describe("validateBatchPipelineConfig", () => {
+    it("accepts disabled legacy glossary input without returning a glossary setting", () => {
+      const config = validateBatchPipelineConfig({ speechStylePreset: "informal", runGlossary: false });
+      expect(config).not.toHaveProperty("runGlossary");
+      expect(getDefaultBatchConfig()).not.toHaveProperty("runGlossary");
+      expect(() => validateBatchPipelineConfig({ speechStylePreset: "informal", runGlossary: "false" }))
+        .toThrow("runGlossary must be a boolean");
+    });
+
     it("accepts valid batch config and normalizes defaults", () => {
       const valid = validateBatchPipelineConfig({
         targetPages: [1, 2, 3],
@@ -137,7 +145,7 @@ describe("batchAutomation", () => {
       expect(valid.speechStylePreset).toBe("honorific");
       expect(valid.overwriteExisting).toBe(true);
       expect(valid.runOcr).toBe(false);
-      expect(valid.runGlossary).toBe(false);
+      expect(valid).not.toHaveProperty("runGlossary");
       expect(valid.runInpaint).toBe(false);
     });
 
@@ -156,7 +164,7 @@ describe("batchAutomation", () => {
 
     it("rejects unsupported pipeline stages", () => {
       expect(() => validateBatchPipelineConfig({ speechStylePreset: "informal", runOcr: true })).toThrow("말풍선 OCR 일괄 처리는 아직 지원되지 않습니다");
-      expect(() => validateBatchPipelineConfig({ speechStylePreset: "informal", runGlossary: true })).toThrow("용어집 일괄 처리는 아직 지원되지 않습니다");
+      expect(() => validateBatchPipelineConfig({ speechStylePreset: "informal", runGlossary: true })).toThrow("용어집 기능은 더 이상 제공하지 않습니다");
       expect(() => validateBatchPipelineConfig({ speechStylePreset: "informal", runInpaint: true })).toThrow("배경 인페인팅 일괄 처리는 아직 지원되지 않습니다");
     });
 

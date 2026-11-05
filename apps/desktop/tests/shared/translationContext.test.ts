@@ -84,7 +84,6 @@ describe("translationContext", () => {
       dialogueLines: mockLines,
       targetLineId: "line-3",
       characters: mockCharacters,
-      dictionaryTerms: mockDictionary,
       options: { contextWindowSize: 2 }
     });
 
@@ -109,20 +108,31 @@ describe("translationContext", () => {
     expect(context.formattedSystemPrompt).toContain("독백 / 속마음(생각)");
   });
 
-  it("filters dynamic glossary terms present in target or context", () => {
-    const context = buildDialogueTranslationContext({
+  it("이전 용어 데이터와 includeGlossary 값이 달라도 문맥과 프롬프트는 동일하다", () => {
+    const args = {
       dialogueLines: mockLines,
       targetLineId: "line-4",
       characters: mockCharacters,
-      dictionaryTerms: mockDictionary
-    });
+      options: { contextWindowSize: 2 }
+    };
+    const context = buildDialogueTranslationContext(args);
 
-    // line-4 contains 'ゴムゴムの実', and context contains '海賊王'
-    const matchedSources = context.matchedTerms.map((t) => t.source);
-    expect(matchedSources).toContain("ゴムゴムの実");
-    // 'ワンピース' is not in target or context
-    expect(matchedSources).not.toContain("ワンピース");
-    expect(context.formattedUserPrompt).toContain("고무고무 열매");
+    for (const includeGlossary of [true, false]) {
+      for (const target of ["고무고무 열매", "이전 용어 강제 번역"]) {
+        const legacyArgs = {
+          ...args,
+          dictionaryTerms: mockDictionary.map((term) => ({ ...term, target })),
+          options: { ...args.options, includeGlossary }
+        };
+        expect(buildDialogueTranslationContext(legacyArgs)).toEqual(context);
+      }
+    }
+
+    expect(context).not.toHaveProperty("matchedTerms");
+    expect(context.speakerProfile?.name).toBe("나미");
+    expect(context.formattedSystemPrompt).toContain("야무지고 똑 부러진 어조");
+    expect(context.formattedUserPrompt).toContain("말투: 야무지고 똑 부러진 어조");
+    expect(context.formattedUserPrompt).not.toContain("[용어집");
   });
 
   it("excludes previous page when includePreviousPageContext is false", () => {
@@ -134,64 +144,6 @@ describe("translationContext", () => {
 
     // line-1, line-2, line-3 are on page 1, so previousTurns should be empty
     expect(context.previousTurns).toHaveLength(0);
-  });
-
-  it("matches glossary terms with NFKC normalization and case-insensitivity", () => {
-    const linesWithFullwidth: DialogueLine[] = [
-      {
-        id: "line-fw",
-        order: 1,
-        pageNumber: 1,
-        dialogueType: "speech",
-        sourceLanguage: "ja",
-        sourceText: "ここは ＤＥＭＯＮ ＫＩＮＧ の城다！ ｶﾀｶﾅ もある。",
-        parseConfidence: 0.95,
-        parseWarnings: []
-      }
-    ];
-
-    const terms: DictionaryTerm[] = [
-      { id: "term-1", source: "Demon King", target: "마왕" },
-      { id: "term-2", source: "カタカナ", target: "카타카나" }
-    ];
-
-    const context = buildDialogueTranslationContext({
-      dialogueLines: linesWithFullwidth,
-      targetLineId: "line-fw",
-      dictionaryTerms: terms
-    });
-
-    expect(context.matchedTerms).toHaveLength(2);
-    expect(context.matchedTerms.map((t) => t.target)).toEqual(["마왕", "카타카나"]);
-  });
-
-  it("matches glossary terms with bracketed readings and tildes accurately", () => {
-    const lines: DialogueLine[] = [
-      {
-        id: "line-reading",
-        order: 1,
-        pageNumber: 1,
-        dialogueType: "speech",
-        sourceLanguage: "ja",
-        sourceText: "くらえ！月華一閃！そうじゃのう。",
-        parseConfidence: 0.95,
-        parseWarnings: []
-      }
-    ];
-
-    const terms: DictionaryTerm[] = [
-      { id: "term-1", source: "月華一閃 (げっかいっせん)", target: "월화일섬" },
-      { id: "term-2", source: "〜じゃのう", target: "~인 게지" }
-    ];
-
-    const context = buildDialogueTranslationContext({
-      dialogueLines: lines,
-      targetLineId: "line-reading",
-      dictionaryTerms: terms
-    });
-
-    expect(context.matchedTerms).toHaveLength(2);
-    expect(context.matchedTerms.map((t) => t.target)).toEqual(["월화일섬", "~인 게지"]);
   });
 
   it("formats expanded style presets correctly", () => {
@@ -225,94 +177,36 @@ describe("translationContext", () => {
   });
 
   it("finds fuzzy TM matches and injects them into the prompt", () => {
+    const targetLine = mockLines[0]!;
+    const translatedLine: DialogueLine = { ...targetLine, id: "tm-line", order: 5 };
     const context = buildDialogueTranslationContext({
-      dialogueLines: mockLines,
-      targetLineId: "line-3",
+      dialogueLines: [...mockLines, translatedLine],
+      targetLineId: targetLine.id,
       options: { includeFuzzyTm: true }
     });
 
-    expect(context.fuzzyTmMatches).toBeDefined();
+    expect(context.fuzzyTmMatches?.[0]?.entry.id).toBe("tm-line");
+    expect(context.formattedUserPrompt).toContain("[유사 번역 메모리(TM) 참고]");
+    expect(context.formattedUserPrompt).toContain("해적왕이 내가 될 거야!");
   });
 
-  it("applies speaker conditional dictionary terms", () => {
-    const conditionalTerms = [
-      { id: "term-c1", source: "先輩", target: "선배" },
-      { id: "term-c2", source: "先輩", target: "선배님", condition: { speaker: "나미" }, priority: 20 }
-    ];
-
-    const lines: DialogueLine[] = [
-      {
-        id: "line-nami",
-        order: 1,
-        pageNumber: 1,
-        speaker: "나미",
-        dialogueType: "speech",
-        sourceLanguage: "ja",
-        sourceText: "先輩、助けて！",
-        parseConfidence: 0.9,
-        parseWarnings: []
-      }
-    ];
-
-    const context = buildDialogueTranslationContext({
-      dialogueLines: lines,
-      targetLineId: "line-nami",
-      dictionaryTerms: conditionalTerms
-    });
-
-    expect(context.matchedTerms).toHaveLength(1);
-    expect(context.matchedTerms[0]?.target).toBe("선배님");
-  });
-
-  it("matches saved dialogueType and targetContext glossary conditions", () => {
-    const conditionalTerms = [
-      {
-        id: "term-thought",
-        source: "お前",
-        target: "당신",
-        condition: { dialogueType: "thought" as const },
-        priority: 15
-      },
-      {
-        id: "term-context",
-        source: "月華",
-        target: "달빛",
-        condition: { targetContext: "一閃" },
-        priority: 10
-      }
-    ];
-    const thoughtLine: DialogueLine = {
-      id: "line-thought",
-      order: 1,
-      pageNumber: 1,
-      speaker: "주인공",
-      dialogueType: "thought",
-      sourceLanguage: "ja",
-      sourceText: "お前は何者だ？ 月華一閃。",
-      parseConfidence: 0.9,
-      parseWarnings: []
+  it("직접 프롬프트 입력의 이전 matchedTerms도 무시하고 화자 정보는 보존한다", () => {
+    const args = {
+      sourceText: mockLines[0]!.sourceText,
+      previousTurns: [],
+      nextTurns: [],
+      speakerProfile: mockCharacters[0],
+      dialogueType: "speech" as const
     };
-    const speechLine: DialogueLine = {
-      ...thoughtLine,
-      id: "line-speech",
-      dialogueType: "speech"
+    const legacyArgs = {
+      ...args,
+      matchedTerms: mockDictionary
     };
+    const prompt = formatMangaTranslationUserPrompt(args);
 
-    const thoughtContext = buildDialogueTranslationContext({
-      dialogueLines: [thoughtLine],
-      targetLineId: "line-thought",
-      dictionaryTerms: conditionalTerms
-    });
-    expect(thoughtContext.matchedTerms.map((term) => term.target)).toEqual(
-      expect.arrayContaining(["당신", "달빛"])
-    );
-
-    const speechContext = buildDialogueTranslationContext({
-      dialogueLines: [speechLine],
-      targetLineId: "line-speech",
-      dictionaryTerms: conditionalTerms
-    });
-    expect(speechContext.matchedTerms.map((term) => term.target)).not.toContain("당신");
-    expect(speechContext.matchedTerms.map((term) => term.target)).toContain("달빛");
+    expect(formatMangaTranslationUserPrompt(legacyArgs)).toBe(prompt);
+    expect(prompt).toContain("말투: 활기차고 거침없는 반말");
+    expect(prompt).toContain("관계: 동료들을 매우 소중히 여김");
+    expect(prompt).not.toContain("[용어집");
   });
 });

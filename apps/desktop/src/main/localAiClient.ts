@@ -1,38 +1,10 @@
-export type LocalAiRuntime = "ollama" | "lmstudio" | "vllm" | "custom";
+import {
+  type LocalAiRuntime,
+  type LocalAiModelPreset,
+  MANGA_LOCAL_MODEL_PRESETS
+} from "../shared/providerSettings.js";
 
-export type LocalAiModelPreset = {
-  id: string;
-  name: string;
-  recommendedVram: string;
-  description: string;
-};
-
-export const MANGA_LOCAL_MODEL_PRESETS: readonly LocalAiModelPreset[] = [
-  {
-    id: "qwen2.5:7b-instruct",
-    name: "Qwen 2.5 7B Instruct",
-    recommendedVram: "6GB ~ 8GB VRAM (CUDA 권장)",
-    description: "일본어·영어 만화 대사 번역 정확도 및 뉘앙스 최상위 모델"
-  },
-  {
-    id: "llama3.2:3b",
-    name: "Llama 3.2 3B",
-    recommendedVram: "4GB VRAM (초경량·초고속)",
-    description: "가벼운 VRAM 환경에서도 빠른 속도로 대사 초안을 생성"
-  },
-  {
-    id: "deepseek-r1:7b",
-    name: "DeepSeek R1 7B",
-    recommendedVram: "8GB VRAM",
-    description: "문맥 추론 기반의 고품질 만화/소설 번역"
-  },
-  {
-    id: "gemma2:9b",
-    name: "Gemma 2 9B",
-    recommendedVram: "8GB ~ 12GB VRAM",
-    description: "자연스럽고 생생한 한국어 구어체 표현"
-  }
-] as const;
+export { type LocalAiRuntime, type LocalAiModelPreset, MANGA_LOCAL_MODEL_PRESETS };
 
 export type TestLocalAiConnectionArgs = {
   runtime: LocalAiRuntime;
@@ -67,7 +39,6 @@ export type GenerateLocalAiTranslationArgs = {
   sourceLanguage?: "ja" | "en" | "auto";
   previousContext?: string[];
   characterNotes?: string;
-  glossaryNotes?: string;
   systemPrompt?: string;
   temperature?: number;
   numCtx?: number;
@@ -252,9 +223,6 @@ export async function generateLocalAiTranslation(
   const contextPromptParts: string[] = [];
   if (args.characterNotes?.trim()) {
     contextPromptParts.push(`[등장인물 설정]\n${args.characterNotes.trim()}`);
-  }
-  if (args.glossaryNotes?.trim()) {
-    contextPromptParts.push(`[용어집/사전]\n${args.glossaryNotes.trim()}`);
   }
   if (args.previousContext && args.previousContext.length > 0) {
     contextPromptParts.push(

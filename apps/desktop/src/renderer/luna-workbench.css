@@ -1,0 +1,1582 @@
+/* ==========================================================================
+   Luna Workbench 3-Column Dark Card Layout (Matches Reference Images 1, 2, 3)
+   ========================================================================== */
+
+.luna-workbench {
+  --luna-card: var(--trio-panel);
+  --luna-card-inner: var(--trio-canvas);
+  --luna-card-raised: var(--trio-panel-raised);
+  --luna-card-hover: var(--trio-accent-soft);
+  --luna-border: var(--trio-border);
+  --luna-border-soft: var(--trio-border-soft);
+  --luna-border-strong: var(--trio-border);
+  --luna-text: var(--trio-text);
+  --luna-text-muted: var(--trio-muted);
+  --luna-text-dim: var(--trio-muted);
+  --luna-teal: var(--trio-accent);
+  --luna-teal-bright: var(--trio-accent);
+  --luna-teal-soft: var(--trio-accent-soft);
+  --luna-teal-text: var(--trio-text);
+  --luna-teal-border: var(--trio-accent);
+  --luna-blue-cta: var(--trio-accent);
+  --luna-blue-cta-hover: var(--trio-accent-hover);
+  --luna-floating-bar: var(--trio-panel-raised);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  background: var(--trio-canvas, #101012);
+  color: var(--luna-text);
+  font-family: var(--trio-font-body);
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+
+.luna-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   LEFT COLUMN (288px)
+   ========================================================================== */
+
+.luna-left-col {
+  width: 288px;
+  min-width: 288px;
+  max-width: 288px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.luna-card {
+  background: var(--luna-card);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.luna-mode-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.luna-actions-card {
+  flex: 0 0 auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.luna-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.luna-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--luna-text-muted);
+  text-transform: uppercase;
+}
+
+.luna-header-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.luna-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.luna-icon-btn:hover {
+  background: var(--luna-card-raised);
+  color: var(--luna-text);
+}
+
+/* Segmented Switch (SETTINGS | EDIT, THIS IMAGE | THIS FOLDER) */
+.luna-segmented-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 3px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 8px;
+}
+
+.luna-segmented-switch.compact {
+  padding: 2px;
+}
+
+.luna-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.luna-seg-btn:hover {
+  color: var(--luna-text);
+}
+
+.luna-seg-btn.active {
+  background: var(--luna-teal);
+  color: var(--trio-on-accent);
+  border-color: var(--luna-teal-border);
+}
+
+/* Mode Body & Form Controls */
+.luna-mode-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.luna-group-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.luna-subsection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.luna-subsection-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--luna-text-muted);
+  text-transform: uppercase;
+}
+
+.luna-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.luna-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.luna-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--luna-text-muted);
+}
+
+.luna-dim-inline {
+  color: var(--luna-text-dim);
+  font-weight: 400;
+}
+
+.luna-help-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  border: 1px solid var(--luna-border-strong);
+  color: var(--luna-text-dim);
+  font-size: 9px;
+}
+
+.luna-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 8px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+}
+
+.luna-select-prefix {
+  flex: 0 0 auto;
+  margin-right: 5px;
+  font-size: 12px;
+  color: var(--luna-text-muted);
+}
+
+.luna-serif-f {
+  font-family: Georgia, serif;
+  font-weight: 700;
+}
+
+.luna-select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--luna-text);
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+
+.luna-select option {
+  background: var(--luna-card);
+  color: var(--luna-text);
+}
+
+/* More Options Pills */
+.luna-option-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.luna-option-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid var(--luna-border);
+  background: var(--luna-card-inner);
+  color: var(--luna-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.luna-option-pill.active {
+  background: var(--luna-teal-soft);
+  border-color: var(--luna-teal-border);
+  color: var(--luna-teal-text);
+}
+
+.luna-advanced-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.luna-advanced-link:hover {
+  color: var(--luna-text);
+}
+
+.luna-divider {
+  height: 1px;
+  width: 100%;
+  background: var(--luna-border);
+  margin: 2px 0;
+}
+
+.luna-accordion-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  text-align: left;
+}
+
+.luna-accordion-row:hover {
+  color: var(--luna-text);
+}
+
+.luna-accordion-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.luna-check-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--luna-teal-soft);
+  border: 1px solid var(--luna-teal-border);
+  color: var(--luna-teal-text);
+  font-size: 9px;
+}
+
+.luna-accordion-body {
+  padding: 4px 0;
+}
+
+.luna-helper-note {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--luna-text-muted);
+  line-height: 1.4;
+}
+
+.luna-textarea,
+.luna-input {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+  color: var(--luna-text);
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   EDIT MODE CONTROLS (Tools Bar, Typography, Appearance)
+   ========================================================================== */
+
+.luna-tools-bar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  padding: 4px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 8px;
+}
+
+.luna-btn-group {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 2px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.luna-fmt-btn {
+  flex: 1 1 0;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.luna-fmt-btn:hover {
+  color: var(--luna-text);
+}
+
+.luna-fmt-btn.active {
+  background: var(--luna-teal);
+  color: var(--trio-on-accent);
+}
+
+.luna-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.luna-slider-icon {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--luna-text-muted);
+}
+
+.luna-range {
+  flex: 1 1 auto;
+  min-width: 0;
+  accent-color: var(--luna-teal-bright);
+  cursor: pointer;
+}
+
+.luna-value-box {
+  flex: 0 0 auto;
+  min-width: 38px;
+  padding: 3px 6px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 5px;
+  color: var(--luna-text);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.luna-swatches-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+}
+
+.luna-swatch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.luna-swatch-label {
+  font-size: 10px;
+  color: var(--luna-text-muted);
+}
+
+.luna-color-chip {
+  width: 24px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--luna-border-strong);
+}
+
+.luna-color-chip.swatch-black {
+  background: var(--luna-swatch-black);
+}
+
+.luna-color-chip.swatch-white {
+  background: var(--luna-swatch-white);
+}
+
+.luna-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 10px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+}
+
+.luna-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--luna-text);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   LEFT BOTTOM CARD: SELECTION & ACTIONS
+   ========================================================================== */
+
+.luna-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+}
+
+.luna-selection-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--luna-text);
+}
+
+.luna-selection-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.luna-selection-link:hover {
+  color: var(--luna-text);
+}
+
+.luna-actions-badge {
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--luna-card-raised);
+  color: var(--luna-text-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.luna-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.luna-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+  background: var(--luna-card-inner);
+  color: var(--luna-text);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.luna-action-btn:hover:not(:disabled) {
+  background: var(--luna-card-raised);
+  border-color: var(--luna-border-strong);
+}
+
+.luna-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.luna-action-btn.primary-translate {
+  background: var(--luna-blue-cta);
+  border-color: var(--luna-blue-cta-hover);
+  color: var(--trio-on-accent);
+  font-weight: 600;
+}
+
+.luna-action-btn.primary-translate:hover:not(:disabled) {
+  background: var(--luna-blue-cta-hover);
+}
+
+.luna-icon-translate {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.luna-icon-green {
+  color: var(--luna-green-icon);
+}
+
+.luna-icon-yellow {
+  color: var(--luna-yellow-icon);
+}
+
+.luna-icon-red {
+  color: var(--luna-red-icon);
+}
+
+.luna-icon-orange {
+  color: var(--luna-orange-box);
+}
+
+.luna-shortcut-hint {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--luna-text-dim);
+}
+
+.luna-find-replace-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+/* ==========================================================================
+   CENTER COLUMN: TOP BAR, GRID VIEW, SINGLE VIEW, BOTTOM BAR
+   ========================================================================== */
+
+.luna-center-col {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.luna-center-topbar {
+  flex: 0 0 42px;
+  height: 42px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--luna-card);
+  border-bottom: 1px solid var(--luna-border);
+}
+
+.luna-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.luna-crumb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.luna-crumb-btn:hover,
+.luna-crumb-btn.active {
+  color: var(--luna-text);
+}
+
+.luna-crumb-title {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.luna-crumb-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--luna-card-raised);
+  color: var(--luna-text-muted);
+  font-size: 11px;
+}
+
+.luna-crumb-badge.active {
+  background: var(--luna-teal);
+  color: var(--trio-on-accent);
+}
+
+.luna-crumb-sep {
+  color: var(--luna-text-dim);
+  font-size: 13px;
+}
+
+.luna-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.luna-top-search {
+  height: 26px;
+  width: 120px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--luna-border);
+  background: var(--luna-card-inner);
+  color: var(--luna-text);
+  font-size: 12px;
+}
+
+.luna-top-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--luna-border);
+  border-radius: 6px;
+  background: var(--luna-card-raised);
+  color: var(--luna-text);
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.luna-top-pill-btn.icon-only {
+  padding: 0 8px;
+}
+
+.luna-top-pill-btn:hover,
+.luna-top-pill-btn.active {
+  border-color: var(--luna-teal);
+  background: var(--luna-teal-soft);
+  color: var(--luna-teal-text);
+}
+
+/* Edge Collapse Handles (< and >) */
+.luna-edge-collapse {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  width: 18px;
+  height: 52px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--luna-card-raised);
+  border: 1px solid var(--luna-border);
+  color: var(--luna-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.luna-edge-collapse.left {
+  left: 0;
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.luna-edge-collapse.right {
+  right: 0;
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
+}
+
+.luna-edge-collapse:hover {
+  background: var(--luna-card-hover);
+  color: var(--luna-text);
+}
+
+/* Center Body */
+.luna-center-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Folder Grid View (Image 1) */
+.luna-folder-grid-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.luna-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--luna-grid-min, 140px), 1fr));
+  column-gap: 28px;
+  row-gap: 22px;
+}
+
+.luna-grid-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.luna-grid-page-select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  margin: 0;
+  accent-color: var(--trio-accent);
+}
+
+.luna-grid-card {
+  width: 100%;
+  aspect-ratio: 0.71;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--luna-border);
+  background: var(--luna-card);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 120ms ease;
+}
+
+.luna-grid-card:hover {
+  border-color: var(--luna-teal-bright);
+}
+
+.luna-grid-card.status-orange {
+  border-color: var(--luna-orange-box);
+}
+
+.luna-grid-card.status-blue,
+.luna-grid-card.selected {
+  border-color: var(--trio-accent);
+}
+
+.luna-grid-thumb-box {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.luna-thumb-media {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--luna-card-inner);
+}
+
+.luna-thumb-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.luna-thumb-placeholder {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--luna-text-dim);
+}
+
+.luna-thumb-number-badge {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--luna-overlay-pill);
+  border: 1px solid var(--luna-border-strong);
+  color: var(--luna-text);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.luna-grid-page-code {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--luna-text-muted);
+}
+
+/* Purple Context Link Connector (Horizontal in Grid, Vertical in Strip) */
+/* Single Image Stage Wrapper */
+.luna-single-stage-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.luna-single-stage-wrap.grid-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  pointer-events: none;
+}
+
+.luna-single-stage-wrap .image-canvas-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.focus-deck-shell.has-workspace-navigation .luna-single-stage-wrap .page-image-panel:not(.editor-open) .page-image-toolbar {
+  grid-area: auto !important;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  background: var(--trio-panel) !important;
+  border: 1px solid var(--trio-border) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  overflow: visible;
+}
+
+.luna-single-stage-wrap .page-image-advanced-content {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+.luna-single-stage-wrap .page-dialogue-targets {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  pointer-events: none !important;
+}
+
+/* ==========================================================================
+   SPEECH BUBBLE OVERLAYS & FLOATING TOOLBAR (Matches Image 2 & Image 3)
+   ========================================================================== */
+
+.page-image-editor-overlay-frame,
+.luna-bubble-overlay-layer {
+  position: absolute;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.luna-bubble-overlay-layer {
+  inset: 0;
+}
+
+.luna-bubble-box {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  box-sizing: border-box;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.luna-bubble-box.has-fill {
+  background: var(--luna-swatch-white);
+  border-radius: 8px;
+}
+
+.luna-bubble-box.edit-mode.unselected {
+  border: 1.5px dashed var(--luna-orange-box);
+  border-radius: 4px;
+}
+
+.luna-bubble-box.edit-mode.selected {
+  border: 2px dashed var(--luna-blue-box);
+  border-radius: 4px;
+}
+
+.luna-bubble-box.has-solid-border {
+  border-style: solid;
+}
+
+.luna-bubble-text-render {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-shadow: var(--luna-text-halo);
+}
+
+.luna-bubble-text-render.font-serif {
+  font-family: "RIDIBatang", "NanumMyeongjo", Georgia, serif;
+}
+
+.luna-bubble-text-render.font-sans {
+  font-family: var(--trio-font-body);
+}
+
+.luna-bubble-text-render.is-bold {
+  font-weight: 700;
+}
+
+.luna-bubble-text-render.is-italic {
+  font-style: italic;
+}
+
+.luna-bubble-text-render.is-vertical {
+  writing-mode: vertical-rl;
+}
+
+.luna-bubble-text-render.align-left {
+  text-align: left;
+}
+
+.luna-bubble-text-render.align-center {
+  text-align: center;
+}
+
+.luna-bubble-text-render.align-right {
+  text-align: right;
+}
+
+.luna-bubble-text-render.text-black {
+  color: var(--luna-swatch-black);
+}
+
+.luna-bubble-text-render.text-white {
+  color: var(--luna-swatch-white);
+}
+
+.luna-bubble-inline-Input {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--luna-blue-box);
+  border-radius: 4px;
+  background: var(--luna-swatch-white);
+  color: var(--luna-swatch-black);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  resize: none;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+/* Corner Handles on Speech Bubble Boxes */
+.luna-corner-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--luna-swatch-white);
+  border: 1.5px solid var(--luna-blue-box);
+  color: transparent;
+  display: block;
+  box-shadow: var(--trio-shadow-control);
+}
+
+.luna-corner-handle.tl {
+  top: -4px;
+  left: -4px;
+  cursor: nwse-resize;
+}
+
+.luna-corner-handle.tr {
+  top: -4px;
+  right: -4px;
+  cursor: nesw-resize;
+}
+
+.luna-corner-handle.bl {
+  bottom: -4px;
+  left: -4px;
+  cursor: move;
+}
+
+.luna-corner-handle.bl.unselected {
+  border-color: var(--luna-orange-box);
+}
+
+.luna-corner-handle.br {
+  bottom: -4px;
+  right: -4px;
+  cursor: nwse-resize;
+}
+
+/* Floating Dark Action Bar above Selected Bubble */
+.luna-floating-bubble-toolbar {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 35;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--luna-floating-bar);
+  border: 1px solid var(--luna-border-strong);
+  box-shadow: var(--luna-shadow-floating);
+  white-space: nowrap;
+}
+
+.luna-float-tool-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--luna-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 100ms ease;
+}
+
+.luna-float-tool-btn:hover,
+.luna-float-tool-btn.active {
+  background: var(--luna-card-hover);
+  color: var(--luna-text);
+}
+
+.luna-float-tool-btn.danger:hover {
+  color: var(--luna-red-icon);
+}
+
+.luna-float-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--luna-border-strong);
+  margin: 0 2px;
+}
+
+/* ==========================================================================
+   CENTER BOTTOM BAR (Zoom Slider, Global Zoom Toggle, Prev/Next)
+   ========================================================================== */
+
+.luna-center-bottombar {
+  flex: 0 0 38px;
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--luna-card);
+  border-top: 1px solid var(--luna-border);
+}
+
+.luna-bottom-left,
+.luna-bottom-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.luna-bottom-icon {
+  font-size: 13px;
+  color: var(--luna-text-muted);
+}
+
+.luna-range.zoom-range {
+  width: 110px;
+}
+
+.luna-zoom-readout {
+  min-width: 34px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--luna-text);
+}
+
+.luna-bottom-icon-btn {
+  height: 26px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--luna-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.luna-bottom-icon-btn:hover {
+  background: var(--luna-card-raised);
+  color: var(--luna-text);
+}
+
+.luna-bottom-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--luna-border);
+  background: var(--luna-card-raised);
+  color: var(--luna-text);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.luna-bottom-btn:hover:not(:disabled) {
+  background: var(--luna-card-hover);
+}
+
+.luna-bottom-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   RIGHT COLUMN (DETAILS / PROJECT IMAGES / ADD IMAGES)
+   ========================================================================== */
+
+.luna-right-col {
+  width: 248px;
+  min-width: 248px;
+  max-width: 248px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.luna-workbench.view-single .luna-right-col {
+  width: 196px;
+  min-width: 196px;
+  max-width: 196px;
+}
+
+.luna-credits-card {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.luna-credits-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.luna-credits-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.luna-credits-kicker {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--luna-text-muted);
+}
+
+.luna-credits-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--luna-text);
+}
+
+.luna-close-project-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--luna-border);
+  background: var(--luna-card-raised);
+  color: var(--luna-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.luna-close-project-btn:hover {
+  background: var(--luna-card-hover);
+  color: var(--luna-text);
+}
+
+/* DETAILS Card (Grid View) */
+.luna-details-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.luna-details-cover {
+  width: 100%;
+  height: 136px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--luna-border);
+}
+
+.luna-details-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.luna-details-title-block strong {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--luna-text);
+}
+
+.luna-details-title-block span {
+  font-size: 11.5px;
+  color: var(--luna-text-muted);
+}
+
+.luna-progress-pct {
+  font-size: 12px;
+  color: var(--luna-text);
+}
+
+.luna-progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--luna-card-inner);
+  overflow: hidden;
+}
+
+.luna-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--luna-green-status);
+}
+
+.luna-stats-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.luna-stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.luna-stat-cell strong {
+  font-size: 14px;
+  color: var(--luna-text);
+}
+
+.luna-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--luna-text-muted);
+}
+
+.luna-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.luna-dot.green {
+  background: var(--luna-green-icon);
+}
+
+.luna-dot.gray {
+  background: var(--luna-text-dim);
+}
+
+.luna-dot.red {
+  background: var(--luna-red-icon);
+}
+
+.luna-dot.orange {
+  background: var(--luna-orange-box);
+}
+
+.luna-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.luna-detail-kicker {
+  font-size: 11px;
+  color: var(--luna-text-muted);
+}
+
+.luna-detail-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--luna-card-inner);
+  border: 1px solid var(--luna-border);
+  font-size: 11px;
+  color: var(--luna-text);
+}
+
+.luna-detail-chip b {
+  color: var(--luna-text-muted);
+}
+
+.luna-detail-val {
+  font-size: 12px;
+  color: var(--luna-text);
+}
+
+/* PROJECT IMAGES Vertical Strip Card (Single Image View) */
+.luna-project-images-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 10px;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.luna-vertical-strip-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.luna-vstrip-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.luna-vstrip-thumb-btn {
+  width: 96px;
+  height: 126px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--luna-border);
+  background: var(--luna-card-inner);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 120ms ease;
+}
+
+.luna-vstrip-thumb-btn.status-orange {
+  border-color: var(--luna-orange-box);
+}
+
+.luna-vstrip-thumb-btn.status-blue {
+  border-color: var(--luna-teal-bright);
+}
+
+/* Bottom Add Images Dropzone Card */
+.luna-add-images-card {
+  flex: 0 0 auto;
+  padding: 6px;
+}
+
+.luna-add-images-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px dashed var(--luna-border-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--luna-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.luna-add-images-btn:hover {
+  background: var(--luna-card-raised);
+  border-color: var(--luna-teal);
+}
+
+.luna-add-images-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: var(--luna-card-raised);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+
+.luna-add-images-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.luna-add-images-text strong {
+  font-size: 12px;
+  color: var(--luna-text);
+}
+
+.luna-add-images-text span {
+  font-size: 11px;
+  color: var(--luna-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

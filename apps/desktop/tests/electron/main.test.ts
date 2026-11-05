@@ -49,7 +49,8 @@ describe("electron main dev server URL gate", () => {
         privileges: expect.objectContaining({
           standard: true,
           secure: true,
-          supportFetchAPI: true
+          supportFetchAPI: true,
+          corsEnabled: true
         })
       })
     ]));

@@ -31,7 +31,8 @@
   font-size: 14px;
 }
 
-.stitch-flow :is(button, code, p, h1, h2, strong) { overflow-wrap: anywhere; }
+.stitch-flow :is(code, p, h1, h2, strong) { overflow-wrap: anywhere; }
+.stitch-flow button { white-space: nowrap; }
 .stitch-flow :is(button, input, select):focus-visible {
   outline: 2px solid var(--trio-accent);
   outline-offset: 3px;
@@ -81,7 +82,7 @@
   white-space: normal;
 }
 
-.stitch-flow .project-setup-count { padding: 6px 0; background: transparent; color: var(--trio-muted); font-size: 14px; font-weight: 500; }
+.stitch-flow .project-setup-count { padding: 6px 0; background: transparent; color: var(--trio-muted); font-size: 14px; font-weight: 500; white-space: nowrap; }
 .stitch-flow--setup.project-setup-screen.trio-project-setup { display: block; }
 .stitch-flow .stitch-setup-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: start; }
 .stitch-flow .stitch-setup-image-board { min-width: 0; }
@@ -140,8 +141,8 @@
 .stitch-flow .trio-storage-field button { justify-self: start; }
 .stitch-flow .trio-project-setup-footer { position: static; display: grid; gap: 16px; margin: 24px 0 0; padding: 20px 0 0; border: 0; border-top: 1px solid var(--stitch-rule); background: transparent; box-shadow: none; }
 .stitch-flow .trio-project-setup-footer p { margin: 0; font-size: 12px; color: var(--trio-muted); }
-.stitch-flow .trio-project-setup-footer > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.stitch-flow .trio-project-setup-footer .primary-button { flex: 1 1 auto; }
+.stitch-flow .trio-project-setup-footer > div { display: flex; flex-wrap: nowrap; gap: 8px; }
+.stitch-flow .trio-project-setup-footer .primary-button { flex: 1 1 auto; white-space: nowrap; }
 
 .stitch-flow--environment { display: flex; flex-direction: column; gap: 0; }
 .stitch-flow .stitch-environment-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; align-items: start; gap: 32px; flex: 1; }
@@ -208,24 +209,144 @@
 .stitch-workbench-inline { min-width: 0; font-size: 14px; }
 .stitch-workbench-inline :is(input, textarea, select) { min-width: 0; max-width: 100%; font-size: 14px; }
 .stitch-workbench-inline :is(label, small) { font-size: 12px; }
-.stitch-workbench-inline :is(p, strong, button, label) { overflow-wrap: anywhere; }
+.stitch-workbench-inline :is(p, strong, label) { overflow-wrap: anywhere; }
+.stitch-workbench-inline button { white-space: nowrap; }
 .stitch-workbench-inline :is(input, textarea, select, button):focus-visible { outline: 2px solid var(--trio-accent); outline-offset: 2px; }
-.stitch-workbench-inline.stitch-context-panel { padding: 0; border: 0; border-radius: 0; background: transparent; }
-.stitch-workbench-inline.stitch-context-panel > summary { padding: 16px; border-bottom: 1px solid var(--trio-border-soft); }
-.stitch-workbench-inline .stitch-context-content { padding: 16px; }
-.stitch-workbench-inline .stitch-context-project { margin: 0 0 20px; color: var(--trio-muted); font-size: 12px; }
-.stitch-workbench-inline .stitch-context-project strong { color: var(--trio-text); font-weight: 500; }
-.stitch-workbench-inline .stitch-context-section { margin: 0 0 24px; }
-.stitch-workbench-inline .context-header { align-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--trio-border-soft); }
-.stitch-workbench-inline .context-header h3 { margin: 0; font-size: 16px; font-weight: 500; }
-.stitch-workbench-inline .context-header > div { flex-wrap: wrap; }
-.stitch-workbench-inline .stitch-context-record { display: grid; gap: 16px; margin: 0; padding: 20px 0; border: 0; border-bottom: 1px solid var(--trio-border-soft); border-radius: 0; background: transparent; box-shadow: none; }
-.stitch-workbench-inline .stitch-context-record:focus-within { border-bottom-color: var(--trio-accent); }
-.stitch-workbench-inline .stitch-context-record label { display: grid; gap: 8px; }
-.stitch-workbench-inline .stitch-context-record > button { justify-self: start; font-size: 12px; }
-.stitch-workbench-inline .stitch-context-presets { display: flex; flex-wrap: wrap; gap: 4px; }
-.stitch-workbench-inline .stitch-context-presets button { min-height: 32px; font-size: 12px; }
-.stitch-workbench-inline .stitch-context-empty { padding: 16px 0; color: var(--trio-muted); font-size: 12px; }
+.stitch-workbench-inline.stitch-context-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.stitch-workbench-inline.stitch-context-panel > summary {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--trio-border-soft);
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+.stitch-workbench-inline.stitch-context-panel > summary:hover {
+  background: var(--trio-panel-raised);
+}
+.stitch-workbench-inline .stitch-context-content {
+  padding: 16px;
+}
+.stitch-workbench-inline .stitch-context-project {
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--trio-bg);
+  border: 1px solid var(--trio-border-soft);
+  color: var(--trio-muted);
+  font-size: 12px;
+}
+.stitch-workbench-inline .stitch-context-project strong {
+  color: var(--trio-accent);
+  font-weight: 600;
+}
+.stitch-workbench-inline .stitch-context-section {
+  margin: 0 0 24px;
+}
+.stitch-workbench-inline .context-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--trio-border-soft);
+}
+.stitch-workbench-inline .context-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  color: var(--trio-text);
+}
+.stitch-workbench-inline .context-header > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.stitch-workbench-inline .stitch-context-record {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 16px;
+  border: 1px solid var(--trio-border-soft);
+  border-radius: 8px;
+  background: var(--trio-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+.stitch-workbench-inline .stitch-context-record:focus-within {
+  border-color: var(--trio-accent);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+.stitch-workbench-inline .stitch-context-record label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--trio-muted);
+}
+.stitch-workbench-inline .stitch-context-record :is(input, textarea) {
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--trio-border-soft);
+  background: var(--trio-panel);
+  color: var(--trio-text);
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+.stitch-workbench-inline .stitch-context-record :is(input, textarea):focus {
+  border-color: var(--trio-accent);
+  outline: none;
+}
+.stitch-workbench-inline .stitch-context-record > button {
+  justify-self: end;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  color: var(--trio-error);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.stitch-workbench-inline .stitch-context-record > button:hover:not(:disabled) {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: var(--trio-error);
+}
+.stitch-workbench-inline .stitch-context-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: -4px;
+}
+.stitch-workbench-inline .stitch-context-presets button {
+  min-height: 26px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--trio-border-soft);
+  background: var(--trio-panel-raised);
+  color: var(--trio-muted);
+  transition: all 0.15s ease;
+}
+.stitch-workbench-inline .stitch-context-presets button:hover:not(:disabled) {
+  border-color: var(--trio-accent);
+  color: var(--trio-text);
+  background: rgba(56, 189, 248, 0.1);
+}
+.stitch-workbench-inline .stitch-context-empty {
+  padding: 16px 0;
+  color: var(--trio-muted);
+  font-size: 12px;
+}
+
 .stitch-workbench-inline.stitch-inpainting-editor { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--trio-border-soft); border-radius: 4px; background: var(--trio-panel); overflow: auto; }
 .stitch-workbench-inline .inpainting-editor-header { display: flex; flex-wrap: wrap; align-items: start; gap: 16px; padding: 20px; border-bottom: 1px solid var(--trio-border-soft); }
 .stitch-workbench-inline .inpainting-editor-header > div { display: grid; gap: 8px; flex: 1 1 20em; }

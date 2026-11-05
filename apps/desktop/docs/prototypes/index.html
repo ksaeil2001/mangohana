@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>망고하나 (Mangohana Studio) UI 전면 개편 인터랙티브 시제품</title>
+  <style>
+    :root {
+      --bg-base: #111318;
+      --bg-surface: #181b22;
+      --bg-surface-raised: #1f232c;
+      --bg-surface-hover: #262b36;
+      --border-subtle: #232730;
+      --border-focus: #3a4150;
+      --accent-primary: #8faeff;
+      --accent-primary-hover: #a8c2ff;
+      --accent-primary-soft: rgba(143, 174, 255, 0.12);
+      --accent-orange: #ff8a3d;
+      --accent-green: #2ed573;
+      --text-main: #f1f3f9;
+      --text-muted: #9ba1b0;
+      --text-dim: #5d6373;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 10px;
+      --font-ui: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* Screen Container Switcher */
+    .screen-view { display: none; width: 100%; height: 100%; }
+    .screen-view.active { display: flex; flex-direction: column; }
+
+    /* Top Prototype Switch Bar (for demonstration) */
+    .prototype-meta-bar {
+      height: 32px;
+      background: #090a0d;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      z-index: 100;
+    }
+    .prototype-tabs { display: flex; gap: 8px; }
+    .proto-tab-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 2px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .proto-tab-btn.active {
+      background: var(--accent-primary-soft);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    /* COMMON BUTTONS */
+    button {
+      font-family: inherit;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #0b101b;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+    }
+    .btn-primary:hover { background: var(--accent-primary-hover); }
+    .btn-secondary {
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+    }
+    .btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--border-focus); }
+    .btn-icon {
+      background: transparent;
+      color: var(--text-muted);
+      padding: 6px;
+      border-radius: var(--radius-sm);
+    }
+    .btn-icon:hover { background: var(--bg-surface-hover); color: var(--text-main); }
+
+    /* ========================================================
+       SCREEN 1: START SCREEN (HOME)
+       ======================================================== */
+    .home-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 32px 64px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .home-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .brand-group { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 28px; height: 28px; background: linear-gradient(135deg, #ff8a3d, #8faeff);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff;
+    }
+    .brand-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+    .brand-tag {
+      font-size: 11px; padding: 2px 6px; border-radius: 10px;
+      background: var(--bg-surface-raised); color: var(--text-muted); border: 1px solid var(--border-subtle);
+    }
+
+    .home-dropzone {
+      border: 1.5px dashed var(--border-focus);
+      background: rgba(24, 27, 34, 0.6);
+      border-radius: var(--radius-lg);
+      padding: 48px 32px;
+      text-align: center;
+      margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .home-dropzone:hover {
+      border-color: var(--accent-primary);
+      background: rgba(143, 174, 255, 0.04);
+    }
+    .drop-icon { font-size: 36px; color: var(--accent-primary); }
+    .drop-title { font-size: 16px; font-weight: 600; color: var(--text-main); }
+    .drop-sub { font-size: 12px; color: var(--text-muted); max-width: 400px; }
+    .drop-actions { display: flex; gap: 12px; margin-top: 8px; }
+
+    .recents-section { flex: 1; }
+    .recents-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    .recents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .recent-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .recent-card:hover {
+      border-color: var(--border-focus);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+    .recent-thumb {
+      height: 140px;
+      background: #14171e;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .thumb-cover-text {
+      font-size: 32px; font-weight: 900; color: rgba(255,255,255,0.06); text-transform: uppercase;
+      transform: rotate(-15deg);
+    }
+    .card-badge {
+      position: absolute;
+      top: 10px; right: 10px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+    }
+    .badge-progress { color: var(--accent-primary); border: 1px solid rgba(143,174,255,0.3); }
+    .badge-done { color: var(--accent-green); border: 1px solid rgba(46,213,115,0.3); }
+
+    .card-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--text-main); }
+    .card-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); }
+    .progress-bar-bg { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .progress-bar-fill { height: 100%; background: var(--accent-primary); border-radius: 2px; }
+
+    /* ========================================================
+       SCREEN 2: WORKBENCH (MAIN 3-COLUMN)
+       ======================================================== */
+    .workbench-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Bar */
+    .wb-topbar {
+      height: 48px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 50;
+      flex-shrink: 0;
+    }
+    .wb-top-left { display: flex; align-items: center; gap: 12px; }
+    .save-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+    .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); }
+
+    .wb-top-center { display: flex; align-items: center; gap: 20px; }
+    .page-pager { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
+
+    .pipeline-stepper { display: flex; align-items: center; gap: 4px; background: var(--bg-base); padding: 3px 6px; border-radius: 20px; border: 1px solid var(--border-subtle); }
+    .step-item {
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 12px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .step-item.complete { color: var(--text-muted); }
+    .step-item.complete .step-chk { color: var(--accent-green); }
+    .step-item.active { background: var(--accent-primary-soft); color: var(--accent-primary); font-weight: 600; }
+
+    .wb-top-right { display: flex; align-items: center; gap: 8px; }
+    .btn-batch-auto {
+      background: rgba(255, 138, 61, 0.12);
+      border: 1px solid rgba(255, 138, 61, 0.35);
+      color: var(--accent-orange);
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+    }
+    .btn-batch-auto:hover {
+      background: rgba(255, 138, 61, 0.2);
+    }
+
+    /* Workbench Main Layout (3-Column) */
+    .wb-workspace-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 120px 1fr 380px;
+      overflow: hidden;
+      background: var(--bg-base);
+    }
+
+    /* LEFT: Page Strip */
+    .wb-left-pages {
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 8px;
+    }
+    .page-thumb-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 6px 4px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .page-thumb-item:hover { background: var(--bg-surface-raised); }
+    .page-thumb-item.active {
+      background: var(--accent-primary-soft);
+      border-color: var(--accent-primary);
+    }
+    .page-thumb-box {
+      width: 76px;
+      height: 108px;
+      background: #0d0f13;
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 10px;
+    }
+    .page-thumb-item.active .page-thumb-box { border-color: var(--accent-primary); }
+    .thumb-page-num { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+    .thumb-status-tag { font-size: 9px; padding: 1px 4px; border-radius: 2px; }
+    .tag-done { background: rgba(46,213,115,0.15); color: var(--accent-green); }
+    .tag-edit { background: rgba(143,174,255,0.2); color: var(--accent-primary); }
+
+    /* CENTER: Manga Canvas */
+    .wb-center-canvas {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: radial-gradient(#1a1d26 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Simulated Manga Page Viewport */
+    .manga-canvas-container {
+      width: 580px;
+      height: 840px;
+      background: #fdfdfd;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .manga-art-bg {
+      width: 100%; height: 100%;
+      background:
+        linear-gradient(135deg, #111 25%, transparent 25%) -50px 0,
+        linear-gradient(225deg, #111 25%, transparent 25%) -50px 0,
+        linear-gradient(315deg, #111 25%, transparent 25%),
+        linear-gradient(45deg, #111 25%, transparent 25%);
+      background-size: 100px 100px;
+      background-color: #f7f7f8;
+      opacity: 0.12;
+    }
+    /* Simulated Manga Panels */
+    .manga-panel-grid {
+      position: absolute;
+      inset: 20px;
+      border: 3px solid #111;
+      display: grid;
+      grid-template-rows: 1fr 1.2fr;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .panel-top { border-bottom: 2px solid #111; position: relative; }
+    .panel-bot { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .panel-bot-l { border-right: 2px solid #111; }
+
+    /* Interactive Speech Bubbles */
+    .speech-bubble {
+      position: absolute;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      background: #ffffff;
+      border: 2px solid #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.15s ease;
+    }
+    .bubble-1 {
+      top: 60px; right: 50px; width: 110px; height: 190px;
+      border-color: var(--accent-green);
+      box-shadow: 0 0 0 1px var(--accent-green);
+    }
+    .bubble-2 {
+      top: 360px; left: 60px; width: 120px; height: 210px;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px var(--accent-primary);
+    }
+    .bubble-vertical-text {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 2px;
+      font-size: 15px;
+      line-height: 1.4;
+      font-family: "Pretendard", sans-serif;
+    }
+    .bubble-badge-label {
+      position: absolute;
+      top: -12px; left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: #fff;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+
+    /* Bottom Floating HUD Toolbar */
+    .canvas-hud-toolbar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(24, 27, 34, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-focus);
+      border-radius: 30px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 20;
+    }
+    .hud-layer-group { display: flex; gap: 2px; background: rgba(0,0,0,0.3); padding: 2px; border-radius: 20px; }
+    .hud-layer-btn {
+      padding: 4px 10px; font-size: 11px; border-radius: 16px; background: transparent; color: var(--text-muted);
+    }
+    .hud-layer-btn.active { background: var(--bg-surface-raised); color: var(--text-main); font-weight: 600; }
+
+    .btn-hold-compare {
+      background: var(--accent-primary-soft);
+      border: 1px solid var(--accent-primary);
+      color: var(--accent-primary);
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+    }
+    .btn-hold-compare:active, .btn-hold-compare.holding {
+      background: var(--accent-primary);
+      color: #000;
+    }
+
+    /* RIGHT: Dialogue & Typesetting Inspector */
+    .wb-right-inspector {
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .inspector-head {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .inspector-title { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .inspector-count { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+    /* Multi-select Batch Floating Bar */
+    .batch-selection-bar {
+      background: rgba(143, 174, 255, 0.15);
+      border-bottom: 1px solid var(--accent-primary);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeIn 0.15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .batch-count-tag { font-size: 11px; font-weight: 600; color: var(--accent-primary); }
+    .batch-actions-row { display: flex; gap: 6px; }
+
+    /* Dialogue List (Upper half of inspector) */
+    .dialogue-list-wrap {
+      max-height: 240px;
+      overflow-y: auto;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .dialogue-card-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .dialogue-card-row:hover { background: var(--bg-surface-raised); border-color: var(--border-focus); }
+    .dialogue-card-row.selected {
+      border-color: var(--accent-primary);
+      background: var(--accent-primary-soft);
+    }
+    .dia-checkbox { cursor: pointer; }
+    .dia-num { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
+    .dia-text-preview {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+      color: var(--text-main);
+    }
+    .dia-badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+    .badge-chk-done { background: rgba(46,213,115,0.15); color: var(--accent-green); }
+    .badge-chk-ai { background: rgba(143,174,255,0.15); color: var(--accent-primary); }
+
+    /* Active Dialogue Editor (Lower half of inspector) */
+    .active-editor-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .raw-source-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #cad1de;
+      font-family: "Pretendard", sans-serif;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .speaker-select {
+      width: 100%;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      outline: none;
+    }
+    .translation-textarea {
+      width: 100%;
+      height: 72px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+    }
+    .translation-textarea:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 1px var(--accent-primary); }
+
+    .typeset-controls-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .typeset-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .seg-toggle { display: flex; background: var(--bg-surface-raised); padding: 2px; border-radius: var(--radius-sm); }
+    .seg-btn { padding: 4px 10px; font-size: 11px; border-radius: 3px; background: transparent; color: var(--text-muted); }
+    .seg-btn.active { background: var(--accent-primary); color: #000; font-weight: 600; }
+
+    .btn-confirm-big {
+      background: var(--accent-primary);
+      color: #090e17;
+      font-weight: 700;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(143, 174, 255, 0.25);
+    }
+    .btn-confirm-big:hover { background: var(--accent-primary-hover); }
+
+    .details-accordion {
+      font-size: 11px;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+    }
+    .details-accordion summary { cursor: pointer; color: var(--text-muted); }
+
+  </style>
+</head>
+<body>
+
+  <!-- PROTOTYPE NAVIGATOR BAR -->
+  <div class="prototype-meta-bar">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="font-weight:700; color:var(--text-main);">망고하나 UI 개편 0단계 시제품</span>
+      <span style="color:var(--text-dim);">| 1920×1080 데스크톱 집중형</span>
+    </div>
+    <div class="prototype-tabs">
+      <button class="proto-tab-btn active" onclick="switchScreen('workbench')">작업대 화면 (메인 3단)</button>
+      <button class="proto-tab-btn" onclick="switchScreen('home')">시작 화면 (홈)</button>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SCREEN 1: START SCREEN (HOME)
+       ======================================================== -->
+  <div id="screen-home" class="screen-view">
+    <div class="home-screen">
+      <header class="home-header">
+        <div class="brand-group">
+          <div class="brand-logo">망</div>
+          <span class="brand-title">망고하나</span>
+          <span class="brand-tag">Studio v2.5 Redesign</span>
+        </div>
+        <button class="btn-icon" title="환경설정">⚙ 설정</button>
+      </header>
+
+      <!-- Central Drag-and-Drop Area -->
+      <section class="home-dropzone" onclick="switchScreen('workbench')">
+        <div class="drop-icon">📁</div>
+        <div>
+          <h2 class="drop-title">만화 이미지 또는 폴더를 여기에 끌어다 놓으세요</h2>
+          <p class="drop-sub">JPG, PNG, WEBP, ZIP 파일 지원 • OCR 자동 감지 및 버블 분할</p>
+        </div>
+        <div class="drop-actions" onclick="event.stopPropagation()">
+          <button class="btn-primary" onclick="switchScreen('workbench')">+ 새 프로젝트 만들기</button>
+          <button class="btn-secondary" onclick="switchScreen('workbench')">프로젝트 열기 (.ctp)</button>
+        </div>
+        <span style="font-size:11px; color:var(--text-dim); margin-top:4px;">단축키 Ctrl+O 또는 드래그 앤 드롭</span>
+      </section>
+
+      <!-- Recent Projects Grid -->
+      <section class="recents-section">
+        <div class="recents-head">
+          <span class="section-title">최근 프로젝트 (4)</span>
+          <span style="font-size:12px; color:var(--text-muted); cursor:pointer;">전체 보기</span>
+        </div>
+        <div class="recents-grid">
+          <div class="recent-card" onclick="switchScreen('workbench')">
+            <div class="recent-thumb">
+              <span class="thumb-cover-text">ONE PIECE</span>
+              <span class="card-badge badge-progress">편집 중 72%</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">원피스 제1100화</div>
+              <div class="card-meta">
+                <span>일본어 → 한국어</span>
+                <span>3 / 24 페이지</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 72%;"></div></div>
+              <span style="font-size:10px; color:var(--text-dim); margin-top:2px;">최근 저장: 10분 전</span>
+            </div>
+          </div>
+
+          <div class="recent-card" onclick="switchScreen('workbench')">
+            <div class="recent-thumb">
+              <span class="thumb-cover-text">JUJUTSU</span>
+              <span class="card-badge badge-done">✓ 완료</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">주술회전 250화</div>
+              <div class="card-meta">
+                <span>일본어 → 한국어</span>
+                <span>19 / 19 페이지 완료</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 100%; background:var(--accent-green);"></div></div>
+              <span style="font-size:10px; color:var(--text-dim); margin-top:2px;">최근 저장: 어제</span>
+            </div>
+          </div>
+
+          <div class="recent-card" onclick="switchScreen('workbench')">
+            <div class="recent-thumb">
+              <span class="thumb-cover-text">BLUE BOX</span>
+              <span class="card-badge badge-progress">번역 중 40%</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">푸른 상자 - 단행본 05권</div>
+              <div class="card-meta">
+                <span>일본어 → 한국어</span>
+                <span>12 / 32 페이지</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 40%;"></div></div>
+              <span style="font-size:10px; color:var(--text-dim); margin-top:2px;">최근 저장: 3일 전</span>
+            </div>
+          </div>
+
+          <div class="recent-card" onclick="switchScreen('workbench')">
+            <div class="recent-thumb">
+              <span class="thumb-cover-text">Frieren</span>
+              <span class="card-badge badge-progress">초안 15%</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">장송의 프리렌 Ep.12</div>
+              <div class="card-meta">
+                <span>일본어 → 한국어</span>
+                <span>4 / 26 페이지</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: 15%;"></div></div>
+              <span style="font-size:10px; color:var(--text-dim); margin-top:2px;">최근 저장: 5일 전</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SCREEN 2: WORKBENCH (MAIN 3-COLUMN)
+       ======================================================== -->
+  <div id="screen-workbench" class="screen-view active">
+    <div class="workbench-screen">
+      <!-- Top Slim Navigation Bar (48px) -->
+      <header class="wb-topbar">
+        <div class="wb-top-left">
+          <button class="btn-secondary" style="padding: 4px 10px;" onclick="switchScreen('home')" title="시작 화면으로 이동 (Esc)">← 홈</button>
+          <span style="font-weight:700; font-size:14px;">원피스 제1100화</span>
+          <div class="save-indicator">
+            <div class="pulse-dot"></div>
+            <span>저장됨 (문서\망고하나)</span>
+          </div>
+        </div>
+
+        <div class="wb-top-center">
+          <div class="page-pager">
+            <button class="btn-icon" style="padding:2px 6px;">‹</button>
+            <span>3 / 24 페이지</span>
+            <button class="btn-icon" style="padding:2px 6px;">›</button>
+          </div>
+
+          <!-- 5-Stage Stepper -->
+          <div class="pipeline-stepper">
+            <div class="step-item complete"><span class="step-chk">✓</span>인식</div>
+            <div class="step-item complete"><span class="step-chk">✓</span>번역</div>
+            <div class="step-item complete"><span class="step-chk">✓</span>지우기</div>
+            <div class="step-item active">● 식자 검토</div>
+            <div class="step-item">확인</div>
+          </div>
+        </div>
+
+        <div class="wb-top-right">
+          <button class="btn-primary" style="padding: 6px 14px;">다음: 식자 검토 →</button>
+          <button class="btn-batch-auto" title="전체 24페이지 자동 실행">⚡ 자동</button>
+          <button class="btn-icon" title="메뉴 (내보내기, 다른 이름 저장, 설정)">☰</button>
+        </div>
+      </header>
+
+      <!-- 3-Column Body -->
+      <div class="wb-workspace-body">
+
+        <!-- LEFT: Page Strip (120px) -->
+        <aside class="wb-left-pages">
+          <div class="page-thumb-item">
+            <div class="page-thumb-box">P. 1</div>
+            <span class="thumb-page-num">1 페이지</span>
+            <span class="thumb-status-tag tag-done">✓ 완료</span>
+          </div>
+
+          <div class="page-thumb-item">
+            <div class="page-thumb-box">P. 2</div>
+            <span class="thumb-page-num">2 페이지</span>
+            <span class="thumb-status-tag tag-done">✓ 완료</span>
+          </div>
+
+          <div class="page-thumb-item active">
+            <div class="page-thumb-box" style="border-width:2px;">
+              <span style="font-weight:bold; color:var(--accent-primary);">P. 3</span>
+            </div>
+            <span class="thumb-page-num" style="color:var(--accent-primary); font-weight:bold;">3 페이지</span>
+            <span class="thumb-status-tag tag-edit">● 편집 중</span>
+          </div>
+
+          <div class="page-thumb-item">
+            <div class="page-thumb-box">P. 4</div>
+            <span class="thumb-page-num">4 페이지</span>
+            <span class="thumb-status-tag" style="background:#222; color:#888;">대기</span>
+          </div>
+
+          <div class="page-thumb-item">
+            <div class="page-thumb-box">P. 5</div>
+            <span class="thumb-page-num">5 페이지</span>
+            <span class="thumb-status-tag" style="background:#222; color:#888;">대기</span>
+          </div>
+        </aside>
+
+        <!-- CENTER: Manga Canvas Viewport -->
+        <main class="wb-center-canvas">
+          <div class="manga-canvas-container" id="canvas-manga">
+            <div class="manga-art-bg"></div>
+
+            <!-- Manga Panel Frame Lines -->
+            <div class="manga-panel-grid">
+              <div class="panel-top"></div>
+              <div class="panel-bot">
+                <div class="panel-bot-l"></div>
+                <div class="panel-bot-r"></div>
+              </div>
+            </div>
+
+            <!-- Speech Bubble 1: Completed -->
+            <div class="speech-bubble bubble-1" onclick="selectBubble(1)">
+              <span class="bubble-badge-label" style="background:var(--accent-green);">#1 확정됨</span>
+              <div class="bubble-vertical-text">그건 말도 안 되는 소리야!</div>
+            </div>
+
+            <!-- Speech Bubble 2: Active / Selected (Japanese Vertical Layout) -->
+            <div class="speech-bubble bubble-2" id="canvas-bubble-2" onclick="selectBubble(2)">
+              <span class="bubble-badge-label" style="background:var(--accent-primary);">#2 선택됨 (세로식자)</span>
+              <div class="bubble-vertical-text" id="live-bubble-text">
+                네 녀석,<br>
+                정체가<br>
+                뭐냐…!?
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Floating HUD Toolbar -->
+          <div class="canvas-hud-toolbar">
+            <div class="hud-layer-group">
+              <button class="hud-layer-btn" onclick="setLayer(this, 'raw')">원본</button>
+              <button class="hud-layer-btn" onclick="setLayer(this, 'inpaint')">지운 결과</button>
+              <button class="hud-layer-btn active" onclick="setLayer(this, 'composite')">완성본</button>
+            </div>
+
+            <button class="btn-hold-compare" id="btn-quick-compare"
+              onmousedown="startHoldCompare()" onmouseup="endHoldCompare()"
+              onmouseleave="endHoldCompare()"
+              title="누르는 동안 오버레이를 숨기고 원본 이미지를 봅니다">
+              ⇆ 원본 비교 (Hold)
+            </button>
+
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); font-family:var(--font-mono);">
+              <button class="btn-icon" style="padding:2px 6px;">−</button>
+              <span>100%</span>
+              <button class="btn-icon" style="padding:2px 6px;">+</button>
+            </div>
+          </div>
+        </main>
+
+        <!-- RIGHT: Dialogue Review & Typesetting Inspector (380px) -->
+        <aside class="wb-right-inspector">
+          <div class="inspector-head">
+            <span class="inspector-title">대사 목록 및 식자</span>
+            <span class="inspector-count">8개 중 6개 완료</span>
+          </div>
+
+          <!-- Multi-select Batch Floating Bar (Dynamically shown) -->
+          <div class="batch-selection-bar" id="batch-bar" style="display:none;">
+            <span class="batch-count-tag" id="batch-selected-count">2개 대사 선택됨</span>
+            <div class="batch-actions-row">
+              <button class="btn-primary" style="padding:2px 8px; font-size:11px;" onclick="batchMarkDone()">일괄 완료</button>
+              <button class="btn-secondary" style="padding:2px 8px; font-size:11px;">글꼴 변경</button>
+            </div>
+          </div>
+
+          <!-- Dialogue List (Upper half) -->
+          <div class="dialogue-list-wrap">
+            <!-- Item 1 -->
+            <div class="dialogue-card-row" onclick="selectBubble(1)">
+              <input type="checkbox" class="dia-checkbox" onclick="event.stopPropagation(); updateBatchCount();">
+              <span class="dia-num">#1</span>
+              <span class="dia-text-preview">그건 말도 안 되는 소리야!</span>
+              <span class="dia-badge badge-chk-done">✓ 완료</span>
+            </div>
+
+            <!-- Item 2 (Active) -->
+            <div class="dialogue-card-row selected" id="list-item-2" onclick="selectBubble(2)">
+              <input type="checkbox" class="dia-checkbox" checked onclick="event.stopPropagation(); updateBatchCount();">
+              <span class="dia-num">#2</span>
+              <span class="dia-text-preview" id="preview-text-2">네 녀석, 정체가 뭐냐…!?</span>
+              <span class="dia-badge badge-chk-ai">● 식자 중</span>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="dialogue-card-row" onclick="selectBubble(3)">
+              <input type="checkbox" class="dia-checkbox" onclick="event.stopPropagation(); updateBatchCount();">
+              <span class="dia-num">#3</span>
+              <span class="dia-text-preview">어디서 온 놈들이길래...</span>
+              <span class="dia-badge" style="background:#222; color:#888;">대기</span>
+            </div>
+
+            <!-- Item 4 -->
+            <div class="dialogue-card-row">
+              <input type="checkbox" class="dia-checkbox" onclick="event.stopPropagation(); updateBatchCount();">
+              <span class="dia-num">#4</span>
+              <span class="dia-text-preview">이 섬은 아무에게도 넘겨줄 수 없다!</span>
+              <span class="dia-badge" style="background:#222; color:#888;">대기</span>
+            </div>
+          </div>
+
+          <!-- Active Dialogue Detail & Typesetting Controls (Lower half) -->
+          <div class="active-editor-pane">
+            <!-- Source Text -->
+            <div>
+              <div class="field-label">
+                <span>원문 (일본어 OCR 감지)</span>
+                <span style="font-family:var(--font-mono); font-size:10px; color:var(--accent-green);">99.4% 신뢰도</span>
+              </div>
+              <div class="raw-source-card">
+                <span>「お前、何者だ…！？」</span>
+                <button class="btn-icon" style="padding:2px 4px; font-size:10px;" title="원문 복사">📋</button>
+              </div>
+            </div>
+
+            <!-- Speaker -->
+            <div>
+              <div class="field-label">화자</div>
+              <select class="speaker-select">
+                <option>조로 (Zoro) - #거친말투</option>
+                <option>루피 (Luffy)</option>
+                <option>나미 (Nami)</option>
+                <option>직접 입력...</option>
+              </select>
+            </div>
+
+            <!-- Translation Input -->
+            <div>
+              <div class="field-label">
+                <span>한국어 번역</span>
+                <span style="color:var(--accent-primary); font-size:10px;">AI 번역 메모리 적용</span>
+              </div>
+              <textarea class="translation-textarea" id="input-korean-trans" oninput="updateLiveText(this.value)">네 녀석, 정체가 뭐냐…!?</textarea>
+            </div>
+
+            <!-- Typesetting Controls (Japanese Vertical Specialist) -->
+            <div class="typeset-controls-card">
+              <div class="field-label" style="margin-bottom:0;">식자 타이포그래피</div>
+
+              <div class="typeset-row">
+                <span style="font-size:12px; color:var(--text-muted);">글쓰기 방향</span>
+                <div class="seg-toggle">
+                  <button class="seg-btn active" id="btn-dir-v" onclick="setWritingMode('vertical')">세로쓰기</button>
+                  <button class="seg-btn" id="btn-dir-h" onclick="setWritingMode('horizontal')">가로쓰기</button>
+                </div>
+              </div>
+
+              <div class="typeset-row">
+                <span style="font-size:12px; color:var(--text-muted);">글꼴</span>
+                <select class="speaker-select" style="width:160px; padding:3px 6px;">
+                  <option>산돌만화체 Pro</option>
+                  <option>나눔고딕</option>
+                  <option>윤디자인 쿨재즈</option>
+                </select>
+              </div>
+
+              <div class="typeset-row">
+                <span style="font-size:12px; color:var(--text-muted);">글자 크기</span>
+                <div style="display:flex; align-items:center; gap:6px; font-family:var(--font-mono);">
+                  <button class="btn-secondary" style="padding:2px 8px;" onclick="adjustFontSize(-1)">−</button>
+                  <span id="font-size-val">15px</span>
+                  <button class="btn-secondary" style="padding:2px 8px;" onclick="adjustFontSize(1)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Primary Confirm Action -->
+            <button class="btn-confirm-big" onclick="confirmDialogue()">✓ 대사 확정 (Ctrl+Enter)</button>
+
+            <!-- Metadata Accordion (Zero dictionary distraction) -->
+            <details class="details-accordion">
+              <summary>세부 정보 & 좌표</summary>
+              <div style="margin-top:8px; line-height:1.6;">
+                <div>바운딩 박스: X: 60, Y: 360, W: 120, H: 210</div>
+                <div>파서 경고: 없음 (정상 파싱)</div>
+              </div>
+            </details>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Screen Switcher
+    function switchScreen(screenId) {
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.proto-tab-btn').forEach(el => el.classList.remove('active'));
+
+      if (screenId === 'home') {
+        document.getElementById('screen-home').classList.add('active');
+        document.querySelectorAll('.proto-tab-btn')[1].classList.add('active');
+      } else {
+        document.getElementById('screen-workbench').classList.add('active');
+        document.querySelectorAll('.proto-tab-btn')[0].classList.add('active');
+      }
+    }
+
+    // Live Typesetting text update
+    function updateLiveText(val) {
+      const bubble = document.getElementById('live-bubble-text');
+      const preview = document.getElementById('preview-text-2');
+      if (bubble) bubble.innerHTML = val.replace(/\n/g, '<br>');
+      if (preview) preview.innerText = val.replace(/\n/g, ' ');
+    }
+
+    // Writing Mode Toggle
+    function setWritingMode(mode) {
+      const bubble = document.getElementById('live-bubble-text');
+      const btnV = document.getElementById('btn-dir-v');
+      const btnH = document.getElementById('btn-dir-h');
+      if (mode === 'vertical') {
+        bubble.style.writingMode = 'vertical-rl';
+        btnV.classList.add('active');
+        btnH.classList.remove('active');
+      } else {
+        bubble.style.writingMode = 'horizontal-tb';
+        btnH.classList.add('active');
+        btnV.classList.remove('active');
+      }
+    }
+
+    // Font Size Adjust
+    let currentSize = 15;
+    function adjustFontSize(delta) {
+      currentSize = Math.max(10, Math.min(32, currentSize + delta));
+      document.getElementById('font-size-val').innerText = currentSize + 'px';
+      document.getElementById('live-bubble-text').style.fontSize = currentSize + 'px';
+    }
+
+    // Hold to compare original
+    function startHoldCompare() {
+      const bubble = document.getElementById('canvas-bubble-2');
+      const btn = document.getElementById('btn-quick-compare');
+      btn.classList.add('holding');
+      if (bubble) bubble.style.opacity = '0';
+    }
+    function endHoldCompare() {
+      const bubble = document.getElementById('canvas-bubble-2');
+      const btn = document.getElementById('btn-quick-compare');
+      btn.classList.remove('holding');
+      if (bubble) bubble.style.opacity = '1';
+    }
+
+    // Multi-select batch checkbox counter
+    function updateBatchCount() {
+      const checkedBoxes = document.querySelectorAll('.dia-checkbox:checked');
+      const batchBar = document.getElementById('batch-bar');
+      const batchCount = document.getElementById('batch-selected-count');
+      if (checkedBoxes.length >= 2) {
+        batchBar.style.display = 'flex';
+        batchCount.innerText = `${checkedBoxes.length}개 대사 선택됨`;
+      } else {
+        batchBar.style.display = 'none';
+      }
+    }
+
+    function batchMarkDone() {
+      alert('선택된 대사들이 일괄 완료 처리되었습니다.');
+      document.getElementById('batch-bar').style.display = 'none';
+      document.querySelectorAll('.dia-checkbox').forEach(c => c.checked = false);
+    }
+
+    function confirmDialogue() {
+      alert('대사가 성공적으로 확정되었습니다. 다음 대사(#3)로 이동합니다.');
+    }
+
+    function setLayer(el, layer) {
+      document.querySelectorAll('.hud-layer-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function selectBubble(id) {
+      alert('#' + id + ' 대사가 선택되었습니다.');
+    }
+  </script>
+</body>
+</html>

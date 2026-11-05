@@ -35,12 +35,11 @@ describe("translation payload fingerprint", () => {
     expect(fingerprint(nextChanged)).not.toBe(baseline);
   });
 
-  it("changes when matched glossary, fuzzy TM, speaker profile, or style payload changes", () => {
+  it("changes when fuzzy TM, speaker profile, or style payload changes", () => {
     const target = dialogueLine("target", 2, "先輩、ありがとう", { speaker: "Hero" });
     const tmCandidate = dialogueLine("tm", 1, "先輩、ありがとう", {
       userTranslation: "선배, 고마워"
     });
-    const glossary: DictionaryTerm[] = [{ id: "term", source: "先輩", target: "선배" }];
     const character: CharacterProfile = {
       id: "hero",
       name: "Hero",
@@ -50,7 +49,6 @@ describe("translation payload fingerprint", () => {
     const baseArgs = {
       dialogueLines: [tmCandidate, target],
       targetLineId: target.id,
-      dictionaryTerms: glossary,
       characters: [character],
       stylePreset: "honorific",
       maxPreviousTurns: 0,
@@ -58,10 +56,6 @@ describe("translation payload fingerprint", () => {
     } as const;
     const baseline = computeTranslationContextFingerprint(baseArgs);
 
-    expect(computeTranslationContextFingerprint({
-      ...baseArgs,
-      dictionaryTerms: [{ ...glossary[0]!, target: "선배님" }]
-    })).not.toBe(baseline);
     expect(computeTranslationContextFingerprint({
       ...baseArgs,
       dialogueLines: [{ ...tmCandidate, userTranslation: "선배님, 감사합니다" }, target]
@@ -74,6 +68,48 @@ describe("translation payload fingerprint", () => {
       ...baseArgs,
       stylePreset: "informal"
     })).not.toBe(baseline);
+  });
+
+  it("이전 용어 데이터만 다른 입력은 payload와 fingerprint에 영향을 주지 않는다", () => {
+    const target = dialogueLine("target", 1, "先輩、ありがとう", { speaker: "Hero" });
+    const character: CharacterProfile = {
+      id: "hero",
+      name: "Hero",
+      aliases: [],
+      speechStyle: "정중한 존댓말"
+    };
+    const args = {
+      dialogueLines: [target],
+      targetLineId: target.id,
+      characters: [character],
+      stylePreset: "honorific"
+    };
+    const payload = buildTranslationContextPayload(args);
+    const baseline = computeTranslationContextFingerprint(args);
+    const legacyTerms: DictionaryTerm[] = [
+      { id: "term", source: "先輩", target: "선배" },
+      {
+        id: "conditional-term",
+        source: "先輩",
+        target: "선배님",
+        condition: { speaker: "Hero", dialogueType: "speech", targetContext: "ありがとう" },
+        priority: 20
+      }
+    ];
+
+    for (const dictionaryTerms of [legacyTerms, legacyTerms.map((term) => ({
+      ...term,
+      target: "이전 용어 강제 번역",
+      note: "이전 용어 메모"
+    }))]) {
+      const legacyArgs = { ...args, dictionaryTerms };
+      expect(buildTranslationContextPayload(legacyArgs)).toEqual(payload);
+      expect(computeTranslationContextFingerprint(legacyArgs)).toBe(baseline);
+    }
+
+    expect(payload.entities).not.toHaveProperty("matchedGlossary");
+    expect(payload.entities.speakerProfile).toEqual(character);
+    expect(payload.constraints.speechStyleRules).toBe("정중한 존댓말");
   });
 
   it("is stable when an equivalent speaker profile uses a different property insertion order", () => {

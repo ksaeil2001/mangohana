@@ -10,10 +10,6 @@ import {
   formatMangaTranslationSystemPrompt
 } from "../../src/shared/translationContext.js";
 import {
-  parseGlossaryFile,
-  reconcileGlossaryTerms
-} from "../../src/shared/glossaryPipeline.js";
-import {
   compositeRawRgbaBuffers
 } from "../../src/main/inpaintingImageGeometry.js";
 import {
@@ -76,16 +72,8 @@ describe("E2E Manga Translation Pipeline Benchmark", () => {
     expect(clippedMask).toHaveLength(maskWidth * maskHeight);
 
     // -------------------------------------------------------------
-    // Stage 2: Context Window, Tone Presets & Glossary Reconciliation
+    // Stage 2: Context Window & Tone Presets
     // -------------------------------------------------------------
-    const rawGlossaryText = [
-      "月華一閃\t월화일섬\t필살기",
-      "黒妖の森\t흑요의 숲\t지명",
-      "先輩\t선배\t존칭"
-    ].join("\n");
-    const dictionaryTerms = parseGlossaryFile(rawGlossaryText, "tsv");
-    expect(dictionaryTerms).toHaveLength(3);
-
     const characters = [
       {
         id: "char-1",
@@ -126,19 +114,12 @@ describe("E2E Manga Translation Pipeline Benchmark", () => {
       dialogueLines,
       targetLineId: "line-2",
       characters,
-      dictionaryTerms,
       options: { stylePreset: "tsundere", contextWindowSize: 2 }
     });
 
     expect(context.targetLine.id).toBe("line-2");
     expect(context.speakerProfile?.name).toBe("세실");
-    expect(context.matchedTerms.map((t) => t.target)).toContain("월화일섬");
     expect(context.formattedSystemPrompt).toContain("츤데레");
-
-    // Glossary reconciliation test
-    const rawAiOutput = "이거나 먹어라! 달빛 베기!";
-    const reconciled = reconcileGlossaryTerms(context.targetLine.sourceText, rawAiOutput, context.matchedTerms);
-    expect(reconciled.replacements).toEqual([{ source: "月華一閃", target: "월화일섬" }]);
 
     // -------------------------------------------------------------
     // Stage 3: Inpainting Lossless Composite & Residual Text QA Loop

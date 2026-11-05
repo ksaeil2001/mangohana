@@ -48,7 +48,12 @@ export function PageStrip({ pages, currentPage, onSelectPage, currentFilePath }:
             >
               <PageThumbnail path={page.storedRelativePath} revision={page.imageRevision} scope={currentFilePath} pageNumber={page.pageNumber} />
               <span className="page-strip-info" id={`page-strip-info-${page.pageNumber}`}>
-                <strong>{page.pageNumber}페이지</strong>
+                <strong style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>{page.pageNumber}페이지</span>
+                  {page.lineCount > 0 && page.issueCount === 0 && (
+                    <span style={{ fontSize: "11px", color: "var(--trio-success)", fontWeight: 700 }} aria-hidden="true">✓ 완료</span>
+                  )}
+                </strong>
                 <span className="page-strip-image-state">{page.hasImage ? "이미지 있음" : "이미지 없음"}</span>
                 <span>라인 {page.lineCount}</span>
                 <span className="page-strip-status" data-needs-review={page.issueCount > 0}>{page.issueCount > 0 ? `문제 ${page.issueCount}` : "문제 0"}</span>

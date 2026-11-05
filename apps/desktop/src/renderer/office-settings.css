@@ -1,0 +1,46 @@
+.stitch-suite[data-stitch-screen="settings"] .office-settings > .trio-page-header-row {
+  padding-bottom: var(--trio-space-4);
+}
+
+.stitch-suite[data-stitch-screen="settings"] .office-settings .trio-settings-section-title {
+  font-size: var(--trio-text-section);
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.stitch-suite[data-stitch-screen="settings"] .office-settings .stitch-settings-intro {
+  margin-bottom: var(--trio-space-2);
+}
+
+.stitch-suite[data-stitch-screen="settings"] .office-settings .trio-setting-item {
+  padding-block: var(--trio-space-4);
+}
+
+.office-settings .office-settings-local {
+  display: grid;
+  gap: var(--trio-space-3);
+  min-width: 0;
+  padding-block: var(--trio-space-4);
+  border-bottom: 1px solid var(--trio-border-soft);
+}
+
+.office-settings .office-settings-local h3 {
+  margin: 0;
+  font-size: var(--trio-text-body);
+  font-weight: 600;
+}
+
+.office-settings .office-settings-local .trio-settings-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--trio-space-3);
+}
+
+.office-settings .office-settings-local .mangohana-local-field-label {
+  display: block;
+  margin-bottom: var(--trio-space-1);
+}
+
+.office-settings .office-settings-local :is(select, input) {
+  width: 100%;
+}

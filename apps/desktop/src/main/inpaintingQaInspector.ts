@@ -4,7 +4,6 @@ import {
   type InpaintingQaResult,
   type ResidualTextRegion
 } from "../shared/inpaintingQa.js";
-import { safeParseJsonObject } from "./glossaryExtraction.js";
 
 export type InspectInpaintingQaArgs = {
   inpaintedImageBytes: Buffer;
@@ -38,15 +37,13 @@ export async function inspectInpaintingQa(
         maxRetryAttempts,
         apiKey: effectiveApiKey
       });
-    } catch (error) {
-      console.warn("Gemini 인페인팅 QA 검수 실패, 로컬 분석으로 폴백합니다:", error);
+    } catch {
+      console.warn("Gemini 인페인팅 QA 검수에 실패하여 수동 검토가 필요합니다.");
     }
   }
 
-  // 로컬/오프라인 에지 및 픽셀 분석 기반 Fallback
-  return inspectInpaintingQaWithLocalAnalysis({
+  return createUnmeasuredQaResult({
     inpaintedImageBytes,
-    maskBytes,
     attemptCount,
     maxRetryAttempts
   });
@@ -128,77 +125,109 @@ async function inspectInpaintingQaWithGemini(args: {
   );
 
   if (!response.ok) {
-    const err = await response.text().catch(() => "");
-    throw new Error(`Gemini QA 요청 실패 (HTTP ${response.status}): ${err}`);
+    throw new Error(`Gemini QA 요청 실패 (HTTP ${response.status})`);
   }
 
-  const payload = (await response.json()) as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
+  const payload: unknown = await response.json();
+  const candidate = isRecord(payload) && Array.isArray(payload.candidates) ? payload.candidates[0] : undefined;
+  const content = isRecord(candidate) ? candidate.content : undefined;
+  const part = isRecord(content) && Array.isArray(content.parts) ? content.parts[0] : undefined;
+  const rawJson = isRecord(part) ? part.text : undefined;
+  if (typeof rawJson !== "string" || !rawJson.trim()) {
+    throw new Error("Gemini QA 응답에 검사 결과가 없습니다.");
+  }
 
-  const rawJson = payload.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "{}";
-  const parsed = safeParseJsonObject(rawJson) as {
-    residualRegions?: Array<{
-      bbox?: { x?: number; y?: number; width?: number; height?: number };
-      detectedText?: string;
-      residualConfidence?: number;
-      severity?: string;
-      notes?: string;
-    }>;
-  };
+  const parsed = safeParseJsonObject(rawJson);
+  if (!isRecord(parsed) || !Array.isArray(parsed.residualRegions)) {
+    throw new Error("Gemini QA 응답의 잔여 텍스트 영역 목록이 올바르지 않습니다.");
+  }
 
-  const regions: ResidualTextRegion[] = (parsed.residualRegions || []).map((r) => ({
-    bbox: {
-      x: Math.max(0, Math.min(1, r.bbox?.x ?? 0)),
-      y: Math.max(0, Math.min(1, r.bbox?.y ?? 0)),
-      width: Math.max(0, Math.min(1, r.bbox?.width ?? 0.1)),
-      height: Math.max(0, Math.min(1, r.bbox?.height ?? 0.1))
-    },
-    detectedText: r.detectedText?.trim(),
-    residualConfidence: Math.max(0, Math.min(1, r.residualConfidence ?? 0.5)),
-    severity: r.severity === "severe" ? "severe" : "minor",
-    notes: r.notes?.trim()
-  }));
+  const regions: ResidualTextRegion[] = parsed.residualRegions.map((region: unknown) => {
+    if (!isRecord(region) || !isRecord(region.bbox)) {
+      throw new Error("Gemini QA 응답의 잔여 텍스트 영역이 올바르지 않습니다.");
+    }
+    const { bbox, residualConfidence, severity, detectedText, notes } = region;
+    if (
+      !isNormalizedNumber(bbox.x) ||
+      !isNormalizedNumber(bbox.y) ||
+      !isNormalizedNumber(bbox.width) || bbox.width === 0 ||
+      !isNormalizedNumber(bbox.height) || bbox.height === 0 ||
+      bbox.x + bbox.width > 1 ||
+      bbox.y + bbox.height > 1 ||
+      !isNormalizedNumber(residualConfidence) ||
+      (severity !== "minor" && severity !== "severe") ||
+      (detectedText !== undefined && typeof detectedText !== "string") ||
+      (notes !== undefined && typeof notes !== "string")
+    ) {
+      throw new Error("Gemini QA 응답의 잔여 텍스트 영역 필드가 올바르지 않습니다.");
+    }
+    return {
+      bbox: { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height },
+      detectedText: detectedText?.trim(),
+      residualConfidence,
+      severity,
+      notes: notes?.trim()
+    };
+  });
 
-  return evaluateInpaintingQuality({
+  const result = evaluateInpaintingQuality({
     residualRegions: regions,
     attemptCount: args.attemptCount,
     maxRetryAttempts: args.maxRetryAttempts
   });
+  if (regions.length > 0 && result.qaStatus === "pass") {
+    return {
+      ...result,
+      qaStatus: "manual_review",
+      cleanlinessScore: 0,
+      residualRegions: regions,
+      reason: "낮은 신뢰도 후보로 잔여 여부를 확정하지 못함, 청결도 미측정",
+      recommendedAction: "none",
+      recommendedDilation: 0
+    };
+  }
+  return result;
 }
 
-/**
- * 로컬/오프라인 검수 분석 (기본 PASS 판정 및 안전한 통계 생성)
- */
-function inspectInpaintingQaWithLocalAnalysis(args: {
+function createUnmeasuredQaResult(args: {
   inpaintedImageBytes: Buffer;
-  maskBytes?: Buffer;
   attemptCount: number;
   maxRetryAttempts: number;
 }): InpaintingQaResult {
-  // 로컬 분석에서는 유효한 이미지 바이트인 경우 정상(PASS)으로 안전하게 통과시킴
-  if (!args.inpaintedImageBytes || args.inpaintedImageBytes.length < 64) {
-    return {
-      qaStatus: "manual_review",
-      cleanlinessScore: 0.0,
-      residualRegions: [
-        {
-          bbox: { x: 0, y: 0, width: 1, height: 1 },
-          residualConfidence: 1.0,
-          severity: "severe",
-          notes: "손상되었거나 유효하지 않은 이미지 바이트입니다."
-        }
-      ],
-      attemptCount: args.attemptCount,
-      maxRetryAttempts: args.maxRetryAttempts,
-      reason: "결과 이미지 데이터가 올바르지 않습니다.",
-      evaluatedAt: new Date().toISOString()
-    };
-  }
-
-  return evaluateInpaintingQuality({
+  return {
+    qaStatus: "manual_review",
+    // 검수 미완료 시 0은 기존 숫자 타입을 유지하는 보수적 표시값입니다.
+    cleanlinessScore: 0,
     residualRegions: [],
     attemptCount: args.attemptCount,
-    maxRetryAttempts: args.maxRetryAttempts
-  });
+    maxRetryAttempts: args.maxRetryAttempts,
+    reason: !args.inpaintedImageBytes || args.inpaintedImageBytes.length < 64
+      ? "결과 이미지 데이터가 올바르지 않습니다. 청결도는 미측정입니다."
+      : "잔여 텍스트 검수를 완료하지 못해 청결도는 미측정입니다. 수동 검토가 필요합니다.",
+    evaluatedAt: new Date().toISOString(),
+    recommendedAction: "none"
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNormalizedNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
+}
+
+function safeParseJsonObject(raw: string): unknown {
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Attempt to locate outermost { and }
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      return JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+    }
+    throw new Error("Gemini QA 응답의 JSON이 올바르지 않습니다.");
+  }
 }

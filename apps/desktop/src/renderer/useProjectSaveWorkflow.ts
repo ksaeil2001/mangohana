@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import type { EditableTranslationProject, TranslationProjectV2 } from "../shared/projectTypes.js";
 import type { ProjectSessionResult, TranslationProjectDto } from "../shared/projectSessionTypes.js";
 import type { RecentProject } from "./recentProjects.js";
@@ -55,6 +55,13 @@ export function useProjectSaveWorkflow(options: UseProjectSaveWorkflowOptions) {
   } = options;
 
   const saveInFlightRef = useRef(false);
+  const hasSavedExplicitlyRef = useRef(false);
+
+  useEffect(() => {
+    if (currentFilePath && !currentFilePath.startsWith("session:")) {
+      hasSavedExplicitlyRef.current = true;
+    }
+  }, [currentFilePath]);
 
   function isSameSession(sessionId: string | null, generation: number): boolean {
     return projectSessionIdRef.current === sessionId && sessionGenerationRef.current === generation;
@@ -153,6 +160,7 @@ export function useProjectSaveWorkflow(options: UseProjectSaveWorkflowOptions) {
           setIsDirty(hasUnsavedChanges);
           onProjectDto?.(result.project);
         }
+        hasSavedExplicitlyRef.current = true;
         setCurrentFilePath(`session:${startedSessionId}`);
         if (!hasNewerRevision && result.project.status === "needs_recovery") return;
         if (result.recentProject) {

@@ -17,7 +17,7 @@ import type {
   TranslationProject,
   TranslationProjectV2
 } from "./projectTypes.js";
-import { PRODUCTION_OCR_CONTRACT, normalizeProductionOcrText } from "./productionOcr.js";
+import { isProductionOcrProvenance } from "./productionOcrValidation.js";
 
 const dialogueTypes: DialogueType[] = ["speech", "thought", "narration", "unknown"];
 const lineStatuses: LineStatus[] = ["untranslated", "draft", "complete", "review"];
@@ -432,57 +432,6 @@ function isOptionalTextRegionSourceInfo(value: unknown): boolean {
     (value.orientation === undefined || ["horizontal", "vertical", "unknown"].includes(value.orientation as string)) &&
     (value.productionOcrProvenance === undefined || isProductionOcrProvenance(value.productionOcrProvenance))
   );
-}
-
-function isProductionOcrProvenance(value: unknown): boolean {
-  if (!isRecord(value) || !isRecord(value.cropTransform)) return false;
-  const transform = value.cropTransform;
-  return (
-    value.contractVersion === 1 &&
-    value.detectorModelId === PRODUCTION_OCR_CONTRACT.detector.modelId &&
-    value.detectorRevision === PRODUCTION_OCR_CONTRACT.detector.revision &&
-    value.recognizerModelId === PRODUCTION_OCR_CONTRACT.recognizer.modelId &&
-    value.recognizerRevision === PRODUCTION_OCR_CONTRACT.recognizer.revision &&
-    isNonEmptyString(value.groupId) &&
-    isStringArray(value.sourceDetectionIds) && value.sourceDetectionIds.length > 0 &&
-    new Set(value.sourceDetectionIds).size === value.sourceDetectionIds.length &&
-    Array.isArray(value.sourceQuadsPx) &&
-    value.sourceQuadsPx.length === value.sourceDetectionIds.length &&
-    Array.isArray(value.sourceDetectionScores) &&
-    value.sourceDetectionScores.length === value.sourceDetectionIds.length &&
-    value.sourceDetectionScores.every((score) =>
-      typeof score === "number" && Number.isFinite(score) && score >= 0 && score <= 1) &&
-    value.sourceQuadsPx.every((quad) => Array.isArray(quad) && quad.length === 4 && quad.every(isFinitePoint)) &&
-    ["horizontal", "vertical", "unknown"].includes(value.orientation as string) &&
-    value.confidenceSource === "detector_min" &&
-    (value.recognition === undefined || (
-      isRecord(value.recognition) &&
-      typeof value.recognition.rawOcrText === "string" &&
-      typeof value.recognition.normalizedOcrText === "string" &&
-      value.recognition.normalization === PRODUCTION_OCR_CONTRACT.normalization &&
-      value.recognition.normalizedOcrText === normalizeProductionOcrText(value.recognition.rawOcrText)
-    )) &&
-    isPixelBbox(transform.sourceBboxPx) &&
-    isPixelBbox(transform.cropBboxPx) &&
-    transform.paddingRatio === 0.08 &&
-    transform.rotationDegrees === 0 &&
-    isPositiveInteger(transform.imageWidth) &&
-    isPositiveInteger(transform.imageHeight)
-  );
-}
-
-function isFinitePoint(value: unknown): boolean {
-  return isRecord(value) &&
-    typeof value.x === "number" && Number.isFinite(value.x) &&
-    typeof value.y === "number" && Number.isFinite(value.y);
-}
-
-function isPixelBbox(value: unknown): boolean {
-  if (!isRecord(value)) return false;
-  return [value.x, value.y, value.width, value.height].every((coordinate) =>
-    typeof coordinate === "number" && Number.isFinite(coordinate)) &&
-    typeof value.width === "number" && value.width > 0 &&
-    typeof value.height === "number" && value.height > 0;
 }
 
 function isDialogueTypesetting(value: unknown): value is DialogueTypesetting {

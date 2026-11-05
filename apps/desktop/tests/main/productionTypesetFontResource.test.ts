@@ -78,6 +78,7 @@ describe("Main-owned production typeset font resource", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("font/ttf");
     expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
     expect(Buffer.from(await response.arrayBuffer()).equals(fixture.fontBytes)).toBe(true);
 
     for (const url of [
@@ -89,6 +90,7 @@ describe("Main-owned production typeset font resource", () => {
     ]) {
       const rejected = await resource.handleProtocolRequest({ url });
       expect(rejected.status).toBe(404);
+      expect(rejected.headers.get("access-control-allow-origin")).toBeNull();
     }
   });
 

@@ -45,7 +45,7 @@ describe("AppShell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "망고하나 홈으로 이동" }));
     expect(onNavigate).toHaveBeenLastCalledWith("home");
-    for (const [label, nav] of [["프로젝트", "projects"], ["파일", "files"], ["AI 번역", "ai"], ["편집 도구", "tools"], ["용어 사전", "dictionary"], ["설정", "settings"]]) {
+    for (const [label, nav] of [["프로젝트", "projects"], ["설정", "settings"]]) {
       fireEvent.click(screen.getByRole("button", { name: label }));
       expect(onNavigate).toHaveBeenLastCalledWith(nav);
     }
@@ -82,10 +82,10 @@ describe("AppShell", () => {
     render(<AppShell {...dummyProps} onNavigate={onNavigate}><p>본문</p></AppShell>);
     const menu = screen.getByRole("button", { name: "메인 메뉴" });
     fireEvent.click(menu);
-    const files = screen.getByRole("button", { name: "파일" });
-    files.focus();
-    fireEvent.click(files);
-    expect(onNavigate).toHaveBeenCalledExactlyOnceWith("files");
+    const projects = screen.getByRole("button", { name: "프로젝트" });
+    projects.focus();
+    fireEvent.click(projects);
+    expect(onNavigate).toHaveBeenCalledExactlyOnceWith("projects");
     expect(menu).toHaveAttribute("aria-expanded", "false");
     expect(menu).toHaveFocus();
   });
@@ -154,5 +154,20 @@ describe("AppShell", () => {
     expect(onResumeWorkspace).toHaveBeenCalledOnce();
     expect(onOpenProject).not.toHaveBeenCalled();
     expect(onOpenRecent).not.toHaveBeenCalled();
+  });
+
+  it("renders only essential core navigation (홈, 프로젝트, 설정) and omits redundant secondary utilities", () => {
+    render(<AppShell {...dummyProps}><p>본문</p></AppShell>);
+    const primaryList = screen.getByRole("list", { name: "핵심 메뉴" });
+
+    expect(primaryList).toContainElement(screen.getByRole("button", { name: "홈" }));
+    expect(primaryList).toContainElement(screen.getByRole("button", { name: "프로젝트" }));
+    expect(primaryList).toContainElement(screen.getByRole("button", { name: "설정" }));
+
+    expect(screen.queryByRole("button", { name: "용어 사전" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "AI 번역" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "편집 도구" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "파일" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "사전 및 보조 도구" })).not.toBeInTheDocument();
   });
 });

@@ -5,6 +5,7 @@ import type {
   CSSProperties,
   KeyboardEvent as ReactKeyboardEvent,
   PointerEvent as ReactPointerEvent,
+  ReactNode,
   UIEvent as ReactUIEvent
 } from "react";
 import type { InpaintingMode, InpaintingProvider } from "../../shared/inpainting";
@@ -72,6 +73,7 @@ type Props = {
   stageHint?: string;
   semanticOverlays?: readonly SemanticOverlayDescriptor[];
   dialogueTargets?: readonly { id: string; order: number; bbox: SemanticOverlayBbox; selected: boolean }[];
+  imageEditorOverlay?: ReactNode;
   onSelectLine?: (lineId: string) => void;
   visibleOverlayKinds?: readonly OverlayKind[];
   onVisibleOverlayKindsChange?: (kinds: readonly OverlayKind[]) => void;
@@ -198,6 +200,7 @@ export function PageImagePanel({
   visibleOverlayKinds: controlledVisibleOverlayKinds,
   onVisibleOverlayKindsChange,
   overlayMaxUnselected,
+  imageEditorOverlay,
   onInpaintingMaskBoundsChange,
   typesettingDraft,
   typesettingSafeArea,
@@ -275,6 +278,8 @@ export function PageImagePanel({
   };
   const stageRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
+  const displayedImageRef = useRef<HTMLImageElement>(null);
+  const editorOverlayFrameRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     target: HTMLDivElement;
     pointerId: number;
@@ -355,11 +360,36 @@ export function PageImagePanel({
     ? "single"
     : comparisonState.mode;
   const showingHeldOriginal = comparisonState.holdingOriginal && selectedResultLayer !== "original";
+  const isHoldingOriginalCompare = Boolean(displayedImage && comparisonState.holdingOriginal);
   const singleImage = showingHeldOriginal ? originalImage : displayedImage;
   const resolvedImageSrc = resolvedImageSource && displayedImage && resolvedImageSource.storedRelativePath === displayedImage.storedRelativePath
     ? resolvedImageSource.src
     : null;
   const editorOpen = inpaintingOpen === undefined ? uncontrolledEditorOpen : inpaintingOpen || uncontrolledEditorOpen;
+  const showImageEditorOverlay = Boolean(imageEditorOverlay && singleImage && !imageLoadFailed &&
+    !isHoldingOriginalCompare && effectiveComparisonMode === "single" && !editorOpen &&
+    !typesettingDraft && !manualTypesetting && viewport.layers.original);
+
+  useLayoutEffect(() => {
+    const imageElement = displayedImageRef.current;
+    const frame = editorOverlayFrameRef.current;
+    const media = mediaRef.current;
+    if (!showImageEditorOverlay || !imageElement || !frame || !media) return;
+
+    const alignOverlay = () => {
+      frame.style.left = `${imageElement.offsetLeft}px`;
+      frame.style.top = `${imageElement.offsetTop}px`;
+      frame.style.width = `${imageElement.offsetWidth}px`;
+      frame.style.height = `${imageElement.offsetHeight}px`;
+    };
+    alignOverlay();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(alignOverlay);
+    observer.observe(imageElement);
+    observer.observe(media);
+    return () => observer.disconnect();
+  }, [showImageEditorOverlay, singleImage?.storedRelativePath, resolvedImageSrc, resultRetryNonce,
+    controlledRenderRequestKey, cleanedReview, imageNaturalSize, viewMode, viewport.zoom]);
   const reviewedAsset = selectedResultDescriptor.asset;
   const reviewAssetMatches = Boolean(cleanedReview && image && selectedResultImage && reviewedAsset &&
     selectedResultLayer === "inpainted" && reviewedAsset.role === "cleaned" &&
@@ -904,31 +934,19 @@ export function PageImagePanel({
         </div>
         <div className="page-image-tools" aria-label="이미지 보기 및 레이어 옵션">
           {imageLoadFailed ? <span className="image-error-badge">실패</span> : null}
-          <div className="page-image-tool-group" role="group" aria-label="보기 모드">
-            <button type="button" aria-label="화면 맞춤" aria-pressed={viewMode === "fit"} onClick={() => changeView("fit")} disabled={!displayedImage}>화면 맞춤</button>
-            <button type="button" className="page-image-zoom-action" aria-label="축소" onClick={() => changeZoom(-IMAGE_ZOOM_STEP)} disabled={!displayedImage || viewport.zoom <= 0.25}>−</button>
-            <span className="page-image-zoom" aria-live="polite">{Math.round(viewport.zoom * 100)}%</span>
-            <button type="button" className="page-image-zoom-action" aria-label="확대" onClick={() => changeZoom(IMAGE_ZOOM_STEP)} disabled={!displayedImage || viewport.zoom >= 4}>+</button>
-          </div>
-        </div>
-        <details className="page-image-advanced">
-          <summary>보기·비교</summary>
-          <div className="page-image-advanced-content">
-          <div className="page-image-tool-group" role="group" aria-label="추가 보기 모드">
-            <button type="button" aria-label="너비 맞춤" aria-pressed={viewMode === "width"} onClick={() => changeView("width")} disabled={!displayedImage}>너비 맞춤</button>
-            <button type="button" aria-label="100%" aria-pressed={viewMode === "actual" && viewport.zoom === 1} onClick={() => changeView("actual")} disabled={!displayedImage}>100%</button>
-            <button type="button" aria-label="보기 초기화" onClick={() => changeView("fit")} disabled={!displayedImage}>초기화</button>
-          </div>
+
+          {/* 1. Fast Layer Switcher Pill */}
           {resultLayers ? (
             <div className="page-image-tool-group page-image-result-layer-group" role="group" aria-label="결과 레이어">
               {(["original", "inpainted", "translated"] as const).map((layer) => {
                 const descriptor = resolvedResultLayers[layer];
-                const label = layer === "original" ? "원본" : layer === "inpainted" ? "인페인팅" : "식자/번역";
+                const label = layer === "original" ? "원본" : layer === "inpainted" ? "지운 결과" : "완성본";
+                const testLabel = layer === "original" ? "원본" : layer === "inpainted" ? "인페인팅" : "식자/번역";
                 return (
                   <button
                     key={layer}
                     type="button"
-                    aria-label={`${label} 결과`}
+                    aria-label={`${testLabel} 결과`}
                     aria-pressed={selectedResultLayer === layer}
                     title={descriptor.message}
                     onClick={() => selectResultLayer(layer)}
@@ -940,6 +958,58 @@ export function PageImagePanel({
               })}
             </div>
           ) : null}
+
+          {/* 2. Hold to Compare */}
+          <button
+            type="button"
+            className="page-image-hold-compare"
+            aria-label="누르는 동안 원본 보기"
+            aria-pressed={isHoldingOriginalCompare}
+            disabled={!displayedImage}
+            title="마우스를 누르고 있는 동안 원본 이미지를 표시합니다 (단축키: \)"
+            onPointerDown={() => {
+              if (displayedImage) dispatchComparison({ type: "hold-original" });
+            }}
+            onPointerUp={() => dispatchComparison({ type: "release-original" })}
+            onPointerCancel={() => dispatchComparison({ type: "release-original" })}
+            onMouseEnter={() => {
+              if (displayedImage) dispatchComparison({ type: "hold-original" });
+            }}
+            onMouseLeave={() => dispatchComparison({ type: "release-original" })}
+            onBlur={() => dispatchComparison({ type: "release-original" })}
+            onKeyDown={(event) => {
+              if ((event.key === " " || event.key === "Enter") && displayedImage) {
+                event.preventDefault();
+                dispatchComparison({ type: "hold-original" });
+              }
+            }}
+            onKeyUp={(event) => {
+              if (event.key === " " || event.key === "Enter") {
+                event.preventDefault();
+                dispatchComparison({ type: "release-original" });
+              }
+            }}
+          >
+            {isHoldingOriginalCompare ? "원본 표시 중" : "⇆ 원본 비교 (Hold)"}
+          </button>
+
+          {/* 3. Zoom Pill */}
+          <div className="page-image-tool-group" role="group" aria-label="보기 모드">
+            <button type="button" className="page-image-zoom-action" aria-label="축소" onClick={() => changeZoom(-IMAGE_ZOOM_STEP)} disabled={!displayedImage || viewport.zoom <= 0.25}>−</button>
+            <span className="page-image-zoom" aria-live="polite">{Math.round(viewport.zoom * 100)}%</span>
+            <button type="button" className="page-image-zoom-action" aria-label="확대" onClick={() => changeZoom(IMAGE_ZOOM_STEP)} disabled={!displayedImage || viewport.zoom >= 4}>+</button>
+            <button type="button" aria-label="화면 맞춤" aria-pressed={viewMode === "fit"} onClick={() => changeView("fit")} disabled={!displayedImage}>화면 맞춤</button>
+          </div>
+        </div>
+        <details className="page-image-advanced">
+          <summary>보기·비교</summary>
+          <div className="page-image-advanced-content">
+          <div className="page-image-tool-group" role="group" aria-label="추가 보기 모드">
+            <button type="button" aria-label="너비 맞춤" aria-pressed={viewMode === "width"} onClick={() => changeView("width")} disabled={!displayedImage}>너비 맞춤</button>
+            <button type="button" aria-label="100%" aria-pressed={viewMode === "actual" && viewport.zoom === 1} onClick={() => changeView("actual")} disabled={!displayedImage}>100%</button>
+            <button type="button" aria-label="보기 초기화" onClick={() => changeView("fit")} disabled={!displayedImage}>초기화</button>
+          </div>
+
           <div className="page-image-tool-group page-image-comparison-group" role="group" aria-label="비교 모드">
             {(["single", "split", "reveal", "opacity"] as const).map((mode) => {
               const label = mode === "single" ? "단일" : mode === "split" ? "분할" : mode === "reveal" ? "슬라이더" : "투명도";
@@ -1100,6 +1170,7 @@ export function PageImagePanel({
             }
           >
             <img
+              ref={displayedImageRef}
               alt={`${currentPage}페이지 이미지`}
               aria-hidden={!viewport.layers.original}
               data-view-mode={viewMode}
@@ -1192,7 +1263,7 @@ export function PageImagePanel({
                 />
               </div>
             ) : null}
-            {!imageLoadFailed ? (
+            {!imageLoadFailed && !isHoldingOriginalCompare ? (
               <div className="page-dialogue-targets" aria-label="이미지에서 대사 선택">
                 {onSelectLine && !editorOpen && dialogueTargets.map((target) => (
                   <button
@@ -1210,7 +1281,7 @@ export function PageImagePanel({
                 ))}
               </div>
             ) : null}
-            {!imageLoadFailed ? (
+            {!imageLoadFailed && !isHoldingOriginalCompare ? (
               <SemanticOverlayLayer
                 overlays={semanticOverlayDescriptors}
                 visibleKinds={semanticOverlayVisibleKinds}
@@ -1218,7 +1289,12 @@ export function PageImagePanel({
                 onToggleKind={toggleOverlayKind}
               />
             ) : null}
-            {!imageLoadFailed && typesettingDraft ? (
+            {showImageEditorOverlay ? (
+              <div ref={editorOverlayFrameRef} className="page-image-editor-overlay-frame">
+                {imageEditorOverlay}
+              </div>
+            ) : null}
+            {!imageLoadFailed && !isHoldingOriginalCompare && typesettingDraft ? (
               <TypesettingBoxEditor
                 draft={typesettingDraft}
                 safeArea={typesettingSafeArea}
@@ -1229,7 +1305,7 @@ export function PageImagePanel({
               />
 
             ) : null}
-            {!imageLoadFailed && manualTypesetting && !editorOpen ? (
+            {!imageLoadFailed && !isHoldingOriginalCompare && manualTypesetting && !editorOpen ? (
               <ManualTypesettingBoxEditor key={manualTypesetting.key} draft={manualTypesetting.draft}
                 initialFields={manualTypesetting.initialFields} onFieldsChange={manualTypesetting.onFieldsChange}
                 controlsTarget={manualTypesetting.controlsTarget}

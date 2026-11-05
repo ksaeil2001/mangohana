@@ -1006,11 +1006,11 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "⚡ 일괄 처리 시작" }));
 
     expect(await screen.findByRole("alert", { name: "일괄 처리 오류 요약" })).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: /전 페이지 일괄 자동화/ })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: /^일괄 작업$/ })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "실패 페이지를 작업 큐에서 확인" }));
 
-    expect(screen.queryByRole("dialog", { name: /전 페이지 일괄 자동화/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: /^일괄 작업$/ })).not.toBeInTheDocument();
     const queuePanel = screen.getByRole("region", { name: "페이지 작업 큐" });
     const failedPage = within(queuePanel).getByRole("listitem", { name: "페이지 2" });
     expect(within(failedPage).getByText("페이지 2 번역 Provider 응답 시간이 초과되었습니다.")).toBeInTheDocument();
@@ -1066,7 +1066,7 @@ describe("App", () => {
     fireEvent.click(within(navigation).getByRole("button", { name: "페이지" }));
     expect(screen.getByRole("complementary", { name: "페이지 목록" })).toBeVisible();
     fireEvent.click(within(navigation).getByRole("button", { name: "문맥" }));
-    expect(screen.getByRole("region", { name: "등장인물과 용어 문맥" })).toBeVisible();
+    expect(screen.getByRole("region", { name: "등장인물 문맥" })).toBeVisible();
     fireEvent.click(within(navigation).getByRole("button", { name: "수정" }));
     expect(await screen.findByRole("complementary", { name: "오른쪽 작업 패널" })).toBeVisible();
     fireEvent.click(within(navigation).getByRole("button", { name: "수정" }));
@@ -1160,7 +1160,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "탐색: 페이지" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "탐색: 문맥" }));
     expect(screen.getByRole("button", { name: "탐색: 문맥" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("현재 프로젝트의 등장인물과 용어를 관리합니다.")).toBeInTheDocument();
+    expect(screen.getByText("현재 프로젝트의 등장인물과 말투를 관리합니다.")).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "라이트 테마로 전환" })).toBeInTheDocument();
     expect(document.documentElement.dataset.theme).toBe("dark");
@@ -9175,6 +9175,30 @@ describe("App", () => {
     expect(screen.getByLabelText("원문 2")).toHaveValue("第二声");
   });
 
+  it("confirms an AI proposal before the detail panel moves to the next line", async () => {
+    window.projectApi = {
+      importTxtFile: vi.fn().mockResolvedValue({
+        filePath: "C:\\input.txt",
+        lines: [
+          { ...rendererLine("line-1", 1, "第一声"), aiTranslation: "첫 번째 제안" },
+          rendererLine("line-2", 2, "第二声")
+        ]
+      }),
+      chooseSaveFile: vi.fn(), exportTranslations: vi.fn(), openProject: vi.fn(), saveProject: vi.fn()
+    };
+    renderApp();
+    await clickTxtStart();
+    await openWorkspacePanel("수정");
+
+    const confirm = await screen.findByRole("button", { name: /^대사 확정$/ });
+    expect(confirm).toHaveTextContent("대사 확정 및 다음");
+    fireEvent.click(confirm);
+    expect(await screen.findByLabelText("원문 2")).toHaveValue("第二声");
+    fireEvent.click(screen.getByRole("button", { name: "이전 라인" }));
+    expect(screen.getByLabelText("사용자 수정문 1")).toHaveValue("첫 번째 제안");
+    expect(screen.getByRole("button", { name: "완료 표시" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("allows explicit next-page navigation after the current page has no actionable line", async () => {
     const lines = [rendererLine("page-1-line", 1, "第一頁", 1), rendererLine("page-2-line", 2, "第二頁", 2)];
     window.projectApi = {
@@ -10600,7 +10624,7 @@ describe("App", () => {
     expect(screen.queryByRole("button", { name: "TXT 내보내기" })).not.toBeInTheDocument();
   });
 
-  it("edits character profiles and dictionary terms in project context", async () => {
+  it("edits character profiles without glossary controls in project context", async () => {
     await renderWorkspaceApp();
 
     fireEvent.click(screen.getByRole("button", { name: "캐릭터 추가" }));
@@ -10610,18 +10634,11 @@ describe("App", () => {
     fireEvent.change(screen.getByLabelText("캐릭터 말투 1"), { target: { value: "blunt, casual" } });
     expect(screen.getByDisplayValue("Mika")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Lead character")).toBeInTheDocument();
-    expect(screen.getByText(/캐릭터 1명 · 사용자 사전 0개/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "용어 추가" }));
-    fireEvent.change(screen.getByLabelText("원문 용어 1"), { target: { value: "senpai" } });
-    fireEvent.change(screen.getByLabelText("번역 용어 1"), { target: { value: "선배" } });
-    fireEvent.change(screen.getByLabelText("용어 메모 1"), { target: { value: "Keep relationship tone" } });
-    expect(screen.getByDisplayValue("선배")).toBeInTheDocument();
-    expect(screen.getByText(/캐릭터 1명 · 사용자 사전 1개/)).toBeInTheDocument();
+    expect(screen.getByText(/캐릭터 1명/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "캐릭터 1 삭제" }));
-    fireEvent.click(screen.getByRole("button", { name: "용어 1 삭제" }));
-    expect(screen.getByText(/캐릭터 0명 · 사용자 사전 0개/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "용어 추가" })).not.toBeInTheDocument();
+    expect(screen.getByText(/캐릭터 0명/)).toBeInTheDocument();
   });
 
   it("keeps Context expanded after character edits rerender a non-viewer workspace", async () => {
@@ -10630,7 +10647,7 @@ describe("App", () => {
     expect(appSource).toContain("onToggle={(event) => setContextOpen(event.currentTarget.open)}");
     expect(appSource).not.toContain('open={workspaceMode === "viewer"}');
     await renderWorkspaceApp();
-    const summary = screen.getByText("등장인물·용어").closest("summary");
+    const summary = screen.getByText("등장인물").closest("summary");
     const context = summary?.closest("details");
     expect(summary).not.toBeNull();
     expect(context).not.toBeNull();
@@ -10644,12 +10661,12 @@ describe("App", () => {
     expect(screen.getByDisplayValue("Mika")).toBeInTheDocument();
   });
 
-  function installSessionGlossaryWorkspace(options: {
+  function installSessionCharacterWorkspace(options: {
     characters?: TranslationProjectV2["characters"];
     dictionaryTerms?: TranslationProjectV2["dictionaryTerms"];
   } = {}) {
     const initialProject = normalizeProject(createEmptyProject("Initial", false));
-    const openedProject = normalizeProject(createEmptyProject("Glossary Session", false));
+    const openedProject = normalizeProject(createEmptyProject("Character Session", false));
     openedProject.dialogueLines = [{
       ...rendererLine("session-line", 1, "대사"),
       origin: { kind: "manual" }
@@ -10729,7 +10746,7 @@ describe("App", () => {
     };
   }
 
-  async function openSessionGlossaryWorkspace() {
+  async function openSessionCharacterWorkspace() {
     renderApp();
     fireEvent.click(await screen.findByRole("button", { name: "기존 프로젝트 열기" }));
     await openWorkspacePanel("수정");
@@ -10737,8 +10754,8 @@ describe("App", () => {
   }
 
   it("does not send an invalid upsert_character when only adding a character in the session workflow", async () => {
-    const harness = installSessionGlossaryWorkspace();
-    await openSessionGlossaryWorkspace();
+    const harness = installSessionCharacterWorkspace();
+    await openSessionCharacterWorkspace();
 
     fireEvent.click(screen.getByRole("button", { name: "캐릭터 추가" }));
     expect(screen.getByLabelText("캐릭터 이름 1")).toHaveValue("");
@@ -10758,27 +10775,8 @@ describe("App", () => {
     ]);
   });
 
-  it("does not send an invalid upsert_dictionary_term until source and target are both valid", async () => {
-    const harness = installSessionGlossaryWorkspace();
-    await openSessionGlossaryWorkspace();
-
-    fireEvent.click(screen.getByRole("button", { name: "용어 추가" }));
-    fireEvent.change(screen.getByLabelText("원문 용어 1"), { target: { value: "先輩" } });
-    await waitFor(() => expect(harness.termUpserts()).toEqual([]));
-
-    fireEvent.change(screen.getByLabelText("번역 용어 1"), { target: { value: "선배님" } });
-    await waitFor(() => {
-      expect(harness.termUpserts()).toEqual([
-        expect.objectContaining({
-          type: "upsert_dictionary_term",
-          term: expect.objectContaining({ source: "先輩", target: "선배님" })
-        })
-      ]);
-    });
-  });
-
-  it("does not fail Main validation while replacing a persisted character name or term source in the session workflow", async () => {
-    const harness = installSessionGlossaryWorkspace({
+  it("preserves legacy glossary data while renaming a character, saving and reopening a session", async () => {
+    const harness = installSessionCharacterWorkspace({
       characters: [{
         id: "char-luffy",
         name: "루피",
@@ -10796,10 +10794,9 @@ describe("App", () => {
         condition: { speaker: "루피", targetContext: "능력" }
       }]
     });
-    await openSessionGlossaryWorkspace();
+    await openSessionCharacterWorkspace();
 
     fireEvent.change(screen.getByLabelText("캐릭터 이름 1"), { target: { value: "" } });
-    fireEvent.change(screen.getByLabelText("원문 용어 1"), { target: { value: "" } });
     await waitFor(() => {
       expect(harness.characterUpserts()).toEqual([]);
       expect(harness.termUpserts()).toEqual([]);
@@ -10808,7 +10805,6 @@ describe("App", () => {
     expect(harness.getSessionProject().dictionaryTerms[0]?.source).toBe("ゴムゴムの実");
 
     fireEvent.change(screen.getByLabelText("캐릭터 이름 1"), { target: { value: "몽키 D. 루피" } });
-    fireEvent.change(screen.getByLabelText("원문 용어 1"), { target: { value: "ゴムゴム" } });
     await waitFor(() => {
       expect(harness.getSessionProject().characters[0]).toEqual(expect.objectContaining({
         id: "char-luffy",
@@ -10818,7 +10814,7 @@ describe("App", () => {
       }));
       expect(harness.getSessionProject().dictionaryTerms[0]).toEqual(expect.objectContaining({
         id: "term-fruit",
-        source: "ゴムゴム",
+        source: "ゴムゴムの実",
         target: "고무고무 열매",
         note: "악마의 열매",
         priority: 5,
@@ -10830,9 +10826,9 @@ describe("App", () => {
     await waitFor(() => expect(harness.saveProject).toHaveBeenCalled());
     fireEvent.click(within(screen.getByRole("banner", { name: "앱 상단 바" })).getByRole("button", { name: "열기" }));
     expect(await screen.findByDisplayValue("몽키 D. 루피")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("ゴムゴム")).toBeInTheDocument();
+    expect(screen.queryByLabelText("원문 용어 1")).not.toBeInTheDocument();
     expect(harness.getPersistedProject().characters[0]?.name).toBe("몽키 D. 루피");
-    expect(harness.getPersistedProject().dictionaryTerms[0]?.source).toBe("ゴムゴム");
+    expect(harness.getPersistedProject().dictionaryTerms[0]?.source).toBe("ゴムゴムの実");
   });
 
   it("Task 8 user path: creates a naturally sorted 12-page project after save cancel preserves the draft", async () => {
@@ -12598,7 +12594,6 @@ describe("App", () => {
       dialogueLines: openedProject.dialogueLines,
       targetLineId: "ai-proposal-line",
       characters: openedProject.characters,
-      dictionaryTerms: openedProject.dictionaryTerms,
       stylePreset: DEFAULT_PROVIDER_SETTINGS.translationStyle
     });
     const fingerprint = computeTranslationPayloadFingerprint(payload);
@@ -12672,7 +12667,6 @@ describe("App", () => {
       dialogueLines: opened.project.dialogueLines,
       targetLineId: "local-provider-line",
       characters: opened.project.characters,
-      dictionaryTerms: opened.project.dictionaryTerms,
       stylePreset: "literal"
     });
     const executeTranslation = vi.fn().mockResolvedValue({
