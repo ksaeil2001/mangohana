@@ -1,19 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   evaluateAndBreakKoreanText,
-  findBestSubwordBreak,
-  tokenizeKoreanText
+  findBestSubwordBreak
 } from "../../src/renderer/typesettingKoreanBreak.js";
 
 describe("typesettingKoreanBreak", () => {
-  describe("tokenizeKoreanText", () => {
-    it("tokenizes korean sentences preserving words, spaces, and punctuation", () => {
-      const tokens = tokenizeKoreanText("안녕 루피! 정말이야?");
-      expect(tokens.length).toBeGreaterThan(0);
-      expect(tokens.map((t) => t.text).join("")).toBe("안녕 루피! 정말이야?");
-    });
-  });
-
   describe("findBestSubwordBreak", () => {
     it("avoids breaking right before a single particle", () => {
       // "사과를" -> breaking between "사" and "과를" is better than "사과" and "를" (particle)

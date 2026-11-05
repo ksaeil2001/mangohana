@@ -4,7 +4,6 @@ import type {
   CharacterProfile,
   DialogueLine,
   DialogueType,
-  DictionaryTerm,
   LineStatus,
   SourceLanguage
 } from "../../shared/projectTypes";
@@ -19,6 +18,7 @@ import {
 } from "../../shared/translationContext";
 import type { IssueEditor } from "../issueEditorState";
 import { classifyTranslationOwnership } from "../translationOwnership";
+import { isValidTypesettingBbox } from "../../shared/typesettingGeometry";
 
 type Props = {
   line: DialogueLine | null;
@@ -30,12 +30,12 @@ type Props = {
   context?: IssueEditor;
   dialogueLines?: readonly DialogueLine[];
   characters?: readonly CharacterProfile[];
-  dictionaryTerms?: readonly DictionaryTerm[];
   onRequestAiTranslation?: (line: DialogueLine) => Promise<void>;
   onCancelAiTranslation?: () => void;
   isTranslating?: boolean;
   focusUserTranslation?: boolean;
   onUserTranslationFocus?: () => void;
+  onApproveTranslation?: (advance?: boolean) => void;
   disabled?: boolean;
 };
 
@@ -49,12 +49,12 @@ export function LineDetailPanel({
   context,
   dialogueLines,
   characters,
-  dictionaryTerms,
   onRequestAiTranslation,
   onCancelAiTranslation,
   isTranslating = false,
   focusUserTranslation = false,
   onUserTranslationFocus,
+  onApproveTranslation,
   disabled = false
 }: Props) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -76,13 +76,12 @@ export function LineDetailPanel({
         dialogueLines,
         targetLineId: lineId,
         characters,
-        dictionaryTerms,
         options: { contextWindowSize, stylePreset, lookaheadWindowSize: 2, includeFuzzyTm: true }
       });
     } catch {
       return null;
     }
-  }, [lineId, dialogueLines, characters, dictionaryTerms, contextWindowSize, stylePreset]);
+  }, [lineId, dialogueLines, characters, contextWindowSize, stylePreset]);
 
   const qaReport = useMemo<TranslationQaReport | null>(() => {
     if (!lineId || !deferredTransText.trim() || !transContext) return null;
@@ -90,7 +89,6 @@ export function LineDetailPanel({
       return inspectTranslationQuality({
         sourceText: deferredSourceText,
         translatedText: deferredTransText,
-        matchedTerms: transContext.matchedTerms,
         speakerProfile: transContext.speakerProfile,
         dialogueType
       });
@@ -182,6 +180,21 @@ export function LineDetailPanel({
         event.stopPropagation();
         moveLineIfEnabled(1);
       }
+    } else if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+      if (onApproveTranslation) {
+        onApproveTranslation();
+      } else {
+        const textToConfirm = line?.userTranslation?.trim() || line?.aiTranslation?.trim();
+        if (line && textToConfirm) {
+          updateLineIfEnabled({
+            ...line,
+            userTranslation: line.userTranslation || line.aiTranslation,
+            lineStatus: "complete"
+          });
+        }
+      }
     } else if (event.altKey && event.key === "1") {
       event.preventDefault();
       event.stopPropagation();
@@ -246,7 +259,7 @@ export function LineDetailPanel({
               aria-keyshortcuts="Alt+t"
               onClick={requestAiTranslationIfEnabled}
             >
-              {isTranslating ? "⚡ AI 번역 생성 중..." : "✨ AI 문맥 번역 실행 (Alt+T)"}
+              {isTranslating ? "AI 번역 생성 중..." : "AI 문맥 번역 실행 (Alt+T)"}
             </Button>
             {isTranslating && onCancelAiTranslation ? (
               <Button type="button" variant="secondary" onClick={onCancelAiTranslation}>
@@ -254,7 +267,7 @@ export function LineDetailPanel({
               </Button>
             ) : null}
             <span className="sr-only">
-              (이전 문맥·화자 어투·용어집 자동 반영)
+              (이전 문맥·화자 어투 자동 반영)
             </span>
           </div>
         )}
@@ -275,7 +288,7 @@ export function LineDetailPanel({
                   copyToClipboard("source", line.sourceText);
                 }}
               >
-                {copiedField === "source" ? "✓ 복사됨" : "📋 복사"}
+                {copiedField === "source" ? "복사됨" : "복사"}
               </Button>
             )}
           </div>
@@ -303,7 +316,7 @@ export function LineDetailPanel({
                   aria-label="사용자 수정문 비우기"
                   title="사용자 수정문 비우기"
                 >
-                  ✕ 비우기
+                  비우기
                 </button>
               )}
               {(line.userTranslation?.trim() || line.aiTranslation?.trim()) && (
@@ -317,7 +330,7 @@ export function LineDetailPanel({
                     copyToClipboard("user", line.userTranslation || line.aiTranslation || "");
                   }}
                 >
-                  {copiedField === "user" ? "✓ 복사됨" : "📋 복사"}
+                  {copiedField === "user" ? "복사됨" : "복사"}
                 </Button>
               )}
             </div>
@@ -336,13 +349,136 @@ export function LineDetailPanel({
             onChange={(event) => updateLineIfEnabled({ ...line, userTranslation: event.target.value })}
             onFocus={onUserTranslationFocus}
           />
-          {!line.typesetting?.bbox ? <small className="manual-line-position-note">식자 영역 미지정 · 글자 배치에서 지정</small> : null}
+          {!isValidTypesettingBbox(line.typesetting?.bbox) && <small className="manual-line-position-note">
+            {line.typesetting ? "식자 영역이 유효하지 않습니다. 글자 배치에서 다시 지정하세요." : "식자 영역 미지정 · 글자 배치에서 지정"}
+          </small>}
           <small className="translation-field-note">{line.userTranslation ? "사용자 수정이 AI 제안보다 우선" : line.aiTranslation ? "AI 제안 · 수정 가능" : "AI 제안 없음"}</small>
           {context === "translation" && line.aiTranslation ? (
             <div className="translation-inline-proposal" aria-label="현재 AI 제안">
               <strong>AI 제안</strong><p>{line.aiTranslation}</p>
             </div>
           ) : null}
+
+          {/* Quick Confirmation CTA */}
+          <div style={{ marginTop: "8px", display: "flex", gap: "8px" }}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="compact"
+              className="mangohana-confirm-cta"
+              aria-label="대사 확정"
+              title="현재 번역문으로 확정하고 다음 대사로 이동합니다 (단축키: Ctrl+Enter)"
+              disabled={disabled || (!line.userTranslation?.trim() && !line.aiTranslation?.trim())}
+              onClick={() => {
+                if (onApproveTranslation) {
+                  onApproveTranslation(canMoveNext);
+                  return;
+                }
+                const textToConfirm = line.userTranslation?.trim() || line.aiTranslation?.trim();
+                if (!textToConfirm) return;
+                updateLineIfEnabled({ ...line, userTranslation: textToConfirm, lineStatus: "complete" });
+                if (canMoveNext) moveLineIfEnabled(1);
+              }}
+            >
+              {canMoveNext ? "대사 확정 및 다음 →" : "대사 확정 ✓"}
+            </Button>
+          </div>
+
+          {/* Typesetting quick controls: Writing Mode, Font, Size */}
+          <fieldset disabled={disabled || !isValidTypesettingBbox(line.typesetting?.bbox)} className="mangohana-typesetting-controls" style={{ marginTop: "12px", padding: "10px", background: "var(--trio-panel)", borderRadius: "8px", border: "1px solid var(--trio-border-soft)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--trio-muted)" }}>식자 방향 및 스타일</span>
+              <div style={{ display: "flex", gap: "4px" }}>
+                <button
+                  type="button"
+                  className={`secondary-button ${(line.typesetting?.writingMode ?? "vertical-rl") === "vertical-rl" ? "active" : ""}`}
+                  style={{ fontSize: "11px", padding: "2px 8px" }}
+                  onClick={() => {
+                    const currentTs = line.typesetting;
+                    if (!currentTs || !isValidTypesettingBbox(currentTs.bbox)) return;
+                    updateLineIfEnabled({
+                      ...line,
+                      typesetting: { ...currentTs, writingMode: "vertical-rl" }
+                    });
+                  }}
+                >
+                  세로쓰기
+                </button>
+                <button
+                  type="button"
+                  className={`secondary-button ${line.typesetting?.writingMode === "horizontal-tb" ? "active" : ""}`}
+                  style={{ fontSize: "11px", padding: "2px 8px" }}
+                  onClick={() => {
+                    const currentTs = line.typesetting;
+                    if (!currentTs || !isValidTypesettingBbox(currentTs.bbox)) return;
+                    updateLineIfEnabled({
+                      ...line,
+                      typesetting: { ...currentTs, writingMode: "horizontal-tb" }
+                    });
+                  }}
+                >
+                  가로쓰기
+                </button>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "8px" }}>
+              <select
+                style={{ fontSize: "11px", padding: "4px", background: "var(--trio-canvas)", color: "var(--trio-text)", border: "1px solid var(--trio-border-soft)", borderRadius: "4px" }}
+                value={line.typesetting?.fontFamily ?? "Comic Sans"}
+                onChange={(e) => {
+                  const currentTs = line.typesetting;
+                  if (!currentTs || !isValidTypesettingBbox(currentTs.bbox)) return;
+                  updateLineIfEnabled({
+                    ...line,
+                    typesetting: { ...currentTs, fontFamily: e.target.value }
+                  });
+                }}
+              >
+                <option value="Comic Sans">만화 고딕 (기본)</option>
+                <option value="Nanum Myeongjo">나눔명조 (진지/해설)</option>
+                <option value="Gmarket Sans">Gmarket Sans (강조)</option>
+                <option value="Nanum Pen">나눔손글씨 (독백/효과)</option>
+              </select>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "11px", color: "var(--trio-muted)" }}>크기</span>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  style={{ padding: "2px 6px", fontSize: "11px" }}
+                  onClick={() => {
+                    const currentTs = line.typesetting;
+                    if (!currentTs || !isValidTypesettingBbox(currentTs.bbox)) return;
+                    const currentRatio = currentTs.fontSizeRatio ?? 1.0;
+                    updateLineIfEnabled({
+                      ...line,
+                      typesetting: { ...currentTs, fontSizeRatio: Math.max(0.6, Number((currentRatio - 0.1).toFixed(1))) }
+                    });
+                  }}
+                >
+                  −
+                </button>
+                <span style={{ fontSize: "11px", minWidth: "28px", textAlign: "center" }}>
+                  {Math.round((line.typesetting?.fontSizeRatio ?? 1.0) * 100)}%
+                </span>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  style={{ padding: "2px 6px", fontSize: "11px" }}
+                  onClick={() => {
+                    const currentTs = line.typesetting;
+                    if (!currentTs || !isValidTypesettingBbox(currentTs.bbox)) return;
+                    const currentRatio = currentTs.fontSizeRatio ?? 1.0;
+                    updateLineIfEnabled({
+                      ...line,
+                      typesetting: { ...currentTs, fontSizeRatio: Math.min(2.0, Number((currentRatio + 0.1).toFixed(1))) }
+                    });
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </fieldset>
         </label>
         <label className={context === "speaker" ? "context-target" : undefined}>
           화자
@@ -410,42 +546,13 @@ export function LineDetailPanel({
               }}
             >
               <div style={{ fontWeight: 700, marginBottom: "var(--trio-space-1)", color: qaReport.passed ? "var(--trio-warning)" : "var(--trio-error)" }}>
-                {qaReport.passed ? "품질 검사 통과 · 확인할 항목 있음" : "⚠️ 번역 품질 검사 이슈 감지 (Glossarion QA)"}
+                {qaReport.passed ? "품질 검사 통과 · 확인할 항목 있음" : "번역 품질 검사 이슈 감지"}
               </div>
               <ul style={{ margin: 0, paddingLeft: "var(--trio-space-4)" }}>
                 {qaReport.issues.map((issue, idx) => (
                   <li key={idx} style={{ color: issue.severity === "error" ? "var(--trio-error)" : issue.severity === "warning" ? "var(--trio-warning)" : "var(--trio-text)" }}>
                     {issue.message}
-                    {issue.suggestedFix && (
-                      <span style={{ marginLeft: "var(--trio-space-2)", display: "inline-flex", alignItems: "center", gap: "var(--trio-space-1)" }}>
-                        <span
-                          style={{
-                            fontWeight: 600,
-                            color: "var(--trio-accent)",
-                            background: "var(--trio-accent-soft)",
-                            padding: "1px var(--trio-space-1)",
-                            borderRadius: "var(--trio-radius-sm)",
-                            fontSize: "var(--trio-text-caption)"
-                          }}
-                        >
-                          권장 용어: {issue.suggestedFix}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="compact"
-                          aria-label={`권장 용어 ${issue.suggestedFix} 복사`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (issue.suggestedFix) {
-                              copyToClipboard(`qa-fix-${idx}`, issue.suggestedFix);
-                            }
-                          }}
-                        >
-                          {copiedField === `qa-fix-${idx}` ? "✓ 복사됨" : "📋 복사"}
-                        </Button>
-                      </span>
-                    )}
+
                   </li>
                 ))}
               </ul>
@@ -467,7 +574,7 @@ export function LineDetailPanel({
               }}
             >
               <div style={{ fontWeight: 600, color: "var(--trio-accent)", marginBottom: "var(--trio-space-1)" }}>
-                ⚡ 번역 메모리(TM) 추천
+                번역 메모리(TM) 추천
               </div>
               {transContext.fuzzyTmMatches.map((tmMatch, idx) => (
                 <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>
@@ -501,7 +608,7 @@ export function LineDetailPanel({
             </summary>
             <div className="translation-context-content">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--trio-space-2)" }}>
-                <span style={{ fontSize: "var(--trio-text-caption)", fontWeight: 600, color: "var(--ink-muted)" }}>문맥 탐색 범위:</span>
+                <span style={{ fontSize: "var(--trio-text-caption)", fontWeight: 600, color: "var(--ink-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>문맥 탐색 범위:</span>
                 <div style={{ display: "flex", gap: "var(--trio-space-1)" }}>
                   {[3, 5, 10].map((sz) => (
                     <button
@@ -523,11 +630,11 @@ export function LineDetailPanel({
                 </div>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--trio-space-2)" }}>
-                <span style={{ fontSize: "var(--trio-text-caption)", fontWeight: 600, color: "var(--ink-muted)" }}>대사 어조 프리셋:</span>
+                <span style={{ fontSize: "var(--trio-text-caption)", fontWeight: 600, color: "var(--ink-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>대사 어조 프리셋:</span>
                 <select
                   value={stylePreset}
                   onChange={(e) => setStylePreset(e.target.value as MangaSpeechStylePreset)}
-                  style={{ fontSize: "var(--trio-text-caption)", padding: "2px var(--trio-space-1)", borderRadius: "var(--trio-radius-sm)" }}
+                  style={{ fontSize: "var(--trio-text-caption)", padding: "2px var(--trio-space-1)", borderRadius: "var(--trio-radius-sm)", flex: "1 1 130px", minWidth: 0, maxWidth: "180px" }}
                   aria-label="대사 어조 프리셋 선택"
                 >
                   {mangaSpeechStylePresets.map((preset) => (
@@ -544,16 +651,7 @@ export function LineDetailPanel({
                 </div>
               )}
 
-              {transContext.matchedTerms.length > 0 && (
-                <div className="context-item context-glossary">
-                  <strong>매칭된 사전 용어:</strong>
-                  <ul>
-                    {transContext.matchedTerms.map((t) => (
-                      <li key={t.id}>{t.source} → {t.target} {t.note ? `(${t.note})` : ""}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+
               {transContext.previousTurns.length > 0 && (
                 <div className="context-item context-turns">
                   <strong>직전 대화 흐름 (Previous):</strong>
@@ -604,7 +702,7 @@ export function LineDetailPanel({
               aria-label="AI 번역을 사용자 수정문에 적용"
               onClick={() => updateLineIfEnabled({ ...line, userTranslation: line.aiTranslation })}
             >
-              📥 번역창에 적용
+              번역창에 적용
             </Button>
           )}
         </div>

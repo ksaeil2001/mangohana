@@ -79,7 +79,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: true,
@@ -138,7 +137,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: true,
@@ -184,7 +182,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -227,7 +224,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -306,7 +302,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: [2],
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: true,
@@ -353,7 +348,6 @@ describe("batchExecutionCoordinator", () => {
           targetPages: "all",
           speechStylePreset: "informal",
           runOcr: true, // unsupported
-          runGlossary: false,
           runTranslate: true,
           runInpaint: false,
           runTypeset: false,
@@ -370,7 +364,6 @@ describe("batchExecutionCoordinator", () => {
           targetPages: "all",
           speechStylePreset: "informal",
           runOcr: false,
-          runGlossary: false,
           runTranslate: true,
           runInpaint: true, // unsupported
           runTypeset: false,
@@ -422,7 +415,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: false,
         runInpaint: false,
         runTypeset: true,
@@ -486,7 +478,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: true,
@@ -535,7 +526,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: [1],
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: true,
@@ -608,7 +598,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -685,7 +674,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -752,7 +740,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -815,7 +802,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -885,7 +871,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: false,
         runInpaint: false,
         runTypeset: true,
@@ -963,7 +948,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -982,7 +966,7 @@ describe("batchExecutionCoordinator", () => {
     expect(line3?.userTranslation).toBe("이미 번역됨");
   });
 
-  it("discards stale batch results when dictionary term is modified during batch execution", async () => {
+  it("keeps batch results when only unused legacy dictionary data changes", async () => {
     const projectSessionManager = createProjectSessionManager();
     const sessionProject: TranslationProjectV2 = {
       ...dummyProject,
@@ -1020,7 +1004,7 @@ describe("batchExecutionCoordinator", () => {
       executeTranslation: vi.fn().mockImplementation(async (payload) => {
         callCount++;
         if (callCount === 1) {
-          // Mutate glossary during execution
+          // Replay a legacy term update while translation is running.
           const currentRev = projectSessionManager.getProject(sessionId).revision;
           const mutResult = await projectSessionManager.applyProjectMutation({
             projectSessionId: sessionId,
@@ -1053,7 +1037,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -1062,14 +1045,11 @@ describe("batchExecutionCoordinator", () => {
     });
 
     const updatedSession = projectSessionManager.getProject(sessionId);
-    // line-1 had glossary matched to こんにちは, which changed during execution -> discarded
-    expect(updatedSession.project.dialogueLines[0]?.aiTranslation).toBeUndefined();
-    // line-2 used line-1 and its matched glossary as provider context -> discarded
-    expect(updatedSession.project.dialogueLines[1]?.aiTranslation).toBeUndefined();
-
-    expect(result.progress.stage).toBe("failed");
-    expect(result.progress.errors.length).toBeGreaterThan(0);
-    expect(result.progress.currentMessage).toContain("2개 번역 실행 중 변경으로 폐기");
+    expect(updatedSession.project.dialogueLines[0]?.aiTranslation).toBe("Translated_こんにちは");
+    expect(updatedSession.project.dialogueLines[1]?.aiTranslation).toBeDefined();
+    expect(updatedSession.project.dictionaryTerms[0]?.target).toBe("안녕하세요 (공손하게)");
+    expect(result.progress.stage).toBe("completed");
+    expect(result.progress.errors).toEqual([]);
   });
 
   it("discards stale batch results when character profile is modified during batch execution", async () => {
@@ -1155,7 +1135,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -1241,7 +1220,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -1318,7 +1296,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: true,
@@ -1433,7 +1410,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -1530,7 +1506,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: false,
         runInpaint: false,
         runTypeset: true,
@@ -1609,7 +1584,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: true,
@@ -1695,7 +1669,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: false,
         runInpaint: false,
         runTypeset: true,
@@ -1775,7 +1748,6 @@ describe("batchExecutionCoordinator", () => {
       targetPages: "all" as const,
       speechStylePreset: "informal" as const,
       runOcr: false,
-      runGlossary: false,
       runTranslate: true,
       runInpaint: false,
       runTypeset: false,
@@ -2218,7 +2190,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -2293,7 +2264,6 @@ describe("batchExecutionCoordinator", () => {
         targetPages: "all",
         speechStylePreset: "informal",
         runOcr: false,
-        runGlossary: false,
         runTranslate: true,
         runInpaint: false,
         runTypeset: false,
@@ -3629,7 +3599,6 @@ function createTestBatchConfig(overrides: { runTranslate: boolean; runTypeset: b
     targetPages: "all" as const,
     speechStylePreset: "informal" as const,
     runOcr: false,
-    runGlossary: false,
     runTranslate: overrides.runTranslate,
     runInpaint: false,
     runTypeset: overrides.runTypeset,

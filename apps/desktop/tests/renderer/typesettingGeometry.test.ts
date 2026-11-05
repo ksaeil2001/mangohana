@@ -8,6 +8,7 @@ import {
   dialogueTypesettingToDraft,
   draftToDialogueTypesetting,
   getRotatedCorners,
+  hasTypesettingTextOverflow,
   isDraftWithinSafeArea,
   layoutTextForBubbleShape,
   moveTypesettingDraft,
@@ -176,6 +177,65 @@ describe("typesettingGeometry", () => {
     for (const line of result.lines) {
       expect(line.text.length).toBeGreaterThan(0);
       expect(line.width).toBeGreaterThan(0);
+    }
+  });
+
+  it.each([
+    { label: "80x400 OCR box", width: 80, height: 400, fontSizeRatio: 0.075, text: "가나다라", expectedLines: ["가나", "다라"] },
+    { label: "600x100 caption", width: 600, height: 100, fontSizeRatio: 0.3, text: "가나다라마바사아자차카타", expectedLines: ["가나다라마바사아자차카타"] }
+  ])("lays out $label using physical glyph widths without changing the requested font ratio", ({ width, height, fontSizeRatio, text, expectedLines }) => {
+    const options = Object.freeze({ shape: "rectangle" as const, fontSizeRatio, boxAspectRatio: width / height });
+    const result = layoutTextForBubbleShape(text, options);
+
+    expect(result.fontSizeRatio).toBe(fontSizeRatio);
+    expect(result.lines.map((line) => line.text)).toEqual(expectedLines);
+    for (const line of result.lines) {
+      // These fixtures contain only full-width Hangul glyphs.
+      expect(line.text.length * fontSizeRatio * height).toBeLessThanOrEqual(line.width * width);
+    }
+  });
+
+  it.each([
+    { label: "80x400 OCR box", width: 80, height: 400, text: "가나다라", expectedLineCount: 2, minFontSizeRatio: 0.04, maxFontSizeRatio: 0.091 },
+    { label: "600x100 caption", width: 600, height: 100, text: "가나다라마바사아자차카타", expectedLineCount: 1, minFontSizeRatio: 0.3, maxFontSizeRatio: 0.35 }
+  ])("auto-fits $label against its physical width", ({ width, height, text, expectedLineCount, minFontSizeRatio, maxFontSizeRatio }) => {
+    const options = Object.freeze({ shape: "rectangle" as const, boxAspectRatio: width / height });
+    const result = autoFitFontSizeForBubbleShape(text, options);
+
+    expect(result.lines).toHaveLength(expectedLineCount);
+    expect(result.lines.map((line) => line.text).join("")).toBe(text);
+    expect(result.fontSizeRatio).toBeGreaterThanOrEqual(minFontSizeRatio);
+    expect(result.fontSizeRatio).toBeLessThanOrEqual(maxFontSizeRatio);
+    expect(result.totalHeightRatio).toBeLessThanOrEqual(0.92);
+    for (const line of result.lines) {
+      expect(line.text.length * result.fontSizeRatio * height).toBeLessThanOrEqual(line.width * width * 1.08);
+    }
+    expect(hasTypesettingTextOverflow(text, options)).toBe(false);
+  });
+
+  it.each([
+    { label: "a glyph wider than the 80x400 OCR box", width: 80, height: 400, text: "가", fontSizeRatio: 0.2, overflow: true },
+    { label: "a line that fits the 600x100 caption", width: 600, height: 100, text: "가나다라마바사아자차카타", fontSizeRatio: 0.3, overflow: false }
+  ])("checks physical overflow for $label", ({ width, height, text, fontSizeRatio, overflow }) => {
+    expect(hasTypesettingTextOverflow(text, {
+      shape: "rectangle",
+      fontSizeRatio,
+      boxAspectRatio: width / height
+    })).toBe(overflow);
+  });
+
+  it("preserves square-box behavior when the aspect ratio is omitted or explicitly one", () => {
+    const text = "안녕! 나는 루피라고 해. 해적왕이 될 사나이지!";
+    for (const shape of ["rectangle", "ellipse", "rounded_rectangle", "cloud", "spiky"] as const) {
+      const options = { shape, fontSizeRatio: 0.15 };
+      expect(layoutTextForBubbleShape(text, { ...options, boxAspectRatio: 1 }))
+        .toEqual(layoutTextForBubbleShape(text, options));
+      expect(autoFitFontSizeForBubbleShape(text, { shape, boxAspectRatio: 1 }))
+        .toEqual(autoFitFontSizeForBubbleShape(text, { shape }));
+      expect(hasTypesettingTextOverflow(text, { ...options, boxAspectRatio: 1 }))
+        .toBe(hasTypesettingTextOverflow(text, options));
+      expect(hasTypesettingTextOverflow(text, { shape, boxAspectRatio: 1 }))
+        .toBe(hasTypesettingTextOverflow(text, { shape }));
     }
   });
 

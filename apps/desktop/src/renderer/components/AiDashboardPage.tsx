@@ -137,7 +137,7 @@ export function AiDashboardPage(props: AiDashboardPageProps) {
               if (props.recentProjects.some((project) => project.recentProjectId === targetProject)) props.onOpenRecent(targetProject);
               else props.onOpenProject();
             }}>{hasRecent ? "선택 프로젝트 작업대로 이동" : "기존 프로젝트 파일 열기"}</Button>
-            {!hasRecent && <div className="stitch-ai-no-project"><Button disabled={!props.apiReady} onClick={props.onNewProject} aria-label="새 프로젝트 만들기">새 프로젝트 만들기</Button></div>}
+            {!hasRecent && <div className="stitch-ai-no-project"><Button onClick={props.onNewProject} aria-label="새 프로젝트 만들기">새 프로젝트 만들기</Button></div>}
             {hasRecent && <div className="stitch-ai-history">
               <h3>최근 작업 프로젝트</h3>
               <div className="trio-projects-table-wrap" tabIndex={0} role="region" aria-label="최근 작업 프로젝트 목록">

@@ -153,8 +153,8 @@ function toPipelineLine(
     ocrUserOwnedFields: [...OCR_USER_OWNED_FIELDS],
     ocrGroupId: candidate.provenance.groupId,
     ocrSourceInfo: {
-      detectorName: "PP-OCRv6_medium_det",
-      ocrEngine: "baberu-ocr",
+      detectorName: candidate.provenance.detectorModelId.split("/").at(-1)!,
+      ocrEngine: candidate.provenance.recognizerModelId.split("/").at(-1)!,
       confidence: candidate.confidence,
       orientation: candidate.orientation,
       productionOcrProvenance: structuredClone(candidate.provenance)

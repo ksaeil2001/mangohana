@@ -24,7 +24,40 @@ function setup(overrides: Partial<ProjectHomeScreenProps> = {}) {
 }
 
 describe("ProjectHomeScreen", () => {
-  it("gives a new user one primary project action and keeps TXT under another-method disclosure", () => {
+  it("rejects ZIP files and folders without opening the project picker", () => {
+    const onDropImages = vi.fn();
+    const props = setup({ onDropImages });
+    const home = screen.getByRole("heading", { name: "번역 프로젝트" });
+
+    fireEvent.drop(home, { dataTransfer: { files: [new File(["zip"], "chapter.zip")] } });
+    expect(screen.getByRole("alert")).toHaveTextContent("ZIP은 먼저 압축을 푸세요.");
+
+    fireEvent.drop(home, {
+      dataTransfer: { files: [], items: [{ webkitGetAsEntry: () => ({ isDirectory: true }) }] }
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent("폴더 안의 JPG, PNG, WebP 이미지 파일");
+    expect(props.onOpenProject).not.toHaveBeenCalled();
+    expect(onDropImages).not.toHaveBeenCalled();
+
+    const image = new File(["image"], "page.webp");
+    fireEvent.drop(home, { dataTransfer: { files: [image] } });
+    expect(onDropImages).toHaveBeenCalledExactlyOnceWith([image]);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("blocks image drops while a new project session is unavailable", () => {
+    const onDropImages = vi.fn();
+    setup({ projectSessionReady: false, onDropImages });
+
+    fireEvent.drop(screen.getByRole("heading", { name: "번역 프로젝트" }), {
+      dataTransfer: { files: [new File(["fixture"], "page.png")] }
+    });
+
+    expect(onDropImages).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("프로젝트 세션이 준비되면 이미지 파일을 추가할 수 있습니다.");
+  });
+
+  it("gives a new user one primary project action and provides direct entry actions", () => {
     const props = setup();
 
     expect(screen.getByRole("heading", { name: "번역 프로젝트" })).toHaveFocus();
@@ -34,17 +67,11 @@ describe("ProjectHomeScreen", () => {
     expect(screen.getByRole("button", { name: "기존 프로젝트 열기" })).toBeVisible();
     expect(screen.getByRole("region", { name: "현재 준비 상태" })).toBeVisible();
     fireEvent.click(within(screen.getByRole("region", { name: "현재 준비 상태" })).getByRole("button", { name: "환경 준비" }));
-    const disclosure = screen.getByText("다른 시작 방법").closest("details");
     const txtButton = screen.getByRole("button", { name: "TXT로 시작" });
-    expect(disclosure).not.toHaveAttribute("open");
-    expect(txtButton).not.toBeVisible();
-    expect(props.onImportTxt).not.toHaveBeenCalled();
+    expect(txtButton).toBeVisible();
 
     fireEvent.click(newButton);
     fireEvent.click(screen.getByRole("button", { name: "기존 프로젝트 열기" }));
-    fireEvent.click(screen.getByText("다른 시작 방법"));
-    expect(disclosure).toHaveAttribute("open");
-    expect(txtButton).toBeVisible();
     fireEvent.click(txtButton);
     fireEvent.click(within(screen.getByRole("region", { name: "현재 준비 상태" })).getByRole("button", { name: "설정" }));
 
@@ -66,7 +93,7 @@ describe("ProjectHomeScreen", () => {
       ]
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "최근 프로젝트 Book 이어하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "최근 프로젝트 Book 열기" }));
 
     expect(props.onOpenRecent).toHaveBeenCalledWith("recent-book");
     expect(screen.getByRole("heading", { name: "번역 프로젝트" })).toBeVisible();
@@ -91,14 +118,11 @@ describe("ProjectHomeScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "Missing Book 최근 목록에서 제거" }));
     expect(props.onRemoveRecent).toHaveBeenCalledWith("recent-missing");
   });
-  it("renders the two-column start surface with truthful state and real entry actions", () => {
+  it("renders the start surface with truthful state and real entry actions", () => {
     const props = setup();
-    expect(screen.getByRole("banner", { name: "앱 헤더" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "망고하나 홈으로 이동" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "프로젝트 목록으로 이동" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "번역 프로젝트" })).toHaveFocus();
     expect(screen.queryByPlaceholderText("프로젝트, 파일, 태그 검색...")).not.toBeInTheDocument();
     expect(screen.queryByText("seil_kim")).not.toBeInTheDocument();
-    expect(screen.getByRole("complementary", { name: "메인 사이드바" })).toBeVisible();
     expect(screen.queryByText("로컬 저장소")).not.toBeInTheDocument();
     expect(screen.queryByText("Trio Pro로 업그레이드")).not.toBeInTheDocument();
     expect(screen.getByText("만화 번역 작업실")).toBeVisible();
@@ -131,7 +155,6 @@ describe("ProjectHomeScreen", () => {
 
   it("keeps the original loading label while importing TXT", () => {
     setup({ isImportingTxt: true });
-    fireEvent.click(screen.getByText("다른 시작 방법"));
     expect(screen.getByRole("button", { name: "TXT 불러오는 중" })).toBeDisabled();
   });
 
@@ -166,13 +189,12 @@ describe("ProjectHomeScreen", () => {
     expect(props.onOpenRecent).toHaveBeenCalledExactlyOnceWith("available");
   });
 
-  it("disables only the unavailable recent project's open and resume actions", () => {
+  it("disables only the unavailable recent project's open action", () => {
     const props = setup({ recentProjects: [
       { recentProjectId: "missing", title: "Missing", openedAt: "2026-10-19T00:00:00Z" },
       { recentProjectId: "busy", title: "Busy", openedAt: "2026-10-18T00:00:00Z" }
     ], unavailableRecentPath: "missing" });
     expect(screen.getByRole("button", { name: "최근 프로젝트 Missing 열기" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "최근 프로젝트 Missing 이어하기" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "최근 프로젝트 Busy 열기" }));
     expect(props.onOpenRecent).toHaveBeenCalledExactlyOnceWith("busy");
   });

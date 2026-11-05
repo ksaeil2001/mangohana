@@ -159,6 +159,7 @@ describe("SettingsPage", () => {
     fireEvent.click(screen.getByRole("tab", { name: "AI 번역 엔진" }));
     expect(within(footer).getByRole("button", { name: "설정 저장" })).toBeEnabled();
     fireEvent.keyDown(screen.getByLabelText("Gemini API 키", { exact: true }), { key: "Enter", isComposing: true });
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
     fireEvent.keyDown(screen.getByRole("textbox", { name: "로컬 서버 주소" }), { key: "Enter", keyCode: 229 });
     expect(updateProviderSettings).not.toHaveBeenCalled();
     expect(testLocalAiConnection).not.toHaveBeenCalled();
@@ -170,6 +171,7 @@ describe("SettingsPage", () => {
     expect(start.labels?.[0]).toHaveTextContent("시작 화면");
     expect(start).toHaveAccessibleDescription("앱 실행 시 표시할 화면");
     fireEvent.click(screen.getByRole("tab", { name: /AI 번역 엔진/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
     const endpoint = screen.getByRole("textbox", { name: "로컬 서버 주소" }) as HTMLInputElement;
     expect(endpoint.labels?.[0]).toHaveTextContent("로컬 서버 주소");
     fireEvent.change(endpoint, { target: { value: "http://localhost:11434/sim-draft" } });
@@ -246,6 +248,7 @@ describe("SettingsPage", () => {
     render(<SettingsPage {...dummyProps} onOpenPreparation={onOpenPreparation} />);
     await waitFor(() => expect(screen.getByRole("button", { name: "설정 저장" })).toBeEnabled());
     fireEvent.click(screen.getByRole("tab", { name: "AI 번역 엔진" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
     fireEvent.change(screen.getByRole("textbox", { name: "로컬 서버 주소" }), { target: { value: "http://localhost:11434/draft" } });
     screen.getByRole("button", { name: "환경 준비 확인" }).focus();
     fireEvent.click(screen.getByRole("button", { name: "환경 준비 확인" }));
@@ -315,7 +318,7 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("combobox", { name: "시작 화면" })).not.toHaveTextContent("마지막 작업 프로젝트");
   });
 
-  it("shows unsupported preferences as informational text and excludes them from save payload", async () => {
+  it("omits unsupported preferences from controls and the save payload", async () => {
     const updateProviderSettings = vi.fn().mockResolvedValue({});
     window.projectApi = {
       ...((window.projectApi as object) || {}),
@@ -412,7 +415,7 @@ describe("SettingsPage", () => {
 
     const aiTab = screen.getByRole("tab", { name: /AI 번역 엔진/ });
     fireEvent.click(aiTab);
-
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
     const testBtn = screen.getByRole("button", { name: /로컬 서버 연결 및 모델 확인/ });
     expect(testBtn).toBeInTheDocument();
     fireEvent.click(testBtn);
@@ -438,7 +441,7 @@ describe("SettingsPage", () => {
 
     render(<SettingsPage {...dummyProps} />);
     fireEvent.click(screen.getByRole("tab", { name: /AI 번역 엔진/ }));
-
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
     fireEvent.click(screen.getByRole("button", { name: /로컬 서버 연결 및 모델 확인/ }));
     await waitFor(() => expect(testLocalAiConnection).toHaveBeenCalledWith({
       runtime: "ollama",
@@ -478,6 +481,7 @@ describe("SettingsPage", () => {
 
     render(<SettingsPage {...dummyProps} />);
     fireEvent.click(screen.getByRole("tab", { name: /AI 번역 엔진/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
     fireEvent.click(screen.getByRole("button", { name: /로컬 서버 연결 및 모델 확인/ }));
     await waitFor(() => expect(testLocalAiConnection).toHaveBeenCalledTimes(1));
 
@@ -518,6 +522,7 @@ describe("SettingsPage", () => {
 
     render(<SettingsPage {...dummyProps} />);
     fireEvent.click(screen.getByRole("tab", { name: /AI 번역 엔진/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
     expect(await screen.findByText("설치된 로컬 모델이 없습니다 (서버 연결 및 모델 설치 필요)")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /로컬 서버 연결 및 모델 확인/ }));
@@ -557,6 +562,7 @@ describe("SettingsPage", () => {
 
     const aiTab = screen.getByRole("tab", { name: /AI 번역 엔진/ });
     fireEvent.click(aiTab);
+    fireEvent.change(screen.getByRole("combobox", { name: "AI 번역 엔진 선택" }), { target: { value: "local_ai" } });
 
     // Verify disabled placeholder is shown when 0 models are returned
     expect(
@@ -585,7 +591,7 @@ describe("SettingsPage", () => {
     expect(screen.queryByRole("combobox", { name: "말풍선 OCR 엔진 선택" })).not.toBeInTheDocument();
     expect(screen.getByText(/PP-OCRv6_medium_det.*Baberu/)).toBeInTheDocument();
 
-    fireEvent.change(translationSelect, { target: { value: "local-ollama" } });
+    fireEvent.change(translationSelect, { target: { value: "local_ai" } });
 
     const saveBtn = screen.getByRole("button", { name: "설정 저장" });
     fireEvent.click(saveBtn);
@@ -645,7 +651,7 @@ describe("SettingsPage", () => {
     expect((translationSelect as HTMLSelectElement).value).toBe("local_ai");
 
     // Gemini model select should not be visible when local_ai is active
-    expect(screen.queryByRole("combobox", { name: "Gemini 모델 선택" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: /클라우드 AI 모델 선택|Gemini 모델 선택/ })).not.toBeInTheDocument();
 
     const saveBtn = screen.getByRole("button", { name: "설정 저장" });
     fireEvent.click(saveBtn);
@@ -690,7 +696,7 @@ describe("SettingsPage", () => {
     const translationSelect = screen.getByRole("combobox", { name: "AI 번역 엔진 선택" });
     fireEvent.change(translationSelect, { target: { value: "gemini" } });
 
-    const geminiModelSelect = screen.getByRole("combobox", { name: "Gemini 모델 선택" });
+    const geminiModelSelect = screen.getByRole("combobox", { name: /클라우드 AI 모델 선택|Gemini 모델 선택/ });
     fireEvent.change(geminiModelSelect, { target: { value: "gemini-2.5-pro" } });
 
     const saveBtn = screen.getByRole("button", { name: "설정 저장" });
@@ -1106,5 +1112,45 @@ describe("SettingsPage", () => {
     });
     expect(screen.queryByText("이전 저장 실패")).not.toBeInTheDocument();
     expect(screen.getByText(/안전하게 저장되었습니다/)).toBeInTheDocument();
+  });
+  it("uses one engine selector and displays only settings for the selected provider", async () => {
+    window.projectApi = {
+      ...((window.projectApi as object) || {}),
+      getProviderSettings: vi.fn().mockResolvedValue(DEFAULT_PROVIDER_SETTINGS),
+      listLocalAiModels: vi.fn().mockResolvedValue([])
+    } as unknown as typeof window.projectApi;
+
+    render(<SettingsPage {...dummyProps} />);
+    fireEvent.click(screen.getByRole("tab", { name: /AI 번역 엔진/ }));
+
+    const engine = screen.getByRole("combobox", { name: "AI 번역 엔진 선택" });
+    expect(engine).toHaveValue("gemini");
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "클라우드 AI 모델 선택" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Gemini 3.8 Flash" })).toHaveValue("gemini-3.8-flash");
+    expect(screen.queryByRole("option", { name: /GPT-5.6 Sol|Claude Fable 5|Qwen3.8 Max/ })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Gemini API 키", { exact: true })).toBeInTheDocument();
+
+    // Under Cloud: Local PC options are hidden
+    expect(screen.queryByRole("textbox", { name: "로컬 서버 주소" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "로컬 AI 모델" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /로컬 서버 연결 및 모델 확인/ })).not.toBeInTheDocument();
+
+    fireEvent.change(engine, { target: { value: "local_ai" } });
+    expect(engine).toHaveValue("local_ai");
+    expect(screen.queryByText("번역 언어 설정")).not.toBeInTheDocument();
+    expect(screen.queryByText("Gemma 로컬")).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "로컬 엔진 런타임" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "로컬 서버 주소" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "로컬 AI 모델" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /로컬 서버 연결 및 모델 확인/ })).toBeInTheDocument();
+
+    // Under Local PC: Gemini specific options are hidden
+    expect(screen.queryByRole("combobox", { name: /클라우드 AI 모델 선택|Gemini 모델 선택/ })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Gemini API 키", { exact: true })).not.toBeInTheDocument();
+
+    // 4. Common settings like style and Production OCR remain accessible
+    expect(screen.queryByRole("combobox", { name: "번역 스타일 프리셋" })).not.toBeInTheDocument();
+    expect(screen.getByText("Production OCR")).toBeInTheDocument();
   });
 });

@@ -21,6 +21,7 @@ export type RenderBurnInOptions = {
   defaultTextColor?: string;
   enableStroke?: boolean;
   textResolver?: (line: DialogueLine) => string;
+  beforeRender?: (imageSize: Readonly<{ width: number; height: number }>) => void;
 };
 
 /**
@@ -61,12 +62,14 @@ export function renderTypesettingToCanvas(
     if (pixelWidth <= 0 || pixelHeight <= 0) continue;
 
     // Calculate layout using shape chords
+    const boxAspectRatio = writingMode === "vertical-rl" ? 1 : pixelWidth / pixelHeight;
     const layout = ts?.fontSizeRatio
       ? layoutTextForBubbleShape(text, {
           shape,
+          boxAspectRatio,
           fontSizeRatio: ts.fontSizeRatio
         })
-      : autoFitFontSizeForBubbleShape(text, { shape });
+      : autoFitFontSizeForBubbleShape(text, { shape, boxAspectRatio });
 
     const fontPx = Math.max(10, Math.round(layout.fontSizeRatio * pixelHeight));
     const fontChain = getRecommendedFontFallbackChain("ko", ts?.fontFamily || defaultFontFamily);
@@ -118,11 +121,8 @@ export function renderTypesettingToCanvas(
         });
       });
     } else {
-      const totalHeight = layout.totalHeightRatio * pixelHeight;
-      const startY = -totalHeight / 2;
-
       for (const lineLayout of layout.lines) {
-        const currentY = startY + lineLayout.relativeY * pixelHeight;
+        const currentY = (lineLayout.relativeY - 0.5) * pixelHeight;
         let drawX = 0;
 
         if (align === "center") {
@@ -163,10 +163,11 @@ export async function burnTypesettingToBlob(
   quality: number = 0.95,
   options: RenderBurnInOptions = {}
 ): Promise<Blob> {
-  const canvas = document.createElement("canvas");
   const width = imageSource.naturalWidth || imageSource.width;
   const height = imageSource.naturalHeight || imageSource.height;
+  options.beforeRender?.({ width, height });
 
+  const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
 

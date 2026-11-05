@@ -6,7 +6,7 @@ import {
 import { applyMainProjectPatch } from "../../src/main/projectReplay.js";
 import { createEmptyProject, normalizeProject } from "../../src/shared/projectValidation.js";
 import type { DialogueLineV2, DialogueOrigin } from "../../src/shared/projectTypes.js";
-import { OCR_USER_OWNED_FIELDS, PRODUCTION_OCR_CONTRACT } from "../../src/shared/productionOcr.js";
+import { MANGA_OCR_MODELS, OCR_USER_OWNED_FIELDS, PRODUCTION_OCR_CONTRACT } from "../../src/shared/productionOcr.js";
 
 function candidate(overrides: Partial<ProductionOcrReviewedCandidate> = {}): ProductionOcrReviewedCandidate {
   return {
@@ -93,6 +93,12 @@ function pipelineOrigin(persistentRegionId: string): Extract<DialogueOrigin, { k
 }
 
 describe("Production OCR reviewed candidate merge", () => {
+  it("retains the real model labels when a Hayai proposal is reviewed", () => {
+    const next=candidate({provenance:{...candidate().provenance,recognizerModelId:MANGA_OCR_MODELS.recognizer.modelId,recognizerRevision:MANGA_OCR_MODELS.recognizer.revision,
+      sourceDetectionModels:[{modelId:PRODUCTION_OCR_CONTRACT.detector.modelId,revision:PRODUCTION_OCR_CONTRACT.detector.revision}]}});
+    const patch=buildProductionOcrReviewMergePatch({existingLines:[],candidates:[next],pageNumber:1,pageImageId:"synthetic-page",runId:"synthetic-run"});
+    expect(patch.lines[0]!.ocrSourceInfo).toMatchObject({detectorName:"PP-OCRv6_medium_det",ocrEngine:"hayai-ocr-v2.5-nova"});
+  });
   it("matches by IoU while preserving field-owned user values and translation", () => {
     const project = normalizeProject(createEmptyProject("OCR merge", false));
     const existing = existingPipelineLine();

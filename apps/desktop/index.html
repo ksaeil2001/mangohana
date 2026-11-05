@@ -5,13 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file: translation-image: http://localhost:*; connect-src 'self' http://localhost:* ws://localhost:*;"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' trio-resource://font; img-src 'self' data: blob: file: translation-image: http://localhost:* http://127.0.0.1:*; connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:*;"
     />
     <link rel="icon" type="image/svg+xml" href="/src/renderer/brand/mangohana-mark.svg" />
     <title>망고하나 · 만화 번역 작업실</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0d12;
+        color: #f1f5f9;
+      }
+      .app-boot-shell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-size: 13px;
+        color: #94a3b8;
+        letter-spacing: -0.01em;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="app-boot-shell">망고하나 작업실을 준비하고 있습니다…</div></div>
     <script type="module" src="/src/renderer/App.tsx"></script>
   </body>
 </html>

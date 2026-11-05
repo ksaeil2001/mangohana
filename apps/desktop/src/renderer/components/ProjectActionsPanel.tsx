@@ -190,7 +190,7 @@ export function ProjectActionsPanel({
           aria-pressed={activeTab === "general"}
           onClick={() => setActiveTab("general")}
         >
-          ⚙️ 일반
+          일반
         </button>
         <button
           type="button"
@@ -198,7 +198,7 @@ export function ProjectActionsPanel({
           aria-pressed={activeTab === "ai"}
           onClick={() => setActiveTab("ai")}
         >
-          🤖 AI & API
+          AI & API
         </button>
         <button
           type="button"
@@ -206,7 +206,7 @@ export function ProjectActionsPanel({
           aria-pressed={activeTab === "translation"}
           onClick={() => setActiveTab("translation")}
         >
-          🌐 번역·내보내기
+          번역·내보내기
         </button>
         <button
           type="button"
@@ -214,7 +214,7 @@ export function ProjectActionsPanel({
           aria-pressed={activeTab === "canvas"}
           onClick={() => setActiveTab("canvas")}
         >
-          🎨 화면·캔버스
+          화면·캔버스
         </button>
         <button
           type="button"
@@ -222,7 +222,7 @@ export function ProjectActionsPanel({
           aria-pressed={activeTab === "shortcuts"}
           onClick={() => setActiveTab("shortcuts")}
         >
-          ⌨️ 단축키
+          단축키
         </button>
         <button
           type="button"
@@ -230,7 +230,7 @@ export function ProjectActionsPanel({
           aria-pressed={activeTab === "about"}
           onClick={() => setActiveTab("about")}
         >
-          ℹ️ 정보
+          정보
         </button>
       </nav>
 
@@ -354,7 +354,7 @@ export function ProjectActionsPanel({
               aria-pressed={translationEngineMode === "cloud"}
               onClick={() => setTranslationEngineMode("cloud")}
             >
-              <div className="ai-engine-card-title">🌐 클라우드 API</div>
+              <div className="ai-engine-card-title">클라우드 API</div>
               <div className="ai-engine-card-desc">Gemini, OpenAI, Claude, DeepL</div>
             </button>
             <button
@@ -363,7 +363,7 @@ export function ProjectActionsPanel({
               aria-pressed={translationEngineMode === "local"}
               onClick={() => setTranslationEngineMode("local")}
             >
-              <div className="ai-engine-card-title">💻 로컬 AI (On-Device)</div>
+              <div className="ai-engine-card-title">로컬 AI (On-Device)</div>
               <div className="ai-engine-card-desc">Ollama, LM Studio, vLLM (오프라인/보안)</div>
             </button>
           </div>
@@ -489,7 +489,7 @@ export function ProjectActionsPanel({
                 <Button type="button" variant="secondary" onClick={handleRefreshLocalModels}
                   disabled={isRefreshingModels} aria-busy={isRefreshingModels}
                   aria-describedby={localConnectionMessage ? `${fieldPrefix}-connection-message` : undefined}>
-                  {isRefreshingModels ? "조회 중..." : "🔄 모델 목록 새로고침"}
+                  {isRefreshingModels ? "조회 중..." : "모델 목록 새로고침"}
                 </Button>
               </div>
             </div>
@@ -672,7 +672,7 @@ export function ProjectActionsPanel({
             style={{ marginTop: "var(--trio-space-1)" }}
             onClick={() => setGeminiApiKeyMessage("렌더링 임시 캐시를 정리했습니다.")}
           >
-            🧹 렌더링 임시 캐시 비우기
+            렌더링 임시 캐시 비우기
           </Button>
         </div>
       </div>

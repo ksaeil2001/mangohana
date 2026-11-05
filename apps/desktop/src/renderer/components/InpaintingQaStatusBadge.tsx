@@ -83,7 +83,7 @@ export function InpaintingQaStatusBadge({
             disabled={isRetrying}
             onClick={onRetry}
           >
-            {isRetrying ? "재시도 중..." : "⚡ 마스크 확장 재시도"}
+            {isRetrying ? "재시도 중..." : "마스크 확장 재시도"}
           </Button>
         )}
       </div>
@@ -124,7 +124,7 @@ export function InpaintingQaStatusBadge({
           style={{ height: "auto" }}
           onClick={onManualEdit}
         >
-          🖌️ 수동 브러시 수정
+          수동 브러시 수정
         </Button>
       )}
     </div>

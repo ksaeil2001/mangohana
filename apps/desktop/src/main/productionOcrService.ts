@@ -1,10 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
+import { nativeImage } from "electron";
 import type { CmsPublisherAllowlist } from "./cmsSignatureVerifier.js";
 import { normalizeCmsPublisherAllowlist } from "./cmsSignatureVerifier.js";
 import { cropProductionOcrGroup } from "./imageCrop.js";
 import { ProductionOcrPipeline } from "./ocr/pipeline/productionOcrPipeline.js";
+import { ProductionOcrDetailDetector } from "./ocr/detection/productionOcrDetailDetector.js";
+import { MangaAssistedOcrDetector } from "./ocr/detection/mangaAssistedOcrDetector.js";
+import { createMangaOcrRuntime, type MangaOcrRuntimeOptions } from "./ocr/runtime/mangaOcrRuntime.js";
+import { MANGA_OCR_MODELS } from "../shared/productionOcr.js";
 import {
   probeProductionOcrResource,
   type ProductionOcrRuntimeBinding
@@ -76,6 +81,8 @@ type ProductionOcrServiceOptions = Readonly<{
   install?: (options: ResourcePackInstallOptions) => Promise<unknown>;
   probeResource?: (binding: ResourceBindingV1) => Promise<ProductionOcrRuntimeBinding>;
   createRuntime?: (binding: ProductionOcrRuntimeBinding) => ProductionOcrRuntime;
+  /** Main/server-owned local assets; these paths are never accepted from renderer IPC. */
+  mangaOcr?: Omit<MangaOcrRuntimeOptions, "resourcesPath">;
 }>;
 
 export class ProductionOcrUnavailableError extends Error {
@@ -102,13 +109,17 @@ export function createProductionOcrService(
   const preflight = options.preflight ?? preflightPipelineResources;
   const install = options.install ?? installResourcePack;
   const probeResource = options.probeResource ?? probeProductionOcrResource;
-  const createRuntime = options.createRuntime ?? createDefaultRuntime;
+  const createRuntime = options.createRuntime ?? ((binding) => createDefaultRuntime(binding, options.mangaOcr
+    ? { ...options.mangaOcr, resourcesPath }
+    : undefined));
   const loadConfiguration = options.loadConfiguration ?? (() =>
     loadProductionOcrConfiguration(resolve(resourcesPath, PIPELINE_RESOURCES_DIRECTORY)));
 
   let runtime: ProductionOcrRuntime | undefined;
   let readinessPromise: Promise<ProductionOcrRuntime> | undefined;
   let lastStatus: ProductionOcrStatus | undefined;
+  let runtimeGeneration = 0;
+  let preparation: { generation: number; controller: AbortController; runtime?: ProductionOcrRuntime } | undefined;
 
   function unsupportedStatus(): ProductionOcrStatus {
     const disabledReason = "Production OCR은 MVP에서 Windows x64 CPU 환경만 지원합니다.";
@@ -121,13 +132,23 @@ export function createProductionOcrService(
   }
 
   function closeRuntime(): void {
+    runtimeGeneration += 1;
+    const pending = preparation;
+    preparation = undefined;
+    pending?.controller.abort(new Error("OCR runtime preparation was closed"));
+    pending?.runtime?.close();
+    if (pending) pending.runtime = undefined;
     runtime?.close();
     runtime = undefined;
     readinessPromise = undefined;
   }
 
   async function prepareRuntime(): Promise<ProductionOcrRuntime> {
+    const generation = runtimeGeneration;
+    const pending = { generation, controller: new AbortController(), runtime: undefined as ProductionOcrRuntime | undefined };
+    preparation = pending;
     if (platform !== "win32" || arch !== "x64") {
+      if (preparation === pending) preparation = undefined;
       throw new ProductionOcrUnavailableError(
         "OCR_UNSUPPORTED_PLATFORM",
         unsupportedStatus().disabledReason!
@@ -138,6 +159,7 @@ export function createProductionOcrService(
       configuration = await loadConfiguration();
       assertFixedProductionOcrEntry(configuration.lock);
     } catch {
+      if (preparation === pending) preparation = undefined;
       throw new ProductionOcrUnavailableError(
         "OCR_DEPLOYMENT_METADATA_MISSING",
         "Production OCR 배포 메타데이터 또는 publisher allowlist가 준비되지 않았습니다."
@@ -146,6 +168,7 @@ export function createProductionOcrService(
 
     let runtimeBinding: ProductionOcrRuntimeBinding | undefined;
     try {
+      pending.controller.signal.throwIfAborted();
       await preflight({
         lock: configuration.lock,
         requiredRoles: [PRODUCTION_OCR_ROLE],
@@ -162,22 +185,34 @@ export function createProductionOcrService(
         }
       });
       if (!runtimeBinding) throw new Error("Production OCR runtime binding is missing");
+      pending.controller.signal.throwIfAborted();
       const nextRuntime = createRuntime(runtimeBinding);
-      await nextRuntime.probe();
+      pending.runtime = nextRuntime;
+      await nextRuntime.probe(pending.controller.signal);
+      pending.controller.signal.throwIfAborted();
+      if (runtimeGeneration !== generation) throw new Error("OCR runtime preparation was superseded");
       runtime = nextRuntime;
+      pending.runtime = undefined;
+      if (preparation === pending) preparation = undefined;
       lastStatus = Object.freeze({
         state: "ready",
         ready: true,
-        message: "PP-OCRv6_medium_det 및 Baberu OCR CPU 런타임이 준비되었습니다.",
+        message: options.mangaOcr
+          ? "PP-OCRv6 및 만화 검출 보강, Hayai OCR CPU 런타임이 준비되었습니다."
+          : "PP-OCRv6_medium_det 및 Baberu OCR CPU 런타임이 준비되었습니다.",
         resourceVersion: PRODUCTION_OCR_RESOURCE_VERSION
       });
       return nextRuntime;
     } catch (error) {
-      closeRuntime();
+      pending.runtime?.close();
+      pending.runtime = undefined;
+      if (preparation === pending) preparation = undefined;
       if (error instanceof ProductionOcrUnavailableError) throw error;
       throw new ProductionOcrUnavailableError(
         "OCR_RESOURCE_UNAVAILABLE",
-        "서명 및 checksum 검증을 통과한 Production OCR 리소스 팩이 필요합니다."
+        options.mangaOcr
+          ? "서명된 기본 OCR 팩과 checksum 검증을 통과한 만화 OCR 모델·CPU 런타임이 필요합니다."
+          : "서명 및 checksum 검증을 통과한 Production OCR 리소스 팩이 필요합니다."
       );
     }
   }
@@ -185,14 +220,16 @@ export function createProductionOcrService(
   async function ensureRuntime(): Promise<ProductionOcrRuntime> {
     if (runtime) return runtime;
     readinessPromise ??= prepareRuntime();
+    const preparing = readinessPromise;
     try {
-      return await readinessPromise;
+      return await preparing;
     } finally {
-      if (!runtime) readinessPromise = undefined;
+      if (!runtime && readinessPromise === preparing) readinessPromise = undefined;
     }
   }
 
   async function getStatus(): Promise<ProductionOcrStatus> {
+    const generation = runtimeGeneration;
     if (platform !== "win32" || arch !== "x64") {
       lastStatus = unsupportedStatus();
       return lastStatus;
@@ -203,13 +240,14 @@ export function createProductionOcrService(
       return lastStatus!;
     } catch (error) {
       const unavailable = toUnavailableError(error);
-      lastStatus = Object.freeze({
+      const blockedStatus: ProductionOcrStatus = Object.freeze({
         state: "blocked",
         ready: false,
         message: unavailable.message,
         disabledReason: unavailable.message
       });
-      return lastStatus;
+      if (runtimeGeneration === generation) lastStatus = blockedStatus;
+      return runtimeGeneration !== generation && lastStatus ? lastStatus : blockedStatus;
     }
   }
 
@@ -278,19 +316,38 @@ export function createProductionOcrService(
   }
 }
 
-function createDefaultRuntime(binding: ProductionOcrRuntimeBinding): ProductionOcrRuntime {
+function createDefaultRuntime(binding: ProductionOcrRuntimeBinding, mangaOptions?: MangaOcrRuntimeOptions): ProductionOcrRuntime {
   const transport = new ProductionOcrSidecarTransport(binding);
   const client = new ProductionOcrSidecarClient((request, signal) =>
     transport.invoke(request, signal));
+  const manga = mangaOptions ? createMangaOcrRuntime(binding, mangaOptions) : undefined;
+  const primary = new ProductionOcrDetailDetector({
+      detector: client,
+      decodeImage: (imageBytes) => nativeImage.createFromBuffer(imageBytes)
+    });
   const pipeline = new ProductionOcrPipeline({
-    detector: client,
-    recognizer: client,
+    detector: manga ? new MangaAssistedOcrDetector({
+      primary,
+      support: new ProductionOcrDetailDetector({
+        detector: manga.detector,
+        decodeImage: (imageBytes) => nativeImage.createFromBuffer(imageBytes),
+        tileSize: 600
+      }),
+      confirmationDetector: client,
+      textVerifier: manga.textVerifier,
+      decodeImage: (imageBytes) => nativeImage.createFromBuffer(imageBytes)
+    }) : primary,
+    recognizer: manga?.recognizer ?? client,
+    recognizerIdentity: manga ? MANGA_OCR_MODELS.recognizer : undefined,
     cropGroup: cropProductionOcrGroup
   });
   return {
-    probe: (signal) => client.probe(signal),
+    probe: async (signal) => {
+      await client.probe(signal);
+      await manga?.probe(signal);
+    },
     execute: (args) => pipeline.execute(args),
-    close: () => transport.close()
+    close: () => { transport.close(); manga?.close(); }
   };
 }
 

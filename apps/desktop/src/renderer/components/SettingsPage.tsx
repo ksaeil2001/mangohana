@@ -6,7 +6,7 @@ import type { RecentProject } from "../recentProjects.js";
 import { AppShell } from "./AppShell.js";
 import type { NavId } from "./AppShell.js";
 import { useFocusTrap } from "../useFocusTrap.js";
-import mangohanaMark from "../brand/mangohana-mark.svg";
+import "../office-settings.css";
 
 export type SettingsPageProps = {
   recentProjects: RecentProject[];
@@ -32,6 +32,14 @@ type GeminiKeyQueryState =
   | { status: "ready"; value: GeminiApiKeyStatus }
   | { status: "error"; message: string }
   | { status: "unavailable" };
+
+const geminiModels = [
+  ["gemini-2.5-flash", "Gemini 2.5 Flash"],
+  ["gemini-2.5-pro", "Gemini 2.5 Pro"],
+  ["gemini-3.1-pro-preview", "Gemini 3.1 Pro (미리보기)"],
+  ["gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite"],
+  ["gemini-3.8-flash", "Gemini 3.8 Flash"]
+] as const;
 
 export function SettingsPage(props: SettingsPageProps) {
   const fieldPrefix = useId();
@@ -465,7 +473,7 @@ export function SettingsPage(props: SettingsPageProps) {
       onNewProject={() => requestLeave(props.onNewProject)}
       onResumeWorkspace={props.onResumeWorkspace ? () => requestLeave(props.onResumeWorkspace!) : undefined}
     >
-      <div className="trio-page-container stitch-settings" inert={leaveOpen}>
+      <div className="trio-page-container stitch-settings office-settings" inert={leaveOpen}>
         {/* Page Header */}
         <PageHeader title={<>환경 설정</>} description={null} />
 
@@ -483,10 +491,6 @@ export function SettingsPage(props: SettingsPageProps) {
               className={`trio-settings-tab-btn ${activeTab === "general" ? "active" : ""}`}
               onClick={() => setActiveTab("general")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
               <span>일반 설정</span>
             </button>
 
@@ -500,9 +504,6 @@ export function SettingsPage(props: SettingsPageProps) {
               className={`trio-settings-tab-btn ${activeTab === "ai" ? "active" : ""}`}
               onClick={() => setActiveTab("ai")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"></path>
-              </svg>
               <span>AI 번역 엔진</span>
             </button>
 
@@ -516,11 +517,6 @@ export function SettingsPage(props: SettingsPageProps) {
               className={`trio-settings-tab-btn ${activeTab === "typesetting" ? "active" : ""}`}
               onClick={() => setActiveTab("typesetting")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="4 7 4 4 20 4 20 7"></polyline>
-                <line x1="9" y1="20" x2="15" y2="20"></line>
-                <line x1="12" y1="4" x2="12" y2="20"></line>
-              </svg>
               <span>식자 오버레이</span>
             </button>
 
@@ -534,9 +530,6 @@ export function SettingsPage(props: SettingsPageProps) {
               className={`trio-settings-tab-btn ${activeTab === "storage" ? "active" : ""}`}
               onClick={() => setActiveTab("storage")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-              </svg>
               <span>저장소 및 백업</span>
             </button>
 
@@ -550,14 +543,6 @@ export function SettingsPage(props: SettingsPageProps) {
               className={`trio-settings-tab-btn ${activeTab === "shortcuts" ? "active" : ""}`}
               onClick={() => setActiveTab("shortcuts")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                <line x1="6" y1="8" x2="6.01" y2="8"></line>
-                <line x1="10" y1="8" x2="10.01" y2="8"></line>
-                <line x1="14" y1="8" x2="14.01" y2="8"></line>
-                <line x1="18" y1="8" x2="18.01" y2="8"></line>
-                <line x1="8" y1="16" x2="16" y2="16"></line>
-              </svg>
               <span>키보드 단축키</span>
             </button>
 
@@ -571,11 +556,6 @@ export function SettingsPage(props: SettingsPageProps) {
               className={`trio-settings-tab-btn ${activeTab === "about" ? "active" : ""}`}
               onClick={() => setActiveTab("about")}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
               <span>앱 정보</span>
             </button>
           </nav>
@@ -613,10 +593,6 @@ export function SettingsPage(props: SettingsPageProps) {
                 </SettingsRow>
 
 
-                <SettingsRow title={<>기본 언어</>} description={null} >
-                  <span className="trio-badge muted">현재 미지원</span>
-                </SettingsRow>
-
                 <SettingsRow controlId={`${fieldPrefix}-start`} title={<>시작 화면</>} description={<>앱 실행 시 표시할 화면</>} >
                   <select
                     id={`${fieldPrefix}-start`}
@@ -639,247 +615,225 @@ export function SettingsPage(props: SettingsPageProps) {
             {activeTab === "ai" && (
               <div role="tabpanel" tabIndex={0} id="panel-ai" aria-labelledby="tab-ai" className="trio-settings-section">
                 <h2 className="trio-settings-section-title">AI 번역 및 OCR 엔진</h2>
-                <p className="stitch-settings-intro">서버 연결 확인은 번역 성공을 보장하지 않습니다.</p>
+                <p className="stitch-settings-intro">번역을 실행할 환경을 선택하세요. 로컬과 클라우드 중 원하는 방식을 고를 수 있습니다.</p>
 
-                <div className="trio-setting-item vertical">
-                  <div className="trio-setting-info">
-                    <div className="trio-setting-heading">
-                      <label htmlFor={`${fieldPrefix}-key`}>Gemini API 키</label>
-                      <span className={`trio-badge ${geminiKeyBadgeTone(geminiKeyQuery)}`}>
-                        {geminiKeyBadgeLabel(geminiKeyQuery)}
-                      </span>
-                    </div>
-                    <p id={`${fieldPrefix}-key-description`}>
-                      Gemini 번역·인페인팅용 키입니다. OCR은 로컬에서 실행되며 이 키를 사용하지 않습니다.{" "}
-                      {geminiKeyStatusDetail(geminiKeyQuery)}
-                    </p>
-                  </div>
-                  <div className="trio-input-with-action">
-                    <input
-                      id={`${fieldPrefix}-key`}
-                      aria-describedby={`${fieldPrefix}-key-description${apiKeyFeedbackMessage ? ` ${fieldPrefix}-key-feedback` : ""}`}
-                      type="password"
-                      className="trio-text-input"
-                      aria-label="Gemini API 키"
-                      value={geminiApiKey}
-                      onChange={(e) => setGeminiApiKey(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229) {
-                          e.preventDefault();
-                          void handleSave();
-                        }
-                      }}
-                      placeholder={geminiApiKeyStatus?.configured ? "새 API 키로 변경하려면 입력하세요..." : "API 키를 입력하세요..."}
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => requestLeave(props.onOpenPreparation)}
-                    >
-                      환경 준비 확인
-                    </Button>
-                    {geminiApiKeyStatus?.configured && (
-                      <Button
-                        type="button"
-                          variant="destructive"
-                          onClick={handleClearApiKey}
-                      >
-                        키 삭제
-                      </Button>
-                    )}
-                  </div>
-                  {geminiKeyMutating ? (
-                    <p role="status" style={{ margin: "var(--trio-space-1) 0 0", fontSize: "var(--trio-text-caption)", color: "var(--ink-muted)" }}>
-                      {geminiKeyMutationKind === "clear"
-                        ? "API 키를 삭제하는 중입니다. 입력 중인 내용은 유지됩니다."
-                        : "API 키를 저장하는 중입니다. 입력 중인 내용은 유지됩니다."}
-                    </p>
-                  ) : null}
-                  {apiKeyFeedbackMessage && (
-                    <p id={`${fieldPrefix}-key-feedback`} style={{ margin: "var(--trio-space-1) 0 0", fontSize: "var(--trio-text-caption)", color: "var(--trio-accent)", fontWeight: 600 }}>
-                      {apiKeyFeedbackMessage}
-                    </p>
-                  )}
-                </div>
-
-                <SettingsRow controlId={`${fieldPrefix}-engine`} title={<>AI 번역 엔진 선택</>} description={<>만화 대사 번역에 사용할 AI 엔진입니다.</>} >
+                <SettingsRow controlId={`${fieldPrefix}-engine`} title={<>AI 번역 엔진 선택</>} description={<>만화 대사 번역에 사용할 엔진입니다.</>}>
                   <select
                     id={`${fieldPrefix}-engine`}
                     aria-describedby={`${fieldPrefix}-engine-description`}
                     className="trio-select-control"
                     aria-label="AI 번역 엔진 선택"
                     value={translationEngine}
-                    onChange={(e) => {
-                      const val = e.target.value;
+                    onChange={(event) => {
                       markSettingTouched("translationEngine");
-                      setTranslationEngine(val === "local_ai" || val === "local-ollama" ? "local_ai" : "gemini");
+                      setTranslationEngine(event.target.value === "local_ai" ? "local_ai" : "gemini");
                     }}
                   >
-                    <option value="gemini">Google Gemini (권장 · 클라우드)</option>
-                    <option value="local_ai">로컬 온디바이스 AI (Ollama / CUDA 가속)</option>
-                    <option value="local-ollama" style={{ display: "none" }}>로컬 AI (호환용)</option>
+                    <option value="gemini">Google Gemini</option>
+                    <option value="local_ai">내 컴퓨터 (로컬 AI)</option>
                   </select>
                 </SettingsRow>
 
-                {translationEngine === "gemini" && (
-                  <SettingsRow controlId={`${fieldPrefix}-gemini-model`} title={<>Gemini 모델 선택</>} description={<>번역 속도와 문맥 이해 품질 중 우선할 모델을 선택합니다.</>} >
-                    <select
-                      id={`${fieldPrefix}-gemini-model`}
-                      aria-describedby={`${fieldPrefix}-gemini-model-description`}
-                      className="trio-select-control"
-                      aria-label="Gemini 모델 선택"
-                      value={geminiModel}
-                      onChange={(e) => {
-                        markSettingTouched("geminiModel");
-                        setGeminiModel(e.target.value);
-                      }}
+                {/* 2. Options shown based on the choice */}
+                {translationEngine === "gemini" ? (
+                  <>
+                    <SettingsRow
+                      controlId={`${fieldPrefix}-gemini-model`}
+                      title={<>클라우드 AI 모델 선택</>}
+                      description={<>Gemini API에서 사용할 번역 모델입니다.</>}
                     >
-                      <option value="gemini-2.5-flash">Gemini 2.5 Flash (권장 · 빠름)</option>
-                      <option value="gemini-2.5-pro">Gemini 2.5 Pro (고품질 문맥 이해)</option>
-                    </select>
-                  </SettingsRow>
-                )}
+                      <select
+                        id={`${fieldPrefix}-gemini-model`}
+                        aria-describedby={`${fieldPrefix}-gemini-model-description`}
+                        className="trio-select-control"
+                        aria-label="클라우드 AI 모델 선택"
+                        value={geminiModel}
+                        onChange={(event) => {
+                          markSettingTouched("geminiModel");
+                          setGeminiModel(event.target.value);
+                        }}
+                      >
+                        {!geminiModels.some(([id]) => id === geminiModel) && <option value={geminiModel}>{geminiModel} (저장된 값)</option>}
+                        {geminiModels.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                      </select>
+                    </SettingsRow>
 
-                <SettingsRow title={<>Production OCR</>} description={<>고정된 로컬 OCR 엔진</>} >
-                  <details><summary>엔진 상세</summary><p>PP-OCRv6_medium_det → Region Grouping → Baberu OCR (Windows x64 CPU)</p></details>
-                  <Button type="button" variant="secondary" onClick={() => requestLeave(props.onOpenPreparation)}>
-                    Production OCR 환경 준비
-                  </Button>
-                </SettingsRow>
-
-                <SettingsRow controlId={`${fieldPrefix}-style`} title={<>번역 스타일 프리셋</>} description={<>만화 장르에 어울리는 어투와 문체를 지정합니다.</>} >
-                  <select
-                    id={`${fieldPrefix}-style`}
-                    aria-describedby={`${fieldPrefix}-style-description`}
-                    className="trio-select-control"
-                    aria-label="번역 스타일 프리셋"
-                    value={translationStyle}
-                    onChange={(e) => {
-                      markSettingTouched("translationStyle");
-                      setTranslationStyle(e.target.value);
-                    }}
-                  >
-                    <option value="natural">자연스러운 한국어 웹툰 어투</option>
-                    <option value="literal">원문 충실 (직역 위주)</option>
-                    <option value="action">액션/판타지 박진감 어투</option>
-                    <option value="romance">로맨스 부드러운 구어체</option>
-                  </select>
-                </SettingsRow>
-
-                {/* Local AI & Hardware Acceleration Section (CarrotMangaTranslator Architecture) */}
-                <div className="trio-settings-local-engine" style={{ marginTop: "var(--trio-space-2)" }}>
-                <SettingsRow title={<>로컬 번역 엔진</>} description={<>선택한 서버에서 번역합니다.</>} className="vertical">
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--trio-space-2)", marginTop: "var(--trio-space-2)" }}>
-                    <div className="trio-settings-form-grid">
-                      <div>
-                        <label htmlFor={`${fieldPrefix}-runtime`} style={{ fontSize: "var(--trio-text-caption)", fontWeight: 600, display: "block", marginBottom: "var(--trio-space-1)" }}>
-                          로컬 엔진 런타임
-                        </label>
-                        <select
-                          id={`${fieldPrefix}-runtime`}
-                          className="trio-select-control"
-                          aria-label="로컬 엔진 런타임"
-                          value={localAiRuntime}
-                          onChange={(e) => {
-                            markSettingTouched("localAiRuntime");
-                            setLocalAiRuntime(e.target.value as "ollama" | "lmstudio" | "vllm" | "custom");
-                          }}
-                        >
-                          <option value="ollama">Ollama (NVIDIA CUDA 자동 감지)</option>
-                          <option value="lmstudio">LM Studio (OpenAI 호환)</option>
-                          <option value="vllm">vLLM / llama.cpp Server</option>
-                        </select>
+                    <div className="trio-setting-item vertical office-settings-key">
+                      <div className="trio-setting-info">
+                        <div className="trio-setting-heading">
+                          <label htmlFor={`${fieldPrefix}-key`} style={{ fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span>Gemini API 키</span>
+                          </label>
+                          <span className={`trio-badge ${geminiKeyBadgeTone(geminiKeyQuery)}`}>
+                            {geminiKeyBadgeLabel(geminiKeyQuery)}
+                          </span>
+                        </div>
+                        <p id={`${fieldPrefix}-key-description`} style={{ fontSize: "12px", color: "var(--trio-muted)", margin: "6px 0 10px" }}>
+                          Gemini 번역·인페인팅용 키입니다. OCR은 로컬에서 실행되며 이 키를 사용하지 않습니다.{" "}
+                          {geminiKeyStatusDetail(geminiKeyQuery)}
+                        </p>
                       </div>
-                      <div>
-                        <label htmlFor={`${fieldPrefix}-endpoint`} style={{ fontSize: "var(--trio-text-caption)", fontWeight: 600, display: "block", marginBottom: "var(--trio-space-1)" }}>
-                          로컬 서버 주소
-                        </label>
+                      <div className="trio-input-with-action">
                         <input
-                          id={`${fieldPrefix}-endpoint`}
-                          aria-describedby={localAiTestResult ? `${fieldPrefix}-connection-result` : undefined}
-                          type="text"
+                          id={`${fieldPrefix}-key`}
+                          aria-describedby={`${fieldPrefix}-key-description${apiKeyFeedbackMessage ? ` ${fieldPrefix}-key-feedback` : ""}`}
+                          type="password"
                           className="trio-text-input"
-                          aria-label="로컬 서버 주소"
-                          value={localAiEndpoint}
-                          onChange={(e) => {
-                            markSettingTouched("localAiEndpoint");
-                            setLocalAiEndpoint(e.target.value);
-                          }}
+                          aria-label="Gemini API 키"
+                          value={geminiApiKey}
+                          onChange={(e) => setGeminiApiKey(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229) {
                               e.preventDefault();
-                              handleTestLocalAi();
+                              void handleSave();
                             }
                           }}
-                          placeholder="http://localhost:11434"
+                          placeholder={geminiApiKeyStatus?.configured ? "새 API 키로 변경하려면 입력하세요..." : "API 키를 입력하세요..."}
                         />
+                        {geminiApiKeyStatus?.configured && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleClearApiKey}
+                          >
+                            키 삭제
+                          </Button>
+                        )}
+                      </div>
+                      {geminiKeyMutating ? (
+                        <p role="status" style={{ margin: "var(--trio-space-1) 0 0", fontSize: "var(--trio-text-caption)", color: "var(--ink-muted)" }}>
+                          {geminiKeyMutationKind === "clear"
+                            ? "API 키를 삭제하는 중입니다. 입력 중인 내용은 유지됩니다."
+                            : "API 키를 저장하는 중입니다. 입력 중인 내용은 유지됩니다."}
+                        </p>
+                      ) : null}
+                      {apiKeyFeedbackMessage && (
+                        <p id={`${fieldPrefix}-key-feedback`} style={{ margin: "var(--trio-space-1) 0 0", fontSize: "var(--trio-text-caption)", color: "var(--trio-accent)", fontWeight: 600 }}>
+                          {apiKeyFeedbackMessage}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mangohana-local-suite">
+                      <div className="office-settings-local">
+                        <h3>로컬 서버 연결 및 진단</h3>
+                        <div className="trio-settings-form-grid">
+                          <div>
+                            <label htmlFor={`${fieldPrefix}-runtime`} className="mangohana-local-field-label">
+                              로컬 엔진 런타임
+                            </label>
+                            <select
+                              id={`${fieldPrefix}-runtime`}
+                              className="trio-select-control"
+                              aria-label="로컬 엔진 런타임"
+                              value={localAiRuntime}
+                              onChange={(e) => {
+                                const nextRuntime = e.target.value as "ollama" | "lmstudio" | "vllm" | "custom";
+                                markSettingTouched("localAiRuntime");
+                                setLocalAiRuntime(nextRuntime);
+                                if (nextRuntime === "ollama" && (!localAiEndpoint || localAiEndpoint.includes("1234") || localAiEndpoint.includes("8000"))) {
+                                  setLocalAiEndpoint("http://localhost:11434");
+                                  markSettingTouched("localAiEndpoint");
+                                } else if (nextRuntime === "lmstudio" && (!localAiEndpoint || localAiEndpoint.includes("11434") || localAiEndpoint.includes("8000"))) {
+                                  setLocalAiEndpoint("http://127.0.0.1:1234");
+                                  markSettingTouched("localAiEndpoint");
+                                }
+                              }}
+                            >
+                              <option value="ollama">Ollama (NVIDIA CUDA 자동 감지 · 권장)</option>
+                              <option value="lmstudio">LM Studio (OpenAI 호환 로컬 서버)</option>
+                              <option value="vllm">vLLM / llama.cpp Server</option>
+                              <option value="custom">사용자 지정 (OpenAI 호환)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label htmlFor={`${fieldPrefix}-endpoint`} className="mangohana-local-field-label">
+                              로컬 서버 주소
+                            </label>
+                            <input
+                              id={`${fieldPrefix}-endpoint`}
+                              aria-describedby={localAiTestResult ? `${fieldPrefix}-connection-result` : undefined}
+                              type="text"
+                              className="trio-text-input"
+                              aria-label="로컬 서버 주소"
+                              value={localAiEndpoint}
+                              onChange={(e) => {
+                                markSettingTouched("localAiEndpoint");
+                                setLocalAiEndpoint(e.target.value);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229) {
+                                  e.preventDefault();
+                                  handleTestLocalAi();
+                                }
+                              }}
+                              placeholder="http://localhost:11434"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label htmlFor={`${fieldPrefix}-local-model`} className="mangohana-local-field-label">
+                            로컬 AI 모델
+                          </label>
+                          <select
+                            id={`${fieldPrefix}-local-model`}
+                            aria-describedby={installedLocalModels.includes(localAiModel) && localAiModel.length > 48 ? `${fieldPrefix}-model-value` : undefined}
+                            className="trio-select-control"
+                            aria-label="로컬 AI 모델"
+                            value={localAiModel}
+                            onChange={(e) => {
+                              markSettingTouched("localAiModel");
+                              setLocalAiModel(e.target.value);
+                            }}
+                          >
+                            {installedLocalModels.length > 0 ? (
+                              installedLocalModels.map((m) => (
+                                <option key={m} value={m}>
+                                  {m} (설치됨)
+                                </option>
+                              ))
+                            ) : (
+                              <option value="" disabled>
+                                설치된 로컬 모델이 없습니다 (서버 연결 및 모델 설치 필요)
+                              </option>
+                            )}
+                          </select>
+                          {installedLocalModels.includes(localAiModel) && localAiModel.length > 48 ? <p className="trio-setting-full-value" id={`${fieldPrefix}-model-value`}>{localAiModel}</p> : null}
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "var(--trio-space-2)" }}>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="compact"
+                            disabled={localAiTesting}
+                            aria-busy={localAiTesting}
+                            aria-describedby={localAiTestResult ? `${fieldPrefix}-connection-result` : undefined}
+                            onClick={handleTestLocalAi}
+                          >
+                            {localAiTesting ? "연결 및 모델 확인 중..." : "로컬 서버 연결 및 모델 확인"}
+                          </Button>
+                        </div>
+
+                        {localAiTestResult && (
+                          <Feedback id={`${fieldPrefix}-connection-result`} tone={localAiTestResult.ok ? "success" : "error"}>
+                            {localAiTestResult.message}
+                            {localAiTestResult.version ? ` (버전: ${localAiTestResult.version})` : ""}
+                          </Feedback>
+                        )}
                       </div>
                     </div>
+                  </>
+                )}
 
-
-                    <div>
-                      <label htmlFor={`${fieldPrefix}-local-model`} style={{ fontSize: "var(--trio-text-caption)", fontWeight: 600, display: "block", marginBottom: "var(--trio-space-1)" }}>
-                        로컬 AI 모델
-                      </label>
-                      <select
-                        id={`${fieldPrefix}-local-model`}
-                        aria-describedby={`${fieldPrefix}-model-help${installedLocalModels.includes(localAiModel) && localAiModel.length > 48 ? ` ${fieldPrefix}-model-value` : ""}`}
-                        className="trio-select-control"
-                        aria-label="로컬 AI 모델"
-                        value={localAiModel}
-                        onChange={(e) => {
-                          markSettingTouched("localAiModel");
-                          setLocalAiModel(e.target.value);
-                        }}
-                      >
-                        {installedLocalModels.length > 0 ? (
-                          installedLocalModels.map((m) => (
-                            <option key={m} value={m}>
-                              {m} (설치됨)
-                            </option>
-                          ))
-                        ) : (
-                          <option value="" disabled>
-                            설치된 로컬 모델이 없습니다 (서버 연결 및 모델 설치 필요)
-                          </option>
-                        )}
-                      </select>
-                      {installedLocalModels.includes(localAiModel) && localAiModel.length > 48 ? <p className="trio-setting-full-value" id={`${fieldPrefix}-model-value`}>{localAiModel}</p> : null}
-                      <p id={`${fieldPrefix}-model-help`} style={{ fontSize: "var(--trio-text-caption)", color: "var(--ink-muted)", margin: "var(--trio-space-1) 0 0" }}>
-                        💡 권장 모델: 터미널에서 <code>ollama pull qwen2.5:7b-instruct</code> 또는 <code>ollama pull llama3.2:3b</code> 설치 후 서버 연결을 테스트하세요.
-                      </p>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "var(--trio-space-2)", marginTop: "var(--trio-space-1)" }}>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="compact"
-                        disabled={localAiTesting}
-                        aria-busy={localAiTesting}
-                        aria-describedby={localAiTestResult ? `${fieldPrefix}-connection-result` : undefined}
-                        onClick={handleTestLocalAi}
-                      >
-                        {localAiTesting ? "🔄 연결 및 모델 확인 중..." : "🔌 로컬 서버 연결 및 모델 확인"}
-                      </Button>
-                    </div>
-
-                    {localAiTestResult && (
-                      <Feedback id={`${fieldPrefix}-connection-result`} tone={localAiTestResult.ok ? "success" : "error"}>
-                        {localAiTestResult.ok ? "✅ " : "❌ "}
-                        {localAiTestResult.message}
-                        {localAiTestResult.version ? ` (버전: ${localAiTestResult.version})` : ""}
-                      </Feedback>
-                    )}
-
-                    <details className="trio-settings-note">
-                      <summary>하드웨어 가속 안내</summary>
-                      <span>가속 지원 여부는 서버와 하드웨어 설정에 따라 다릅니다.</span>
-                    </details>
-                  </div>
+                <SettingsRow title={<>Production OCR</>} description={<>PP-OCRv6_medium_det → Region Grouping → Baberu OCR · Windows x64 CPU</>}>
+                  <Button type="button" variant="secondary" size="compact" onClick={() => requestLeave(props.onOpenPreparation)}>
+                    환경 준비 확인
+                  </Button>
                 </SettingsRow>
-                </div>
               </div>
             )}
 
@@ -888,19 +842,7 @@ export function SettingsPage(props: SettingsPageProps) {
             {activeTab === "typesetting" && (
               <div role="tabpanel" tabIndex={0} id="panel-typesetting" aria-labelledby="tab-typesetting" className="trio-settings-section">
                 <h2 className="trio-settings-section-title">식자 오버레이 기본 스타일</h2>
-                <p className="stitch-settings-intro">스타일은 작업대에서 페이지별로 설정합니다.</p>
-
-                <SettingsRow title={<>기본 폰트</>} description={null} >
-                  <span className="trio-badge muted">현재 미지원</span>
-                </SettingsRow>
-
-                <SettingsRow title={<>기본 글자 크기</>} description={null} >
-                  <span className="trio-badge muted">현재 미지원</span>
-                </SettingsRow>
-
-                <SettingsRow title={<>스마트 자동 줄바꿈</>} description={null} >
-                  <span className="trio-badge muted">현재 미지원</span>
-                </SettingsRow>
+                <p className="stitch-settings-intro">글꼴과 글자 크기는 작업대에서 페이지별로 설정합니다.</p>
               </div>
             )}
 
@@ -933,10 +875,6 @@ export function SettingsPage(props: SettingsPageProps) {
                       기본값으로 초기화
                     </Button>
                   </div>
-                </SettingsRow>
-
-                <SettingsRow title={<>자동 백업 주기</>} description={<>프로젝트 저장·복구는 사용 가능</>} >
-                  <span className="trio-badge muted">현재 미지원</span>
                 </SettingsRow>
 
                 <SettingsRow tone="danger" title={<>임시 화면 데이터</>} description={<>현재 창의 임시 표시 데이터만 정리합니다. 프로젝트는 유지됩니다.</>} >
@@ -1048,9 +986,6 @@ export function SettingsPage(props: SettingsPageProps) {
                 <h2 className="trio-settings-section-title">망고하나 앱 정보</h2>
                 <div className="trio-about-box">
                   <div className="trio-about-logo-wrap">
-                    <div className="trio-brand-icon" style={{ width: "36px", height: "36px" }}>
-                      <img src={mangohanaMark} width="36" height="36" alt="" />
-                    </div>
                     <div>
                       <strong className="trio-about-app-name">망고하나 만화 번역 작업실</strong>
                       <span className="trio-about-version">버전 0.1.4</span>

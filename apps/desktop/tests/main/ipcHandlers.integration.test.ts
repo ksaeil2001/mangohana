@@ -29,6 +29,9 @@ import {
 import { computeTranslationContextFingerprint } from "../../src/shared/translationContext";
 import { buildRenderReadinessReport } from "../../src/shared/renderReadiness";
 import type { ProjectImageExportResult } from "../../src/main/projectImageExport";
+import { MANGA_OCR_MODELS } from "../../src/shared/productionOcr.js";
+import { ProductionOcrPipeline } from "../../src/main/ocr/pipeline/productionOcrPipeline.js";
+import { parseProductionOcrDetections } from "../../src/main/ocr/detection/productionDetectorParser.js";
 
 type IpcHandler = (_event: unknown, args?: unknown) => Promise<unknown>;
 type ProtocolHandler = (request: { url: string }) => Promise<Response>;
@@ -126,6 +129,10 @@ afterEach(async () => {
 });
 
 describe("ipc handler integration", () => {
+  it("does not register the removed glossary extraction channel", () => {
+    expect(electronMocks.handlers.has("project:extractGlossaryProposals")).toBe(false);
+  });
+
   it("routes explicit cleaned review through the owner guard and rejects another renderer", async () => {
     const manager = createProjectSessionManager();
     registerIpcHandlers({ geminiApiKeyStore: geminiApiKeyStore as GeminiApiKeyStore, projectSessionManager: manager });
@@ -386,7 +393,6 @@ describe("ipc handler integration", () => {
       dialogueLines: project.dialogueLines,
       targetLineId: "proposal-line",
       characters: project.characters,
-      dictionaryTerms: project.dictionaryTerms,
       stylePreset: "literal"
     });
 
@@ -434,7 +440,6 @@ describe("ipc handler integration", () => {
       dialogueLines: project.dialogueLines,
       targetLineId: "fingerprint-line",
       characters: project.characters,
-      dictionaryTerms: project.dictionaryTerms,
       stylePreset: "literal"
     }));
   });
@@ -1760,6 +1765,81 @@ describe("ipc handler integration", () => {
       pageNumber: 1,
       signal: expect.any(AbortSignal)
     }));
+  });
+
+  it.each(["mixed", "supported PP"] as const)("applies a %s Manga-assisted Hayai result through registered IPC while retaining source and owner guards", async (mode) => {
+    const projectFilePath = join(tempDir, "Project.ctp");
+    await mkdir(join(tempDir, "Project-assets", "images"), { recursive: true });
+    await writeFile(join(tempDir, "Project-assets", "images", "page-001.png"), Buffer.from([1, 2, 3, 4]));
+    const project = createEmptyProject("Synthetic OCR IPC", false);
+    project.pageImages = [pageImageFixture()];
+    await saveProjectFile({ filePath: projectFilePath, project });
+    const projectSessionManager = createProjectSessionManager();
+    const pipeline = new ProductionOcrPipeline({
+      detector: { detect: async () => parseProductionOcrDetections({ detections: [
+        { detectionId: "synthetic-pp", quad: [[10, 10], [60, 10], [60, 20], [10, 20]], score: 0.9 },
+        { detectionId: "synthetic-manga", quad: [[10, 22], [60, 22], [60, 32], [10, 32]], score: 0.8 }
+      ] }, 100, 80).map((detection) => ({
+        ...detection, ...(detection.detectionId === "synthetic-manga"
+          ? mode === "mixed" ? { sourceModel: MANGA_OCR_MODELS.detector } : { supportedBy: MANGA_OCR_MODELS.detector }
+          : {})
+      })) },
+      recognizer: { recognizeGroup: async () => ({ text: "ＳＹＮＴＨＥＴＩＣ" }) },
+      recognizerIdentity: MANGA_OCR_MODELS.recognizer,
+      cropGroup: ({ group }) => ({
+        cropBytes: Buffer.from("synthetic-crop"),
+        transform: { sourceBboxPx: group.groupBboxPx, cropBboxPx: group.groupBboxPx,
+          paddingRatio: 0.08, rotationDegrees: 0, imageWidth: 100, imageHeight: 80 }
+      })
+    });
+    const execute = vi.fn<ProductionOcrService["execute"]>((input) => pipeline.execute(input));
+    registerIpcHandlers({
+      geminiApiKeyStore: geminiApiKeyStore as GeminiApiKeyStore, projectSessionManager,
+      productionOcrService: productionOcrServiceFixture(execute)
+    });
+    electronMocks.showOpenDialog.mockResolvedValueOnce({ canceled: false, filePaths: [projectFilePath] });
+    const session = await invoke("project:openFromDialog", undefined, 41) as { projectSessionId: string };
+    try {
+      const extraction = await invoke("project:extractSpeechBubbles", {
+        requestId: "synthetic-ocr-run", projectSessionId: session.projectSessionId,
+        pageImageId: pageImageFixture().id, sourceSha256: pageImageFixture().sha256
+      }, 41) as SpeechBubbleExtractionResult;
+      const request = {
+        projectSessionId: session.projectSessionId, pageImageId: pageImageFixture().id,
+        sourceSha256: pageImageFixture().sha256, runId: "synthetic-ocr-run",
+        candidates: extraction.speechBubbles.map((bubble) => ({
+          id: bubble.id, textType: bubble.type, text: bubble.text, language: bubble.language,
+          bbox: bubble.bbox, polygon: bubble.polygon, readingOrder: bubble.readingOrder,
+          confidence: bubble.confidence, notes: bubble.notes, selectedSpeaker: "",
+          orientation: bubble.orientation, productionOcrProvenance: bubble.productionOcrProvenance
+        }))
+      };
+      await expect(invoke("project:applyProductionOcrReview", request, 42)).rejects.toThrow(/belongs to another renderer/);
+      await expect(invoke("project:applyProductionOcrReview", { ...request, sourceSha256: "a".repeat(64) }, 41))
+        .rejects.toThrow(/source revision is stale/);
+      expect(projectSessionManager.getProject(session.projectSessionId).project.dialogueLines).toEqual([]);
+
+      await invoke("project:applyProductionOcrReview", request, 41);
+
+      const line = projectSessionManager.getProject(session.projectSessionId).project.dialogueLines[0]!;
+      expect(line).toMatchObject({ sourceText: "SYNTHETIC", ocrEditStatus: "user_confirmed" });
+      expect(line.ocrSourceInfo!.productionOcrProvenance).toEqual(extraction.speechBubbles[0]!.productionOcrProvenance);
+      expect(line.ocrSourceInfo!.productionOcrProvenance).toMatchObject({
+        detectorModelId: MANGA_OCR_MODELS.compositeDetector.modelId,
+        recognizerModelId: MANGA_OCR_MODELS.recognizer.modelId,
+        sourceDetectionIds: ["synthetic-manga", "synthetic-pp"],
+        sourceDetectionModels: [
+          mode === "mixed" ? MANGA_OCR_MODELS.detector : expect.objectContaining({ modelId: "PaddlePaddle/PP-OCRv6_medium_det" }),
+          expect.objectContaining({ modelId: "PaddlePaddle/PP-OCRv6_medium_det" })
+        ],
+        sourceDetectionScores: [0.8, 0.9],
+        recognition: { rawOcrText: "ＳＹＮＴＨＥＴＩＣ", normalizedOcrText: "SYNTHETIC" }
+      });
+      expect(line.ocrSourceInfo!.productionOcrProvenance!.sourceDetectionSupportModels)
+        .toEqual(mode === "supported PP" ? [MANGA_OCR_MODELS.detector, null] : undefined);
+    } finally {
+      await projectSessionManager.disposeAll();
+    }
   });
 
   it("validates Gemini speech bubble extraction from a stored page image through OpenAI", async () => {
@@ -4012,7 +4092,6 @@ async function lifecycleDeadline<T>(pending: Promise<T>): Promise<T> {
 const lifecycleConfig = {
   targetPages: "all" as const,
   runOcr: false,
-  runGlossary: false,
   runTranslate: true,
   runInpaint: false,
   runTypeset: false,

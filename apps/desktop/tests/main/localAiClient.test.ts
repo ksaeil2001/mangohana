@@ -152,16 +152,53 @@ describe("localAiClient", () => {
         model: "sakura-13b-q4",
         sourceText: "本当にありがとう！",
         characterNotes: "유우키: 활발한 여고생",
-        glossaryNotes: "센세 -> 선생님",
         previousContext: ["안녕", "오늘 날씨 좋다"]
       });
 
       expect(translation).toBe("정말 고마워요!");
       expect(requestBody.model).toBe("sakura-13b-q4");
       expect(requestBody.messages[1].content).toContain("[등장인물 설정]\n유우키: 활발한 여고생");
-      expect(requestBody.messages[1].content).toContain("[용어집/사전]\n센세 -> 선생님");
       expect(requestBody.messages[1].content).toContain("[이전 대사 문맥]\n안녕\n오늘 날씨 좋다");
       expect(requestBody.messages[1].content).toContain("[번역할 원문 대사]\n本当にありがとう！");
+    });
+
+    it.each(["custom", "ollama"] as const)("%s 경로에서 이전 glossaryNotes 입력을 무시하고 캐릭터 문맥을 보존한다", async (runtime) => {
+      const requests: Array<{ messages: Array<{ role: string; content: string }> }> = [];
+      globalThis.fetch = vi.fn().mockImplementation(async (url: string, options: RequestInit) => {
+        requests.push(JSON.parse(options.body as string));
+        if (runtime === "ollama" && url.endsWith("/v1/chat/completions")) {
+          return { ok: false, status: 404, statusText: "Not Found" };
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ choices: [{ message: { content: "선배, 감사합니다." } }] })
+        };
+      });
+
+      const args = {
+        runtime,
+        endpoint: "http://local-ai.invalid",
+        model: "fake-model",
+        sourceText: "先輩、ありがとう",
+        characterNotes: "유우키: 정중한 존댓말",
+        previousContext: ["선배를 다시 만났다."]
+      };
+      await generateLocalAiTranslation(args);
+      const baseline = requests.splice(0);
+
+      for (const glossaryNotes of ["先輩 -> 선배님", "先輩 -> 이전 용어 강제 번역"]) {
+        const legacyArgs = { ...args, glossaryNotes };
+        expect(await generateLocalAiTranslation(legacyArgs)).toBe("선배, 감사합니다.");
+        expect(requests.splice(0)).toEqual(baseline);
+      }
+
+      expect(baseline).toHaveLength(runtime === "ollama" ? 2 : 1);
+      for (const request of baseline) {
+        expect(request.messages[1]?.content).toContain("[등장인물 설정]\n유우키: 정중한 존댓말");
+        expect(request.messages[1]?.content).toContain("[이전 대사 문맥]\n선배를 다시 만났다.");
+        expect(request.messages[1]?.content).not.toContain("[용어집");
+      }
     });
 
     it("strips outer quotes from generated translation", async () => {

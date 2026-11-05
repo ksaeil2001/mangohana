@@ -196,10 +196,6 @@ export function createAutoUpdateController({
   return { getState: () => state, start, checkForUpdates, downloadUpdate, installUpdate, openRelease };
 }
 
-export function startAutoUpdater(options: AutoUpdaterOptions): boolean {
-  return createAutoUpdateController(options).start();
-}
-
 function loadAutoUpdater(): AutoUpdaterLike {
   const { autoUpdater } = require("electron-updater") as typeof import("electron-updater");
   return autoUpdater as unknown as AutoUpdaterLike;

@@ -61,16 +61,21 @@
 .mangohana-workspace-navigation > button {
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-height: 48px;
-  padding: 0 10px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 8px;
   border: 0;
   border-left: 3px solid transparent;
   border-radius: 5px;
   color: var(--trio-text);
   background: transparent;
   text-align: left;
-  font-size: 14px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.mangohana-workspace-navigation > button > span {
+  white-space: nowrap;
 }
 
 .mangohana-workspace-navigation > button:hover:not(:disabled) {
@@ -94,9 +99,9 @@
 }
 
 .mangohana-navigation-icon {
-  flex: 0 0 22px;
-  width: 22px;
-  height: 22px;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
 }
 
 .focus-deck-shell.has-workspace-navigation[data-layout-tier] > .focus-deck-workspace {
@@ -337,4 +342,1151 @@
     border-color: Highlight;
     color: Highlight;
   }
+}
+
+/* Primary batch automation action in the top bar */
+.top-batch-primary-action {
+  background: var(--trio-accent) !important;
+  border-color: transparent !important;
+  color: var(--trio-on-accent) !important;
+  font-weight: var(--trio-weight-semibold) !important;
+  padding-inline: var(--trio-space-3) !important;
+  box-shadow: var(--trio-shadow-control);
+}
+
+.top-batch-primary-action:hover:not(:disabled) {
+  background: var(--trio-accent-hover) !important;
+  color: var(--trio-on-accent) !important;
+}
+
+/* Quick hold/hover original compare button in canvas toolbar */
+.page-image-hold-compare {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--trio-border-soft);
+  border-radius: var(--trio-radius-control);
+  background: var(--trio-panel-raised);
+  color: var(--trio-text);
+  font-size: var(--trio-text-caption);
+  font-weight: var(--trio-weight-medium);
+  cursor: pointer;
+  user-select: none;
+}
+
+.page-image-hold-compare:hover:not(:disabled),
+.page-image-hold-compare[aria-pressed="true"] {
+  border-color: var(--trio-accent);
+  background: var(--trio-accent-soft);
+  color: var(--trio-accent);
+}
+
+/* Integrated badge-driven dialogue list in right inspector */
+.inspector-dialogue-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--trio-border-soft);
+}
+
+.inspector-dialogue-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--trio-text-caption);
+}
+
+.inspector-dialogue-list-header strong {
+  color: var(--trio-text);
+  font-weight: var(--trio-weight-semibold);
+}
+
+.inspector-dialogue-list-counts {
+  color: var(--trio-muted);
+}
+
+.inspector-dialogue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 184px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.inspector-dialogue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 1px solid var(--trio-border-soft);
+  border-left: 3px solid transparent;
+  border-radius: var(--trio-radius-sm);
+  background: var(--trio-bg);
+  color: var(--trio-text);
+  font-size: var(--trio-text-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.inspector-dialogue-item:hover {
+  background: var(--trio-panel-raised);
+}
+
+.inspector-dialogue-item.active {
+  border-color: var(--trio-border-soft);
+  border-left-color: var(--trio-accent);
+  background: var(--trio-accent-soft);
+}
+
+.inspector-dialogue-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector-dialogue-badge {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: var(--trio-radius-pill);
+  font-size: 11px;
+  font-weight: var(--trio-weight-medium);
+  line-height: 1.3;
+  background: var(--trio-panel-raised);
+  color: var(--trio-muted);
+}
+
+.inspector-dialogue-badge[data-badge-tone="ai"] {
+  background: var(--trio-state-ai-soft);
+  color: var(--trio-state-ai);
+}
+
+.inspector-dialogue-badge[data-badge-tone="warning"] {
+  background: var(--trio-state-modified-soft);
+  color: var(--trio-state-modified);
+}
+
+.inspector-dialogue-badge[data-badge-tone="confirmed"] {
+  background: var(--trio-state-confirmed-soft);
+  color: var(--trio-state-confirmed);
+}
+
+.inspector-dialogue-badge[data-badge-tone="modified"] {
+  background: var(--trio-state-modified-soft);
+  color: var(--trio-state-modified);
+}
+
+.line-meta-details.translation-context-preview > summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-settings-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--trio-border-soft);
+  font-size: var(--trio-text-secondary);
+}
+
+.top-settings-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid var(--trio-border-soft);
+  border-radius: var(--trio-radius-sm);
+  background: transparent;
+  color: var(--trio-muted);
+  cursor: pointer;
+}
+
+.top-settings-close:hover {
+  background: var(--trio-panel-raised);
+  color: var(--trio-text);
+}
+
+/* ==========================================================================
+   Modern Minimalist Workbench Top Bar (48px Fixed)
+   ========================================================================== */
+.mangohana-workbench-top {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  padding: 0 16px;
+  background: var(--trio-canvas) !important;
+  border-bottom: 1px solid var(--trio-border-soft) !important;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 50;
+}
+
+.mangohana-workbench-top .top-section-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.mangohana-top-home-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--trio-panel);
+  border: 1px solid var(--trio-border-soft);
+  color: var(--trio-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mangohana-top-home-button:hover {
+  background: var(--trio-accent-soft);
+  color: var(--trio-text);
+}
+
+.mangohana-top-home-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mangohana-workbench-top .app-top-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mangohana-workbench-top .workspace-product-type {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--trio-text);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mangohana-workbench-top .top-save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: var(--trio-panel-raised);
+  border: 1px solid var(--trio-border-soft);
+  border-radius: var(--trio-radius-pill);
+  font-size: 11px;
+  color: var(--trio-muted);
+  cursor: pointer;
+}
+
+.mangohana-workbench-top .top-save-state .save-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--trio-success);
+}
+
+.mangohana-workbench-top .top-save-state.dirty .save-dot {
+  background: var(--trio-warning);
+}
+
+.mangohana-workbench-top .top-section-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 1 auto;
+}
+
+.mangohana-page-navigator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--trio-panel-raised);
+  border: 1px solid var(--trio-border-soft);
+  border-radius: var(--trio-radius-sm);
+  padding: 2px 8px;
+}
+
+.mangohana-page-navigator .nav-arrow {
+  background: none;
+  border: none;
+  color: var(--trio-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.mangohana-page-navigator .nav-arrow:hover:not(:disabled) {
+  color: var(--trio-text);
+}
+
+.mangohana-page-navigator .nav-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.mangohana-page-navigator .nav-page-display {
+  font-size: 12px;
+  color: var(--trio-muted);
+}
+
+.mangohana-page-navigator .nav-page-display strong {
+  color: var(--trio-text);
+}
+
+.mangohana-pipeline-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mangohana-pipeline-stepper .step-chip {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.mangohana-pipeline-stepper .step-chip.completed {
+  background: var(--trio-success-soft);
+  color: var(--trio-success);
+}
+
+.mangohana-pipeline-stepper .step-chip.current {
+  background: var(--trio-accent-soft);
+  color: var(--trio-accent);
+  border: 1px solid var(--trio-accent);
+}
+
+.mangohana-pipeline-stepper .step-chip.upcoming {
+  color: var(--trio-muted);
+}
+
+.mangohana-workbench-top .top-section-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.mangohana-workbench-top .secondary-batch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: var(--trio-panel);
+  border: 1px solid var(--trio-border-soft);
+  color: var(--trio-text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mangohana-workbench-top .secondary-batch-btn:hover:not(:disabled) {
+  background: var(--trio-accent-soft);
+  color: var(--trio-on-accent);
+}
+
+.mangohana-workbench-top .top-next-action-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 16px;
+  border-radius: var(--trio-radius-control);
+  background: var(--trio-accent);
+  border: none;
+  color: var(--trio-on-accent);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mangohana-workbench-top .top-next-action-btn:hover:not(:disabled) {
+  background: var(--trio-accent-hover);
+}
+
+.mangohana-workbench-top .top-menu-container {
+  position: relative;
+}
+
+.mangohana-workbench-top .top-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--trio-radius-control);
+  background: transparent;
+  border: 1px solid var(--trio-border-soft);
+  color: var(--trio-muted);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mangohana-workbench-top .top-menu-trigger:hover {
+  background: var(--trio-panel);
+  color: var(--trio-text);
+}
+
+.mangohana-workbench-top .top-popover-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  width: 220px;
+  background: var(--trio-panel);
+  border: 1px solid var(--trio-border);
+  border-radius: var(--trio-radius-panel);
+  padding: 6px;
+  box-shadow: var(--trio-shadow-popover);
+  z-index: 1000;
+}
+
+.mangohana-workbench-top .menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mangohana-workbench-top .menu-group-label {
+  font-size: 10px;
+  color: var(--trio-subtle);
+  padding: 4px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.mangohana-workbench-top .top-popover-menu button[role="menuitem"] {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--trio-text);
+  background: none;
+  border: none;
+  border-radius: var(--trio-radius-sm);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.mangohana-workbench-top .top-popover-menu button[role="menuitem"]:hover:not(:disabled) {
+  background: var(--trio-panel-raised);
+  color: var(--trio-text);
+}
+
+.mangohana-workbench-top .top-popover-menu button[role="menuitem"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mangohana-workbench-top .menu-divider {
+  height: 1px;
+  background: var(--trio-border-soft);
+  margin: 4px 0;
+}
+
+/* ==========================================================================
+   Center Canvas Floating Glassmorphic HUD Toolbar
+   ========================================================================== */
+.page-image-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--trio-canvas);
+}
+
+.page-image-toolbar {
+  position: absolute !important;
+  top: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 4px 8px !important;
+  background: var(--trio-panel) !important;
+  border: 1px solid var(--trio-border) !important;
+  border-radius: var(--trio-radius-pill) !important;
+  box-shadow: var(--trio-shadow-popover) !important;
+  z-index: 30 !important;
+  max-width: 90%;
+  overflow-x: auto;
+}
+
+.page-image-toolbar .page-image-title {
+  display: none !important;
+}
+
+.page-image-toolbar .page-image-tools {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.page-image-toolbar .page-image-tool-group {
+  display: flex !important;
+  align-items: center !important;
+  background: var(--trio-panel-raised) !important;
+  border: 1px solid var(--trio-border-soft) !important;
+  border-radius: var(--trio-radius-pill) !important;
+  padding: 2px 4px !important;
+  gap: 2px !important;
+}
+
+.page-image-toolbar .page-image-tool-group button {
+  padding: 4px 10px !important;
+  border-radius: var(--trio-radius-pill) !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--trio-muted) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.page-image-toolbar .page-image-tool-group button:hover:not(:disabled) {
+  color: var(--trio-text) !important;
+  background: var(--trio-panel) !important;
+}
+
+.page-image-toolbar .page-image-tool-group button[aria-pressed="true"] {
+  background: var(--trio-accent) !important;
+  color: var(--trio-on-accent) !important;
+  box-shadow: none !important;
+}
+
+.page-image-toolbar .page-image-hold-compare {
+  padding: 4px 12px !important;
+  border-radius: var(--trio-radius-pill) !important;
+  background: var(--trio-panel-raised) !important;
+  border: 1px solid var(--trio-border-soft) !important;
+  color: var(--trio-text) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+}
+
+.page-image-toolbar .page-image-hold-compare:hover:not(:disabled) {
+  background: var(--trio-panel) !important;
+  color: var(--trio-text) !important;
+}
+
+.page-image-toolbar .page-image-hold-compare[aria-pressed="true"] {
+  background: var(--trio-accent) !important;
+  border-color: var(--trio-accent) !important;
+  color: var(--trio-on-accent) !important;
+  box-shadow: none !important;
+}
+
+.page-image-toolbar .page-image-zoom {
+  font-size: 11px !important;
+  font-family: var(--trio-font-mono, monospace) !important;
+  color: var(--trio-muted) !important;
+  padding: 0 4px !important;
+  min-width: 36px !important;
+  text-align: center !important;
+}
+
+/* ==========================================================================
+   Left Filmstrip Strip & Inspector Modern Dark Styling
+   ========================================================================== */
+.focus-deck-pages {
+  background: var(--trio-panel) !important;
+  border-right: 1px solid var(--trio-border-soft) !important;
+}
+
+.page-strip-panel {
+  padding: 12px 8px !important;
+}
+
+.page-strip-row {
+  border-radius: var(--trio-radius-sm) !important;
+  background: var(--trio-panel-raised) !important;
+  border: 1px solid var(--trio-border-soft) !important;
+  transition: all 0.15s ease !important;
+  margin-bottom: 6px !important;
+}
+
+.page-strip-row:hover {
+  background: var(--trio-panel) !important;
+  border-color: var(--trio-border) !important;
+}
+
+.page-strip-row.selected {
+  background: var(--trio-accent-soft) !important;
+  border-color: var(--trio-accent) !important;
+  box-shadow: none !important;
+}
+
+
+
+
+
+/* ==========================================================================
+   Prevent Awkward Text Wrapping & Polish Controls
+   ========================================================================== */
+.mangohana-workbench-top button,
+.page-image-toolbar button,
+.mangohana-hero-actions button,
+.quick-status-actions button,
+.studio-editor-toolbar button,
+.line-navigation-actions button,
+.mangohana-typesetting-controls button,
+.mangohana-confirm-cta,
+.step-chip,
+.nav-page-display {
+  white-space: nowrap !important;
+}
+
+.inspector-dialogue-summary {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.inspector-dialogue-badge {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.inspector-batch-bar button {
+  white-space: nowrap !important;
+}
+
+/* ==========================================================================
+   Page Strip Filters Vertical Stacking (Fits 104px sidebar cleanly)
+   ========================================================================== */
+.page-strip-filters {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  margin: 6px 0 !important;
+}
+
+.page-strip-filters button {
+  width: 100% !important;
+  font-size: 11px !important;
+  padding: 4px 6px !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  line-height: 1.2 !important;
+  border-radius: 4px !important;
+}
+
+/* ==========================================================================
+   Inspector Editor Toolbar Clean Stacked Layout
+   ========================================================================== */
+.studio-editor-toolbar {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+}
+
+.studio-editor-toolbar .line-navigation-actions {
+  display: flex !important;
+  width: 100% !important;
+  gap: 4px !important;
+}
+
+.studio-editor-toolbar .line-navigation-actions button {
+  flex: 1 !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.studio-editor-toolbar .studio-translation-actions {
+  width: 100% !important;
+}
+
+.studio-editor-toolbar .studio-translation-actions button {
+  width: 100% !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.translation-ownership-badge {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.trio-modal-footer button {
+  white-space: nowrap !important;
+}
+
+.page-image-zoom {
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: opacity 0.1s ease;
+}
+
+.page-image-zoom:hover {
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   4단계: 메인 작업대 캔버스 및 뷰포트 고도화 (Modern Workbench Canvas & Viewport)
+   ========================================================================== */
+
+/* 1. Luna Workbench within FocusDeck integration: single mode canvas maximization */
+.workspace-main > .luna-workbench.view-single > .luna-left-col,
+.workspace-main > .luna-workbench.view-single > .luna-right-col {
+  display: none !important;
+}
+
+.workspace-main > .luna-workbench.view-single > .luna-center-stage {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.workspace-main > .luna-workbench .luna-edge-collapse {
+  display: none !important;
+}
+
+/* 2. Page Image Stage & Canvas Viewport styling */
+.page-image-stage {
+  background: radial-gradient(circle at center, #18181b 0%, #101012 100%) !important;
+  cursor: grab;
+  outline: none;
+}
+
+.page-image-stage:active {
+  cursor: grabbing;
+}
+
+.page-image-stage .page-image-media img {
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+  border-radius: 4px;
+}
+
+/* 3. Floating Modern Viewport Toolbar */
+.page-image-panel .page-image-toolbar {
+  position: absolute !important;
+  top: 14px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 5px 10px !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  background: rgba(28, 28, 31, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+  z-index: 30 !important;
+}
+
+.page-image-toolbar .page-image-tool-group {
+  display: flex !important;
+  align-items: center !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 999px !important;
+  padding: 2px 4px !important;
+  gap: 2px !important;
+}
+
+.page-image-toolbar .page-image-tool-group button {
+  padding: 4px 11px !important;
+  border-radius: 999px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--trio-muted, #94a3b8) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+}
+
+.page-image-toolbar .page-image-tool-group button:hover:not(:disabled) {
+  color: var(--trio-text, #f1f5f9) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.page-image-toolbar .page-image-tool-group button[aria-pressed="true"] {
+  background: var(--trio-accent, #3583a3) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--trio-accent) 40%, transparent) !important;
+}
+
+.page-image-toolbar .page-image-hold-compare {
+  padding: 4px 12px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--trio-text, #f1f5f9) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+}
+
+.page-image-toolbar .page-image-hold-compare:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+.page-image-toolbar .page-image-hold-compare[aria-pressed="true"] {
+  background: var(--trio-accent, #3583a3) !important;
+  border-color: var(--trio-accent, #3583a3) !important;
+  color: #fff !important;
+}
+
+.page-image-toolbar .page-image-zoom {
+  font-size: 11px !important;
+  font-family: var(--trio-font-mono, monospace) !important;
+  color: var(--trio-accent, #38bdf8) !important;
+  font-weight: 600 !important;
+  padding: 0 4px !important;
+  min-width: 38px !important;
+  text-align: center !important;
+}
+
+/* 4. Top Workflow Progress Indicators */
+.focus-deck-workflow-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 0 16px !important;
+  list-style: none !important;
+}
+
+.focus-deck-workflow-label li {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  color: var(--trio-muted, #94a3b8) !important;
+  transition: all 0.2s ease !important;
+}
+
+.focus-deck-workflow-label li > span:first-child {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  border: 1px solid currentColor !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+}
+
+.focus-deck-workflow-label li[data-state="current"] {
+  color: var(--trio-accent, #38bdf8) !important;
+  font-weight: 600 !important;
+}
+
+.focus-deck-workflow-label li[data-state="current"] > span:first-child {
+  background: var(--trio-accent, #38bdf8) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--trio-accent, #38bdf8) 40%, transparent) !important;
+}
+
+.focus-deck-workflow-label li[data-state="complete"] {
+  color: var(--trio-success, #22c55e) !important;
+}
+
+.focus-deck-workflow-label li[data-state="complete"] > span:first-child {
+  background: color-mix(in srgb, var(--trio-success, #22c55e) 15%, transparent) !important;
+  border-color: var(--trio-success, #22c55e) !important;
+}
+
+/* 5. Bottom Status Bar & Page Navigation */
+.mangohana-workbench-bottom {
+  background: var(--trio-panel, #1c1c1f) !important;
+  border-top: 1px solid var(--trio-border-soft, #27272a) !important;
+  font-size: 12px !important;
+  color: var(--trio-muted, #94a3b8) !important;
+}
+
+.mangohana-workbench-bottom .top-page-actions button {
+  padding: 4px 10px !important;
+  border-radius: var(--trio-radius-control, 6px) !important;
+  background: var(--trio-panel-raised, #232327) !important;
+  border: 1px solid var(--trio-border-soft, #27272a) !important;
+  color: var(--trio-text, #f1f5f9) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.mangohana-workbench-bottom .top-page-actions button:hover:not(:disabled) {
+  background: var(--trio-panel, #1c1c1f) !important;
+  border-color: var(--trio-border, #3f3f46) !important;
+}
+
+.mangohana-workbench-bottom .top-page-actions strong {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: var(--trio-accent, #38bdf8) !important;
+  font-variant-numeric: tabular-nums !important;
+  padding: 0 4px !important;
+}
+
+/* ==========================================================================
+   5단계: 대사 검수 및 식자 편집 인스펙터 고도화 (Dialogue & Typesetting Inspector)
+   ========================================================================== */
+
+/* 1. Right Inspector Layout & Background */
+.focus-deck-shell .right-inspector {
+  background: var(--trio-panel, #1c1c1f) !important;
+  border-left: 1px solid var(--trio-border-soft, #27272a) !important;
+}
+
+.focus-deck-shell .line-detail-panel {
+  padding: 14px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+/* 2. Dialogue Heading & Ownership Badges */
+.focus-deck-shell .line-detail-heading {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid var(--trio-border-soft, #27272a) !important;
+}
+
+.focus-deck-shell .line-detail-heading h2 {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: var(--trio-text, #f1f5f9) !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.focus-deck-shell .line-detail-heading p {
+  font-size: 11.5px !important;
+  color: var(--trio-muted, #94a3b8) !important;
+  margin: 2px 0 0 !important;
+}
+
+.translation-ownership-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 9px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+.translation-ownership-badge.translation-ownership-ai_proposed,
+.translation-ownership-badge[data-workspace-state="ai_proposed"] {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #f59e0b !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.translation-ownership-badge.translation-ownership-user_modified,
+.translation-ownership-badge[data-workspace-state="user_modified"] {
+  background: rgba(56, 189, 248, 0.12) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+}
+
+.translation-ownership-badge.translation-ownership-user_confirmed,
+.translation-ownership-badge.translation-ownership-confirmed,
+.translation-ownership-badge[data-workspace-state="user_confirmed"],
+.translation-ownership-badge[data-workspace-state="confirmed"] {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #22c55e !important;
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+}
+
+/* 3. Studio Editor Toolbar (Line Nav + AI Translation) */
+.studio-editor-toolbar {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  padding: 0 0 10px !important;
+  border-bottom: 1px solid var(--trio-border-soft, #27272a) !important;
+}
+
+.studio-editor-toolbar .line-navigation-actions {
+  display: flex !important;
+  gap: 6px !important;
+}
+
+.studio-editor-toolbar .line-navigation-actions button {
+  flex: 1 !important;
+  min-height: 30px !important;
+  padding: 4px 8px !important;
+  border-radius: var(--trio-radius-control, 6px) !important;
+  background: var(--trio-panel-raised, #232327) !important;
+  border: 1px solid var(--trio-border-soft, #27272a) !important;
+  color: var(--trio-text, #f1f5f9) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.studio-editor-toolbar .line-navigation-actions button:hover:not(:disabled) {
+  background: var(--trio-panel, #1c1c1f) !important;
+  border-color: var(--trio-border, #3f3f46) !important;
+}
+
+.studio-translation-actions button {
+  width: 100% !important;
+  min-height: 32px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* 4. Textarea Fields (Source Text & User Translation) */
+.focus-editor .source-editor {
+  background: #141416 !important;
+  border: 1px solid var(--trio-border-soft, #27272a) !important;
+  border-radius: 6px !important;
+  color: var(--trio-text, #f1f5f9) !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  padding: 8px 10px !important;
+  min-height: 72px !important;
+  transition: border-color 0.15s ease !important;
+}
+
+.focus-editor .source-editor:focus {
+  border-color: var(--trio-border, #3f3f46) !important;
+  outline: none !important;
+}
+
+.focus-editor .user-translation-editor {
+  background: #18181b !important;
+  border: 1px solid var(--trio-border-soft, #27272a) !important;
+  border-left: 3px solid var(--trio-accent, #38bdf8) !important;
+  border-radius: 6px !important;
+  color: var(--trio-text, #f1f5f9) !important;
+  font-size: 14.5px !important;
+  line-height: 1.65 !important;
+  padding: 10px 12px !important;
+  min-height: 96px !important;
+  transition: all 0.15s ease !important;
+}
+
+.focus-editor .user-translation-editor:focus {
+  border-color: var(--trio-accent, #38bdf8) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--trio-accent, #38bdf8) 25%, transparent) !important;
+  outline: none !important;
+}
+
+/* 5. Inline AI Proposal Banner */
+.translation-inline-proposal {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  background: rgba(56, 189, 248, 0.08) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+  margin-top: 6px !important;
+}
+
+.translation-inline-proposal strong {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: var(--trio-accent, #38bdf8) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+}
+
+.translation-inline-proposal p {
+  margin: 0 !important;
+  font-size: 12.5px !important;
+  color: var(--trio-text, #f1f5f9) !important;
+  line-height: 1.45 !important;
+}
+
+/* 6. Typesetting Controls Box */
+.mangohana-typesetting-controls {
+  margin-top: 10px !important;
+  padding: 12px !important;
+  background: var(--trio-panel-raised, #232327) !important;
+  border: 1px solid var(--trio-border-soft, #27272a) !important;
+  border-radius: 8px !important;
+}
+
+.mangohana-typesetting-controls button.secondary-button.active {
+  background: var(--trio-accent-soft) !important;
+  color: var(--trio-accent, #38bdf8) !important;
+  border-color: var(--trio-accent, #38bdf8) !important;
+  font-weight: 600 !important;
+}
+
+/* 7. Primary Confirmation CTA Bar */
+.guided-primary-action {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-top: 14px !important;
+  margin-top: 8px !important;
+  border-top: 1px solid var(--trio-border-soft, #27272a) !important;
+}
+
+.guided-primary-action button.primary-button {
+  flex: 1 !important;
+  min-height: 38px !important;
+  padding: 8px 16px !important;
+  border-radius: var(--trio-radius-control, 6px) !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.guided-primary-action .keyboard-hint kbd {
+  font-size: 10px !important;
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  background: var(--trio-panel-raised, #232327) !important;
+  border: 1px solid var(--trio-border-soft, #27272a) !important;
+  color: var(--trio-muted, #94a3b8) !important;
 }

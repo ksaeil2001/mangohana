@@ -9,6 +9,11 @@ import {
   hasTypesettingTextOverflow
 } from "./typesettingGeometry.js";
 
+type RenderReadinessOptions = {
+  productionFontLoaded?: boolean;
+  imageSize?: Readonly<{ width: number; height: number }>;
+};
+
 /**
  * Collects renderer-only evidence without treating a generic CSS family as a
  * verified font. Main receives the resulting evidence and rechecks its
@@ -16,7 +21,7 @@ import {
  */
 export function collectRenderReadinessEvidence(
   lines: readonly DialogueLine[],
-  options: { productionFontLoaded?: boolean } = {}
+  options: RenderReadinessOptions = {}
 ): RenderReadinessEvidence {
   try {
     return collectRenderReadinessEvidenceUnsafe(lines, options);
@@ -27,9 +32,10 @@ export function collectRenderReadinessEvidence(
 
 function collectRenderReadinessEvidenceUnsafe(
   lines: readonly DialogueLine[],
-  options: { productionFontLoaded?: boolean }
+  options: RenderReadinessOptions
 ): RenderReadinessEvidence {
   const productionFontLoaded = options.productionFontLoaded === true;
+  const imageSize = options.imageSize;
   const effectiveFontFamily = PRODUCTION_TYPESET_FONT_CSS_FAMILY;
   const documentFontsAvailable = hasDocumentFonts();
   const metricContext = createMetricContext();
@@ -93,6 +99,9 @@ function collectRenderReadinessEvidenceUnsafe(
         hasTypesettingTextOverflow(text, {
           shape: typesetting.shape,
           fontSizeRatio: typesetting.fontSizeRatio,
+          boxAspectRatio: typesetting.writingMode === "vertical-rl" || !imageSize
+            ? 1
+            : (typesetting.bbox.width * imageSize.width) / (typesetting.bbox.height * imageSize.height),
           lineHeight: typesetting.lineHeight
         })
       );

@@ -43,7 +43,8 @@ protocol.registerSchemesAsPrivileged([
     privileges: {
       standard: true,
       secure: true,
-      supportFetchAPI: true
+      supportFetchAPI: true,
+      corsEnabled: true
     }
   }
 ]);
@@ -51,6 +52,7 @@ protocol.registerSchemesAsPrivileged([
 function createWindow(): void {
   const window = new BrowserWindow({
     title: "망고하나",
+    backgroundColor: "#0b0d12",
     icon: app.isPackaged
       ? join(__dirname, "../../dist-renderer/mangohana-icon.png")
       : join(__dirname, "../../public/mangohana-icon.png"),
@@ -215,18 +217,19 @@ if (requestApplicationSingleInstance(app)) {
   configureSecondInstanceFocus(app, () => BrowserWindow.getAllWindows()[0]);
 
   app.whenReady().then(async () => {
-    const productionTypesetFontResource =
-      await initializeProductionTypesetFontResource(process.resourcesPath);
-    protocol.handle(
-      productionTypesetFontScheme,
-      productionTypesetFontResource.handleProtocolRequest
-    );
     const geminiApiKeyStore = createGeminiApiKeyStore({
       encryption: safeStorage,
       filePath: join(app.getPath("userData"), "settings", "gemini-api-key.enc"),
       env: process.env
     });
-    await geminiApiKeyStore.initialize();
+    const [productionTypesetFontResource] = await Promise.all([
+      initializeProductionTypesetFontResource(process.resourcesPath),
+      geminiApiKeyStore.initialize()
+    ]);
+    protocol.handle(
+      productionTypesetFontScheme,
+      productionTypesetFontResource.handleProtocolRequest
+    );
     const projectSessionManager = createProjectSessionManager();
     activeProjectSessionManager = projectSessionManager;
     const recentProjectRegistry = createRecentProjectRegistry({

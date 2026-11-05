@@ -9,12 +9,8 @@ import {
   type InpaintingMode,
   type InpaintingProvider
 } from "../shared/inpainting";
-import type { DialogueUserPatch, ProjectMutation } from "../shared/projectChanges";
-import {
-  createInitialEnvironmentSnapshot,
-  getCapabilityDisabledReason,
-  type EnvironmentPreparationSnapshot
-} from "../shared/environmentPreparation";
+import type { DialogueUserPatch } from "../shared/projectChanges";
+import { getCapabilityDisabledReason } from "../shared/environmentPreparation";
 import { createAutoUpdateState, type AutoUpdateState } from "../shared/autoUpdateStatus";
 import {
   acknowledgeCancelIpc,
@@ -23,29 +19,20 @@ import {
   type BackendCancelAcknowledgment
 } from "../shared/cancelAcknowledgment";
 import { createEmptyProject, normalizeProject } from "../shared/projectValidation";
-import {
-  buildDialogueTranslationContext,
-  buildTranslationContextPayload,
-  computeTranslationPayloadFingerprint
-} from "../shared/translationContext";
+import { buildTranslationContextPayload, computeTranslationPayloadFingerprint } from "../shared/translationContext";
 import { inspectApprovedCleanedAsset } from "../shared/approvedCleanedAsset";
 import { calculateTypesettingSafeArea } from "../shared/geometry/panelAndBubbleLayout";
 import { buildRenderReadinessReport } from "../shared/renderReadiness";
-import type { DialogueLine, DialogueTypesetting, EditableTranslationProject, LineStatus, PageImage, PreparedPageImage, TranslationProjectV2 } from "../shared/projectTypes";
+import type { DialogueLine, DialogueTypesetting, LineStatus, PageImage, PreparedPageImage, TranslationProjectV2 } from "../shared/projectTypes";
 import type { ProviderSettings } from "../shared/providerSettings";
 
-import type {
-  PreparedPageImageBatchDto,
-  ProjectChangeResult,
-  ProjectOpenFailureResult,
-  ProjectSessionResult,
-  TranslationProjectDto
-} from "../shared/projectSessionTypes";
+import type { PreparedPageImageBatchDto, ProjectOpenFailureResult, ProjectSessionResult, TranslationProjectDto } from "../shared/projectSessionTypes";
 import {
   type NormalizedBbox,
   type SpeechBubbleExtractionResult
 } from "../shared/speechBubbleExtraction";
 import { CharacterDictionaryPanel } from "./components/CharacterDictionaryPanel";
+import { WorkbenchTopBar } from "./components/WorkbenchTopBar";
 import { AppDialogProvider, useAppDialogs } from "./components/AppDialogs";
 import { BatchAutomationModal, type BatchRunScope } from "./components/BatchAutomationModal";
 import { burnTypesettingFromUrl } from "./imageBurnInRenderer";
@@ -79,24 +66,14 @@ import { useProjectSetup } from "./useProjectSetup";
 import { useTranslationWorkflow } from "./useTranslationWorkflow";
 import { useInpaintingWorkflow } from "./useInpaintingWorkflow";
 import { useProjectSession } from "./useProjectSession";
-import { useSessionMutationQueue, mergePendingPageNumbers, type SessionMutationObserver } from "./useSessionMutationQueue.js";
+import { useSessionMutationQueue, mergePendingPageNumbers } from "./useSessionMutationQueue.js";
 import { useProjectSaveWorkflow } from "./useProjectSaveWorkflow.js";
 import { useOcrWorkflow } from "./useOcrWorkflow";
 import { useWorkspaceState } from "./useWorkspaceState";
 import type { SpeechBubbleReviewDraft, SpeechBubbleReviewItem } from "./components/SpeechBubbleReviewDialog";
 import type { ProjectFileResult, ProjectPasswordRequiredResult } from "./electronApi";
-import {
-  getGuidedStage,
-  getNextActionableLineId,
-  type GuidanceDensity,
-  type ReviewStage
-} from "./guidedWorkflow";
-import {
-  DEFAULT_WORKSPACE_PANELS,
-  loadFocusDeckPreferences,
-  saveFocusDeckPreferences,
-  type WorkspacePanelState
-} from "./focusDeck";
+import { getGuidedStage, getNextActionableLineId, type ReviewStage } from "./guidedWorkflow";
+import { loadFocusDeckPreferences, saveFocusDeckPreferences } from "./focusDeck";
 import {
   createWorkspaceSessionSnapshot,
   getWorkspaceSessionRecentProjectId,
@@ -119,8 +96,8 @@ import {
   resolveApprovedResultAsset,
   type ResultLayerDescriptor
 } from "./resultLayers";
-import type { OverlayKind, ResultLayer } from "./trioState";
-import { buildSemanticOverlayDescriptors, OVERLAY_KIND_ORDER } from "./semanticOverlays";
+import type { ResultLayer } from "./trioState";
+import { buildSemanticOverlayDescriptors } from "./semanticOverlays";
 import type { SemanticOverlayBbox } from "./semanticOverlays";
 import {
   createTypesettingDraft,
@@ -144,7 +121,7 @@ import {
   saveTypesettingDraft,
   type TypesettingDraftScope
 } from "./typesettingDrafts";
-import { initialProjectSetupState, projectSetupReducer } from "./projectSetupState";
+
 import { addRecentProject, loadRecentProjects, removeRecentProject } from "./recentProjects";
 import { getWorkspacePresentation } from "./workspacePresentation";
 import { useWorkspaceAdaptation } from "./workspaceAdaptation";
@@ -165,6 +142,7 @@ import type { PageImageFocusRequest, PageImageRenderState } from "./components/P
 import type { ManualTypesettingBoxFields } from "./components/ManualTypesettingBoxEditor";
 import mangohanaMark from "./brand/mangohana-mark.svg";
 import { DialogueTable } from "./components/DialogueTable";
+import { LunaWorkbench } from "./components/LunaWorkbench";
 import "./design-tokens.css";
 import "./styles.css";
 import "./design-system.css";
@@ -173,14 +151,15 @@ import "./stitch-workbench.css";
 import "./stitch-suite.css";
 import "./stitch-flow.css";
 import "./stitch-dialogs.css";
+import "./mangohana-home.css";
 import "./mangohana-workspace.css";
+import "./luna-workbench.css";
 
 // Inkline Production Bench: the selected page and its active object determine the UI.
 const PageImagePanel = lazy(() => import("./components/PageImagePanel").then((module) => ({ default: module.PageImagePanel })));
 const StageEditor = lazy(() => import("./components/StageEditor").then((module) => ({ default: module.StageEditor })));
 
 type WorkspaceMode = "viewer" | "line-edit" | "ocr-review" | "inpainting";
-type BottomPanel = "dialogue" | "ocr-candidates" | "issues";
 
 const PROVIDER_SETTINGS_LOAD_ERROR = "Provider 설정을 불러오지 못해 작업을 시작하지 않았습니다.";
 type NavigatorView = "pages" | "context" | "guide" | "settings";
@@ -198,27 +177,6 @@ async function loadRequiredProviderSettings(): Promise<ProviderSettings> {
     throw new Error(PROVIDER_SETTINGS_LOAD_ERROR);
   }
 }
-
-type InpaintingMaskDraftContext = {
-  projectId: string;
-  pageNumber: number;
-  pageImageId: string;
-  draft: InpaintingMaskDraft;
-};
-
-type PageResultContext = {
-  original: PageImage | null;
-  inpainted: PageImage | null;
-  translated: PageImage | null;
-};
-
-type PageResultContextMap = Record<string, PageResultContext>;
-
-type PendingInpaintingContext = {
-  projectId: string;
-  pageNumber: number;
-  pageImageId: string;
-};
 
 type TypesettingDraftContext = TypesettingDraftScope & {
   pageNumber: number;
@@ -473,6 +431,24 @@ function AppContent() {
   });
   const [workspaceSessionHydratedKey, setWorkspaceSessionHydratedKey] = useState<string | null>(null);
   const [workspaceComparisonHydrationRevision, setWorkspaceComparisonHydrationRevision] = useState(0);
+  const [batchSelectedIds, setBatchSelectedIds] = useState<Set<string>>(() => new Set());
+  const batchConfirmSelectedLines = () => {
+    if (batchSelectedIds.size === 0) return;
+    replaceProject({
+      ...project,
+      dialogueLines: project.dialogueLines.map((line) => {
+        if (!batchSelectedIds.has(line.id)) return line;
+        const text = line.userTranslation?.trim() || line.aiTranslation?.trim();
+        if (!text) return line;
+        return {
+          ...line,
+          userTranslation: line.userTranslation || line.aiTranslation,
+          lineStatus: "complete" as const
+        };
+      })
+    });
+    setBatchSelectedIds(new Set());
+  };
   const [activeNavigator, setActiveNavigator] = useState<NavigatorView>("pages");
   const [uiThemeChoice, setUiTheme] = useState<"light" | "dark" | null>(() => {
     const persisted = window.localStorage.getItem("trio:ui-theme");
@@ -503,7 +479,8 @@ function AppContent() {
       message: "업데이트 확인은 설치된 망고하나 앱에서 사용할 수 있습니다."
     })
   );
-  const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [batchTargetPages, setBatchTargetPages] = useState<number[] | "all" | null>(null);
+  const batchModalOpen = batchTargetPages !== null;
   const currentBatchRunRef = useRef<{ scope: BatchRunScope; queueId: string | null; isCurrent: () => boolean } | null>(null);
   const [imageExportInFlight, setImageExportInFlight] = useState(false);
   const [cleanedReviewInFlight, setCleanedReviewInFlight] = useState(false);
@@ -1074,7 +1051,6 @@ function AppContent() {
         dialogueLines: project.dialogueLines,
         targetLineId: active.targetLineId,
         characters: project.characters,
-        dictionaryTerms: project.dictionaryTerms,
         stylePreset: active.stylePreset
       });
       if (computeTranslationPayloadFingerprint(payload) !== active.contextFingerprint) {
@@ -2193,7 +2169,6 @@ function AppContent() {
             dialogueLines: nextLines,
             targetLineId: activeTranslation.targetLineId,
             characters: project.characters,
-            dictionaryTerms: project.dictionaryTerms,
             stylePreset: activeTranslation.stylePreset
           })) !== activeTranslation.contextFingerprint;
         } catch {
@@ -2367,7 +2342,6 @@ function AppContent() {
         dialogueLines: requestProject.dialogueLines,
         targetLineId: active.targetLineId,
         characters: requestProject.characters,
-        dictionaryTerms: requestProject.dictionaryTerms,
         stylePreset: active.stylePreset
       });
       active.contextFingerprint = computeTranslationPayloadFingerprint(payload);
@@ -2398,7 +2372,6 @@ function AppContent() {
         dialogueLines: projectRef.current.dialogueLines,
         targetLineId: active.targetLineId,
         characters: projectRef.current.characters,
-        dictionaryTerms: projectRef.current.dictionaryTerms,
         stylePreset: active.stylePreset
       });
       if (
@@ -2417,7 +2390,6 @@ function AppContent() {
           dialogueLines: projectRef.current.dialogueLines,
           targetLineId: active.targetLineId,
           characters: projectRef.current.characters,
-          dictionaryTerms: projectRef.current.dictionaryTerms,
           stylePreset: active.stylePreset
         }));
         if (currentFingerprint !== active.contextFingerprint) {
@@ -2498,7 +2470,7 @@ function AppContent() {
     return candidates[0]?.line ?? null;
   }
 
-  function confirmSelectedTranslation() {
+  function confirmSelectedTranslation(afterConfirm?: () => void) {
     if (!selectedLineForEditor) return;
     if (blockProjectSessionRecovery()) return;
     if (!canConfirmTranslation(selectedLineForEditor)) {
@@ -2542,6 +2514,7 @@ function AppContent() {
         if (selectedLineIdRef.current === confirmed.id) {
           setIssueEditor(null);
           setStatusMessage("선택한 대사의 검수를 확정했습니다.");
+          afterConfirm?.();
         }
       }
     );
@@ -2559,6 +2532,7 @@ function AppContent() {
     setCurrentIssue(null);
     setIssueEditor(null);
     setStatusMessage("선택한 대사의 검수를 확정했습니다.");
+    afterConfirm?.();
   }
 
   function postponeTranslation() {
@@ -2769,29 +2743,6 @@ function AppContent() {
     }
   }
 
-  async function downloadAutoUpdate() {
-    if (!window.projectApi?.downloadAutoUpdate) return;
-    try {
-      setAutoUpdateState(await window.projectApi.downloadAutoUpdate());
-    } catch {
-      setAutoUpdateState(createAutoUpdateState("error", {
-        message: "업데이트를 다운로드하지 못했습니다. 잠시 후 다시 시도하세요."
-      }));
-    }
-  }
-
-  async function installAutoUpdate() {
-    if (isDirty || ocrReviewDraftsRef.current.size > 0 || inpaintingMaskDraftsRef.current.size > 0 || manualTypesettingDraftsRef.current.size > 0) {
-      setStatusMessage("업데이트를 설치하기 전에 저장하지 않은 변경사항과 미적용 초안을 확인하세요.");
-      return;
-    }
-    await window.projectApi?.installAutoUpdate?.();
-  }
-
-  async function openAutoUpdateRelease() {
-    await window.projectApi?.openAutoUpdateRelease?.();
-  }
-
   function invalidateOpenProjectOperation() {
     openProjectOperationRef.current = null;
   }
@@ -2860,7 +2811,7 @@ function AppContent() {
     const operation = {};
     openProjectOperationRef.current = operation;
     const isCurrentOperation = () => openProjectOperationRef.current === operation;
-    setBatchModalOpen(false);
+    setBatchTargetPages(null);
     setStatusMessage("새 프로젝트 세션을 준비하는 중입니다.");
     let createdSession: ProjectSessionResult | null = null;
     let closingPrevious = false;
@@ -2934,7 +2885,7 @@ function AppContent() {
 
   function enterNewImageProjectSetup(options: { preserveStartupSession: boolean; session?: ProjectSessionResult }) {
     cancelActiveAiTranslation();
-    setBatchModalOpen(false);
+    setBatchTargetPages(null);
     invalidateOpenProjectOperation();
     invalidateTxtImportOperation();
     const stalePreparedImages = projectSetup.files;
@@ -3258,6 +3209,7 @@ function AppContent() {
           failurePhase = "initial-save";
           const initialSave = await api.saveProjectAs({
             projectSessionId: activeSessionId,
+            silentDefault: !projectSetupStoragePath,
             ...(projectSetupStoragePath ? { filePath: projectSetupStoragePath } : {})
           });
           if (!isCurrentSetupOperation()) return;
@@ -4699,7 +4651,7 @@ function AppContent() {
   function installSessionResult(result: ProjectSessionResult, saved: boolean, recentProjectIdOverride?: string) {
     cancelActiveAiTranslation();
     cancelActiveOcr();
-    setBatchModalOpen(false);
+    setBatchTargetPages(null);
     setProjectSessionReadiness("ready");
     dispatchProjectSetup({ type: "reset" });
     resetSessionMutationState(result.project.project);
@@ -5106,24 +5058,28 @@ function AppContent() {
         if (!isCurrentSession()) return;
         const lines = currentProject.dialogueLines.filter((line) => line.pageNumber === pageImage.pageNumber);
         const cleanedAssetInspection = inspectApprovedCleanedAsset(currentProject, pageImage);
-        const evidence = collectRenderReadinessEvidence(lines, { productionFontLoaded });
         const reportApprovedCleanedAssetId = cleanedAssetInspection.status === "invalid_reference" || cleanedAssetInspection.status === "missing"
           ? undefined
           : cleanedAssetInspection.approvedCleanedAssetId;
-        const readiness = buildRenderReadinessReport({
-          pageImageId: pageImage.id,
-          revision: currentRevision,
-          resultRevision: currentRevision,
-          lines,
-          approvedCleanedAssetId: reportApprovedCleanedAssetId,
-          cleanedAssetQaStatus: cleanedAssetInspection.qaStatus,
-          cleanedAssetRequired: cleanedAssetInspection.required,
-          safeAreaProvisionalLineIds: evidence.safeAreaProvisionalLineIds,
-          missingGlyphLineIds: evidence.missingGlyphLineIds,
-          overflowLineIds: evidence.overflowLineIds,
-          font: evidence.font
-        });
-        if (!readiness.ready) continue;
+        const buildPageReadiness = (imageSize?: Readonly<{ width: number; height: number }>) => {
+          const evidence = collectRenderReadinessEvidence(lines, { productionFontLoaded, imageSize });
+          return buildRenderReadinessReport({
+            pageImageId: pageImage.id,
+            revision: currentRevision,
+            resultRevision: currentRevision,
+            lines,
+            approvedCleanedAssetId: reportApprovedCleanedAssetId,
+            cleanedAssetQaStatus: cleanedAssetInspection.qaStatus,
+            cleanedAssetRequired: cleanedAssetInspection.required,
+            safeAreaProvisionalLineIds: evidence.safeAreaProvisionalLineIds,
+            missingGlyphLineIds: evidence.missingGlyphLineIds,
+            overflowLineIds: evidence.overflowLineIds,
+            font: evidence.font
+          });
+        };
+        let readiness = buildPageReadiness();
+        // Overflow needs the pixel dimensions from the existing image load.
+        if (readiness.blockers.some((blocker) => blocker.code !== "text_overflow")) continue;
 
         try {
           const useApprovedCleanedAsset = cleanedAssetInspection.status === "valid" && Boolean(cleanedAssetInspection.asset);
@@ -5138,9 +5094,14 @@ function AppContent() {
             : storedRelativePath;
           if (!isCurrentSession()) return;
           const blob = await burnTypesettingFromUrl(imageSrc, lines, "image/png", 0.95, 15000, {
+            beforeRender: (imageSize) => {
+              readiness = buildPageReadiness(imageSize);
+              if (!readiness.ready) throw new Error("식자 준비 상태 검사를 통과하지 못했습니다.");
+            },
             textResolver: (line) => line.userTranslation?.trim() ?? ""
           });
           if (!isCurrentSession()) return;
+          if (!readiness.ready) continue;
           typesetPages.push({
             pageImageId: pageImage.id,
             pngBase64: await blobToBase64(blob),
@@ -5212,6 +5173,10 @@ function AppContent() {
         onOpenSettings={() => dispatchEntryFlow({ type: "navigate", screen: "settings" })}
         onOpenPreparation={() => openEnvironmentPreparation("home")}
         onNavigate={(nav) => dispatchEntryFlow({ type: "navigate", screen: nav })}
+        onDropImages={async (files) => {
+          await beginNewImageProject();
+          void prepareDroppedProjectImages(files);
+        }}
       />
     );
   }
@@ -5222,6 +5187,8 @@ function AppContent() {
         onResumeWorkspace={project.dialogueLines.length > 0 || (project.pageImages?.length ?? 0) > 0 ? () => dispatchEntryFlow({ type: "navigate", screen: "workspace" }) : undefined}
         recentProjects={recentProjects}
         apiReady={apiReady}
+        unavailableRecentPath={unavailableRecentPath}
+        statusMessage={statusMessage === "준비됨." ? undefined : statusMessage}
         onNewProject={beginNewImageProject}
         onOpenProject={() => void openProjectFromFileDialog()}
         onOpenRecent={(filePath) => void openProjectFromFileDialog(filePath)}
@@ -5401,11 +5368,11 @@ function AppContent() {
                 </div>
               </details>
               <button type="button" onClick={() => workspacePanelActionsRef.current?.openInspector()}>대사 수정</button>
-              <button type="button" onClick={confirmSelectedTranslation}
+              <button type="button" onClick={() => confirmSelectedTranslation()}
                 aria-label={!selectedLineForEditor.userTranslation && selectedLineForEditor.aiTranslation?.trim() ? "선택 대사 제안 채택 및 검수 확정" : "선택 대사 검수 확정"}
                 disabled={sessionNeedsRecovery || selectedLineForEditor.lineStatus === "complete" || !canConfirmTranslation(selectedLineForEditor)}
                 title={!canConfirmTranslation(selectedLineForEditor) ? "확정할 번역문을 먼저 입력하거나 제안을 만드세요." : undefined}>
-                {!selectedLineForEditor.userTranslation && selectedLineForEditor.aiTranslation?.trim() ? "제안 채택 및 검수 확정" : "검수 확정"}
+                {!selectedLineForEditor.userTranslation && selectedLineForEditor.aiTranslation?.trim() ? "채택 확정" : "검수 확정"}
               </button>
             </div>
           ) : null}
@@ -5454,157 +5421,123 @@ function AppContent() {
         </nav>
       )}
       topBar={({ resultsVisible, toggleResults }) => (
-      <div className="app-top-bar inkline-command-bar" role="banner" aria-label="앱 상단 바">
-        <p className="sr-only" role="status" aria-label="작업 상태" aria-atomic="true">
-          {statusMessage}
-        </p>
-        {currentIssue ? (
-          <span
-            className="sr-only"
-            data-testid="current-issue"
-            data-issue-id={currentIssue.lineId}
-            data-issue-kind={currentIssue.kind}
-            aria-label={`현재 문제 라인 ${currentIssue.line.order}`}
-          >
-            {currentIssue.line.sourceText}
-          </span>
-        ) : null}
-        <div className="app-top-brand">
-          <img className="mangohana-workspace-mark" src={mangohanaMark} alt="" aria-hidden="true" />
-          <h1>망고하나</h1>
-          <span className="sr-only" aria-hidden="true">대사 편집기</span>
-          <span className="workspace-product-type" title={project.metadata.title}>{project.metadata.title}</span>
-          <span className={isDirty ? "top-save-state dirty" : "top-save-state"} data-status-tone={workspacePresentation.saveLabel === "저장됨" ? "success" : workspacePresentation.saveLabel === "새 프로젝트" ? "neutral" : "warning"}>{workspacePresentation.saveLabel}</span>
-          {ocrReviewDraftCount + inpaintingMaskDraftCount + manualTypesettingDraftCount > 0 ? (
-            <span className="top-save-state dirty" title="OCR, 배경 마스크 또는 글자 배치 초안은 적용하기 전까지 프로젝트 저장에 포함되지 않습니다.">
-              미적용 초안 {ocrReviewDraftCount + inpaintingMaskDraftCount + manualTypesettingDraftCount}개
-            </span>
-          ) : null}
-        </div>
-        <p className="top-file-path">{currentFilePath ?? "선택된 프로젝트 파일이 없습니다."}</p>
-        {sessionNeedsRecovery ? (
-          <div className="processing-queue-notice" role="alert">
-            <p>{projectSessionRecoveryMessage}</p>
-            <button type="button" onClick={() => void reopenProjectForRecovery()}>
-              세션 복구하기
+      <>
+      <WorkbenchTopBar
+        currentIssue={currentIssue}
+        environmentSnapshot={environmentSnapshot}
+        environmentLoading={environmentLoading}
+        title={project.metadata.title}
+        currentFilePath={currentFilePath}
+        saveLabel={workspacePresentation.saveLabel}
+        isDirty={isDirty}
+        unappliedDraftCount={ocrReviewDraftCount + inpaintingMaskDraftCount + manualTypesettingDraftCount}
+        statusMessage={statusMessage}
+        currentPage={currentPage}
+        pageCount={pageCount}
+        currentStage={guidedStage}
+        nextActionLabel={
+          currentPageLines.length === 0
+            ? "다음: OCR 인식 →"
+            : selectedLineForEditor && selectedLineForEditor.lineStatus !== "complete"
+              ? "대사 확정 및 다음 →"
+              : pageSummary.reviewCount > 0
+                ? "다음 대사 검토 →"
+                : currentPage < pageCount
+                  ? "다음 페이지로 →"
+                  : "프로젝트 완료 ✓"
+        }
+        onNextAction={() => {
+          if (currentPageLines.length === 0) {
+            extractSpeechBubblesFromCurrentPage();
+          } else if (selectedLineForEditor && canConfirmTranslation(selectedLineForEditor) && selectedLineForEditor.lineStatus !== "complete") {
+            const nextReviewLine = currentPageLines.find((l) => l.id !== selectedLineForEditor.id && l.lineStatus !== "complete");
+            confirmSelectedTranslation(() => {
+              if (nextReviewLine) selectLine(nextReviewLine.id);
+              else if (currentPage < pageCount) goToNextPage();
+            });
+          } else if (pageSummary.reviewCount > 0) {
+            const nextReviewLine = currentPageLines.find((l) => l.lineStatus !== "complete");
+            if (nextReviewLine) {
+              selectLine(nextReviewLine.id);
+            } else if (hasActionableProjectLines) {
+              goToRemainingActionableLine();
+            }
+          } else if (currentPage < pageCount) {
+            goToNextPage();
+          }
+        }}
+        onBatchAuto={() => setBatchTargetPages("all")}
+        batchAutoDisabled={sessionNeedsRecovery}
+        onGoHome={() => dispatchEntryFlow({ type: "navigate", screen: "home" })}
+        onSelectPage={setPageAndSelection}
+        onSave={saveProject}
+        onSaveAs={saveProjectAs}
+        onNewProject={beginNewImageProject}
+        onOpenProject={() => void openProjectFromFileDialog()}
+        onExportTxt={exportTranslations}
+        onExportImages={() => void exportProjectImagePackage()}
+        exportImagesBusy={imageExportInFlight}
+        onOpenPreparation={() => openEnvironmentPreparation("workspace")}
+        theme={uiTheme}
+        onToggleTheme={() => setUiTheme((theme) => (theme === "light" ? "dark" : "light"))}
+        autoUpdateState={autoUpdateState}
+        onCheckUpdate={() => void checkForAutoUpdate()}
+        finalReading={finalReading}
+        onToggleFinalReading={() => {
+          if (!finalReading) {
+            readingSelectionsRef.current.clear();
+            readingSelectionsRef.current.set(currentPage, selectedLineId);
+          }
+          setFinalReading((c) => !c);
+        }}
+        issueCount={issueLineItems.length}
+        onOpenIssues={() => {
+          if (bottomPanel === "issues" || !resultsVisible) toggleResults();
+          setBottomPanel("issues");
+        }}
+        sessionNeedsRecovery={sessionNeedsRecovery}
+        recoveryMessage={projectSessionRecoveryMessage}
+        onRecoverSession={() => void reopenProjectForRecovery()}
+      />
+      {settingsOpen ? (
+        <section
+          id="workspace-project-settings"
+          ref={settingsPanelRef}
+          className="panel-section"
+          aria-label="프로젝트 설정"
+        >
+          <div className="top-settings-panel-header">
+            <strong>프로젝트 설정</strong>
+            <button
+              type="button"
+              className="top-settings-close"
+              aria-label="프로젝트 설정 닫기"
+              onClick={() => setSettingsOpen(false)}
+            >
+              ✕
             </button>
           </div>
-        ) : null}
-        <div className="top-file-actions" role="group" aria-label="파일 작업">
-          <button type="button" aria-label={finalReading ? "대사 편집으로 돌아가기" : "전체 페이지 최종 읽기"}
-            aria-pressed={finalReading}
-            disabled={workspacePresentation.isEmptyWorkspace || isExtractingSpeechBubbles || isInpainting || inpaintingEditorOpen || Boolean(speechBubbleReview)}
-            onClick={() => {
-              if (!finalReading) {
-                readingSelectionsRef.current.clear();
-                readingSelectionsRef.current.set(currentPage, selectedLineId);
-              }
-              setFinalReading((current) => !current);
-            }}>
-            {finalReading ? "편집으로 돌아가기" : "최종 읽기"}
-          </button>
-          {!finalReading ? <button type="button" aria-label="확인 필요 대사 목록 열기"
-            aria-expanded={resultsVisible && bottomPanel === "issues"}
-            onClick={() => {
-              if (bottomPanel === "issues" || !resultsVisible) toggleResults();
-              setBottomPanel("issues");
-            }}>확인 필요 {issueLineItems.length}</button> : null}
-          {!workspacePresentation.showStartPanel ? <button type="button" aria-label="새로 만들기" onClick={beginNewImageProject}>
-            새 프로젝트
-          </button> : null}
-          {!workspacePresentation.showStartPanel ? <button type="button" onClick={() => void openProjectFromFileDialog()} disabled={!apiReady}>
-            열기
-          </button> : null}
-          {!workspacePresentation.showStartPanel && workspacePresentation.showSave ? <button type="button" onClick={saveProject} disabled={sessionNeedsRecovery}>
-            저장
-          </button> : null}
-          {!workspacePresentation.showStartPanel && workspacePresentation.showSaveAs ? <button type="button" aria-label="다른 이름 저장" onClick={saveProjectAs} disabled={sessionNeedsRecovery}>
-            다른 이름
-          </button> : null}
-          {!workspacePresentation.showStartPanel && workspacePresentation.showExport ? (
-            <>
-              <button type="button" aria-label="TXT 내보내기" onClick={exportTranslations} disabled={sessionNeedsRecovery}>
-                내보내기
-              </button>
-              <button
-                type="button"
-                aria-label="전체 프로젝트 이미지 내보내기"
-                title="전체 페이지의 original·cleaned·typeset 결과를 폴더와 ZIP으로 내보냅니다"
-                onClick={() => void exportProjectImagePackage()}
-                disabled={sessionNeedsRecovery || imageExportInFlight}
-                aria-busy={imageExportInFlight}
-              >
-                이미지 내보내기
-              </button>
-              <button
-                type="button"
-                aria-label="일괄 자동화"
-                title="전체 페이지 번역·식자 일괄 실행"
-                onClick={() => setBatchModalOpen(true)}
-                disabled={sessionNeedsRecovery}
-              >
-                ⚡ 일괄 자동화
-              </button>
-            </>
-          ) : null}
-          <details className="top-utility-menu">
-            <summary aria-label="작업 도구와 상태 열기" title="작업 도구와 상태">도구</summary>
-            <div className="top-utility-menu-content">
-              <button type="button" onClick={() => dispatchEntryFlow({ type: "navigate", screen: "home" })}>작업실 홈</button>
-              <RuntimeStatusControl
-                snapshot={environmentSnapshot}
-                isLoading={environmentLoading}
-                onOpenPreparation={() => openEnvironmentPreparation("workspace")}
-              />
-              <AutoUpdateStatusControl
-                state={autoUpdateState}
-                hasUnsavedChanges={isDirty || ocrReviewDraftCount > 0 || inpaintingMaskDraftCount > 0 || manualTypesettingDraftCount > 0}
-                onCheck={() => void checkForAutoUpdate()}
-                onDownload={() => void downloadAutoUpdate()}
-                onInstall={() => void installAutoUpdate()}
-                onOpenRelease={() => void openAutoUpdateRelease()}
-              />
-              <button
-                type="button"
-                className="theme-toggle"
-                aria-label={uiTheme === "light" ? "다크 테마로 전환" : "라이트 테마로 전환"}
-                title={uiTheme === "light" ? "다크 테마로 전환" : "라이트 테마로 전환"}
-                onClick={() => setUiTheme((theme) => theme === "light" ? "dark" : "light")}
-              >
-                {uiTheme === "light" ? "다크 테마" : "라이트 테마"}
-              </button>
-            </div>
-          </details>
-        </div>
-        {settingsOpen ? (
-          <section
-            ref={settingsPanelRef}
-            id="workspace-project-settings"
-            className="top-settings-panel"
-            role="region"
-            aria-label="프로젝트 설정"
-          >
-            <ProjectActionsPanel
-              project={project}
-              currentFilePath={currentFilePath}
-              statusMessage={statusMessage}
-              isDirty={isDirty}
-              imageImportDisabledReason={imageImportDisabledReason}
-              projectEditingDisabled={sessionNeedsRecovery}
-              showFileActions={false}
-              showFilePath
-              onNewProject={beginNewImageProject}
-              onOpenProject={() => openProjectFromFileDialog()}
-              onSaveProject={saveProject}
-              onSaveProjectAs={saveProjectAs}
-              onExportTranslations={exportTranslations}
-              onRenameProject={renameProject}
-              onToggleSecret={toggleSecret}
-            />
-          </section>
-        ) : null}
-      </div>
-      )}
+          <ProjectActionsPanel
+            project={project}
+            currentFilePath={currentFilePath}
+            statusMessage={statusMessage}
+            isDirty={isDirty}
+            imageImportDisabledReason={imageImportDisabledReason}
+            projectEditingDisabled={sessionNeedsRecovery}
+            showFileActions={false}
+            showFilePath
+            onNewProject={beginNewImageProject}
+            onOpenProject={() => openProjectFromFileDialog()}
+            onSaveProject={saveProject}
+            onSaveProjectAs={saveProjectAs}
+            onExportTranslations={exportTranslations}
+            onRenameProject={renameProject}
+            onToggleSecret={toggleSecret}
+          />
+        </section>
+      ) : null}
+      </>
+    )}
       pages={
       <aside
         className="left-drawer"
@@ -5650,14 +5583,15 @@ function AppContent() {
             />
             </>
           ) : null}
+
           {activeNavigator === "context" ? (
-            <section className="navigator-context panel-section" aria-label="등장인물과 용어 문맥">
-              <div className="navigator-section-heading">
-                <span>문맥</span>
-                <strong>{project.characters.length + project.dictionaryTerms.length}</strong>
-              </div>
-              <p>현재 프로젝트의 등장인물과 용어를 관리합니다.</p>
-              <CharacterDictionaryPanel project={project} onChangeProject={replaceProject} projectEditingDisabled={sessionNeedsRecovery} />
+            <section className="navigator-context panel-section" aria-label="등장인물 문맥">
+              <p>현재 프로젝트의 등장인물과 말투를 관리합니다.</p>
+              <CharacterDictionaryPanel
+                project={project}
+                onChangeProject={replaceProject}
+                projectEditingDisabled={sessionNeedsRecovery}
+              />
             </section>
           ) : null}
           {activeNavigator === "guide" ? (
@@ -5694,102 +5628,197 @@ function AppContent() {
       }
       canvas={
       <section className="workspace-main" aria-label="이미지 중심 작업 영역" data-workspace-enter-context>
-        <section className="image-canvas-shell">
-          <Suspense fallback={<DeferredViewFallback label="이미지 작업대를 여는 중입니다." />}>
-            <PageImagePanel
-            currentPage={currentPage}
-            currentFilePath={currentFilePath}
-            image={currentPageImage}
-            resetKey={`${project.metadata.id}:${imageResetRevision}`}
-            renderRequestKey={controlledRenderRequestKey}
-            focusRequest={issueFocusRequest ?? undefined}
-            resultLayer={resultLayer}
-            resultLayers={currentPageResultLayers}
-            cleanedReview={currentCleanedInspection?.asset && currentPageImage ? {
-              assetId: currentCleanedInspection.asset.assetId,
-              assetSha256: currentCleanedInspection.asset.sha256,
-              sourceSha256: currentPageImage.sha256,
-              reviewed: currentCleanedInspection.status === "valid" &&
-                currentCleanedInspection.pageRecord?.userReviewedCleanedAssetId === currentCleanedInspection.asset.assetId,
-              disabledReason: currentCleanedInspection.status !== "valid"
-                ? "결과의 현재 상태와 품질 검사를 확인하세요."
-                : !projectSessionId || !currentFilePath || !window.projectApi?.reviewCleanedAsset
-                  ? "프로젝트 저장과 세션 준비가 필요합니다."
-                  : sessionNeedsRecovery ? "세션 복구가 필요합니다." : undefined,
-              busy: cleanedReviewInFlight,
-              onConfirm: confirmDisplayedCleanedAsset
-            } : undefined}
-            onResultLayerChange={handleUserResultLayerChange}
-            initialViewport={initialImageViewport}
-            onViewportZoomChange={setWorkspaceZoom}
-            onViewportChangeWithIdentity={(viewport, renderRequestKey, renderGeneration) => {
-                if (
-                !currentRenderRequestKeyRef.current ||
-                renderRequestKey !== currentRenderRequestKeyRef.current ||
-                (currentRenderGenerationRef.current !== null && renderGeneration !== currentRenderGenerationRef.current)
-              ) return;
-              if (currentRenderGenerationRef.current === null) currentRenderGenerationRef.current = renderGeneration;
-              setWorkspaceViewport(viewport);
-              setWorkspaceZoom(viewport.zoom);
-            }}
-            initialComparisonState={{
-              key: `${project.metadata.id}:workspace-comparison:${workspaceIdentityKey}:${workspaceComparisonHydrationRevision}`,
-              ...workspaceComparison
-            }}
-            onComparisonStateChange={handleWorkspaceComparisonStateChange}
-            uploadDisabledReason={imageImportDisabledReason}
-            ocrDisabledReason={isImportingPageImages ? "이미지 연결이 끝난 뒤 다시 시도하세요." : finalReading ? "최종 읽기 중입니다. 편집으로 돌아가서 실행하세요." : ocrDisabledReason}
-            inpaintingDisabledReason={isImportingPageImages ? "이미지 연결이 끝난 뒤 다시 시도하세요." : finalReading ? "최종 읽기 중입니다. 편집으로 돌아가서 실행하세요." : inpaintingDisabledReason}
-            precisionEditingDisabled={workspaceAdaptation.precisionEditingDisabled || isImportingPageImages}
-            onImportImages={importPageImages}
-            onInpaintImage={inpaintCurrentPageImage}
-            onCancelInpainting={() => cancelActiveInpainting({ notify: true })}
-            onExtractSpeechBubbles={extractSpeechBubblesFromCurrentPage}
-            onRenderStateChange={handlePageImageRenderState}
-            isInpainting={isInpainting}
-            isExtractingSpeechBubbles={isExtractingSpeechBubbles}
-            activeOcrBbox={finalReading ? null : activeReviewItem?.bbox ?? currentIssue?.focusBbox ?? selectedLineForEditor?.typesetting?.bbox ?? null}
-            stageHint={activeReviewItem ? `OCR 후보 #${activeReviewItem.readingOrder}` : selectedLineForEditor ? `대사 #${selectedLineForEditor.order} · ${selectedLineForEditor.speaker || "화자 없음"}` : undefined}
-            semanticOverlays={finalReading ? [] : semanticOverlays}
-            dialogueTargets={finalReading || speechBubbleReview ? [] : currentPageLines.flatMap((line) => {
-              const bbox = getDialogueTargetBbox(line);
-              return bbox ? [{ id: line.id, order: line.order, bbox, selected: selectedLineId === line.id }] : [];
-            })}
-            onSelectLine={selectLine}
-            visibleOverlayKinds={visibleOverlayKinds}
-            onVisibleOverlayKindsChange={(kinds) => setVisibleOverlayKinds([...kinds])}
-            typesettingDraft={finalReading || !workspacePanels.inspectorOpen || editingTool !== "typesetting" || inpaintingEditorOpen ? null : currentTypesettingDraft}
-            typesettingSafeArea={typesettingSafeArea}
-            typesettingPreviewText={selectedLineForEditor?.userTranslation || selectedLineForEditor?.aiTranslation || selectedLineForEditor?.sourceText || undefined}
-            onTypesettingDraftChange={handleTypesettingDraftChange}
-            manualTypesetting={!finalReading && workspacePanels.inspectorOpen && editingTool === "typesetting" && !inpaintingEditorOpen &&
-              !speechBubbleReview && manualTypesettingKey && selectedLineForEditor && resultLayer === "original" ? {
-                key: manualTypesettingKey,
-                draft: manualTypesettingDraft ? manualTypesettingDraft.bbox : selectedLineForEditor.typesetting?.bbox ?? null,
-                initialFields: manualTypesettingDraft?.fields,
-                controlsTarget: manualTypesettingControlsTarget,
-                previewText: selectedLineForEditor.userTranslation,
-                onDraftChange: (bbox) => updateManualTypesettingDraft({ bbox }),
-                onFieldsChange: (fields) => updateManualTypesettingDraft({ fields }),
-                onApply: applyManualTypesettingBox,
-                disabled: sessionNeedsRecovery || workspaceAdaptation.precisionEditingDisabled || isImportingPageImages,
-                disabledReason: isImportingPageImages ? "이미지 연결이 끝난 뒤 영역을 수정하세요." : sessionNeedsRecovery ? "세션 복구가 필요합니다." : "창을 넓혀 글자 배치 영역을 지정하세요."
-              } : undefined}
-            onInpaintingMaskBoundsChange={handleInpaintingMaskBoundsChange}
-            initialMaskDraft={currentInpaintingMaskDraft}
-            onInpaintingMaskDraftChange={handleInpaintingMaskDraftChange}
-            inpaintingOpen={inpaintingEditorOpen}
-            onInpaintingOpenChange={(open) => {
-              if (open) {
-                setInpaintingEditorOpen(true);
-                clearSpeechBubbleReview();
-              } else {
-                closeInpaintingEditor();
-              }
-              }}
-            />
-          </Suspense>
-        </section>
+        <LunaWorkbench
+          editingOverlayEnabled={!finalReading && !speechBubbleReview && !inpaintingEditorOpen && resultLayer !== "translated"}
+          getLineImageBounds={getDialogueTargetBbox}
+          onOpenTranslationSettings={() => dispatchEntryFlow({ type: "navigate", screen: "settings" })}
+          projectId={project.metadata.id}
+          projectTitle={project.metadata.title}
+          createdAt={project.metadata.createdAt}
+          currentPage={currentPage}
+          pageCount={pageCount}
+          pageImages={project.pageImages ?? []}
+          pageStripItems={pageStripItems}
+          currentPageLines={currentPageLines}
+          allLines={project.dialogueLines}
+          selectedLineId={selectedLineId}
+          issueCount={issueLineItems.length}
+          currentFilePath={currentFilePath}
+          projectSessionId={projectSessionId}
+          isTranslating={isAiTranslating}
+          isInpainting={isInpainting}
+          isExtractingOcr={isExtractingSpeechBubbles}
+          workspaceZoom={workspaceZoom}
+          showingOriginal={resultLayer === "original" && Boolean(currentPageResultLayers.inpainted.status === "ready" || currentPageResultLayers.translated.status === "ready")}
+          theme={uiTheme}
+          onToggleTheme={() => setUiTheme((theme) => (theme === "light" ? "dark" : "light"))}
+          onGoHome={() => dispatchEntryFlow({ type: "navigate", screen: "home" })}
+          onSelectPage={setPageAndSelection}
+          onPreviousPage={goToPreviousPage}
+          onNextPage={goToNextPage}
+          onSelectLine={selectLine}
+          onUpdateLine={(lineId, field, value) => {
+            const target = project.dialogueLines.find((l) => l.id === lineId);
+            if (target) {
+              updateLine({ ...target, [field]: value });
+            }
+          }}
+          onUpdateLineBbox={(lineId, bbox) => {
+            const target = project.dialogueLines.find((l) => l.id === lineId);
+            if (target) {
+              updateLine({
+                ...target,
+                typesetting: {
+                  ...(target.typesetting ?? { bbox, writingMode: "horizontal-tb" as const }),
+                  bbox
+                }
+              });
+            }
+          }}
+          onDeleteLine={deleteSelectedLine}
+          onCreateManualLine={() => createManualDialogueLine("새 대사")}
+          onRequestAiTranslation={() => {
+            const target = selectedLineForEditor ?? currentPageLines[0];
+            if (target) void handleRequestAiTranslation(target);
+          }}
+          onRunOcr={extractSpeechBubblesFromCurrentPage}
+          onOpenInpainting={() => {
+            setInpaintingEditorOpen(true);
+            clearSpeechBubbleReview();
+          }}
+          onOpenBatchModal={(targetPages) => setBatchTargetPages(targetPages)}
+          onExportImages={() => void exportProjectImagePackage()}
+          onExportTxt={exportTranslations}
+          onImportImages={() => void importPageImages()}
+          onCancelActiveTasks={() => {
+            cancelActiveOcr({ notify: true });
+            cancelActiveInpainting({ notify: true });
+            cancelActiveAiTranslation({ notify: true });
+          }}
+          onOpenEnvironmentPreparation={() => openEnvironmentPreparation("workspace")}
+          onSaveProject={saveProject}
+          onToggleShowOriginal={(show) => {
+            if (show) {
+              handleUserResultLayerChange("original");
+            } else if (currentPageResultLayers.translated.status === "ready") {
+              handleUserResultLayerChange("translated");
+            } else if (currentPageResultLayers.inpainted.status === "ready") {
+              handleUserResultLayerChange("inpainted");
+            }
+          }}
+          onZoomChange={(zoom) => {
+            const clamped = clampImageZoom(zoom);
+            setWorkspaceZoom(clamped);
+            viewportSeedRevisionRef.current += 1;
+            setInitialImageViewport({
+              ...createImageViewportState(),
+              ...(workspaceViewport ?? {}),
+              key: `${project.metadata.id}:luna-zoom:${viewportSeedRevisionRef.current}`,
+              zoom: clamped,
+              viewMode: "actual"
+            });
+          }}
+        >
+          {(imageEditorOverlay) => (
+            <section className="image-canvas-shell">
+              <Suspense fallback={<DeferredViewFallback label="이미지 작업대를 여는 중입니다." />}>
+                <PageImagePanel
+                imageEditorOverlay={imageEditorOverlay}
+                currentPage={currentPage}
+                currentFilePath={currentFilePath}
+                image={currentPageImage}
+                resetKey={`${project.metadata.id}:${imageResetRevision}`}
+                renderRequestKey={controlledRenderRequestKey}
+                focusRequest={issueFocusRequest ?? undefined}
+                resultLayer={resultLayer}
+                resultLayers={currentPageResultLayers}
+                cleanedReview={currentCleanedInspection?.asset && currentPageImage ? {
+                  assetId: currentCleanedInspection.asset.assetId,
+                  assetSha256: currentCleanedInspection.asset.sha256,
+                  sourceSha256: currentPageImage.sha256,
+                  reviewed: currentCleanedInspection.status === "valid" &&
+                    currentCleanedInspection.pageRecord?.userReviewedCleanedAssetId === currentCleanedInspection.asset.assetId,
+                  disabledReason: currentCleanedInspection.status !== "valid"
+                    ? "결과의 현재 상태와 품질 검사를 확인하세요."
+                    : !projectSessionId || !currentFilePath || !window.projectApi?.reviewCleanedAsset
+                      ? "프로젝트 저장과 세션 준비가 필요합니다."
+                      : sessionNeedsRecovery ? "세션 복구가 필요합니다." : undefined,
+                  busy: cleanedReviewInFlight,
+                  onConfirm: confirmDisplayedCleanedAsset
+                } : undefined}
+                onResultLayerChange={handleUserResultLayerChange}
+                initialViewport={initialImageViewport}
+                onViewportZoomChange={setWorkspaceZoom}
+                onViewportChangeWithIdentity={(viewport, renderRequestKey, renderGeneration) => {
+                    if (
+                    !currentRenderRequestKeyRef.current ||
+                    renderRequestKey !== currentRenderRequestKeyRef.current ||
+                    (currentRenderGenerationRef.current !== null && renderGeneration !== currentRenderGenerationRef.current)
+                  ) return;
+                  if (currentRenderGenerationRef.current === null) currentRenderGenerationRef.current = renderGeneration;
+                  setWorkspaceViewport(viewport);
+                  setWorkspaceZoom(viewport.zoom);
+                }}
+                initialComparisonState={{
+                  key: `${project.metadata.id}:workspace-comparison:${workspaceIdentityKey}:${workspaceComparisonHydrationRevision}`,
+                  ...workspaceComparison
+                }}
+                onComparisonStateChange={handleWorkspaceComparisonStateChange}
+                uploadDisabledReason={imageImportDisabledReason}
+                ocrDisabledReason={isImportingPageImages ? "이미지 연결이 끝난 뒤 다시 시도하세요." : finalReading ? "최종 읽기 중입니다. 편집으로 돌아가서 실행하세요." : ocrDisabledReason}
+                inpaintingDisabledReason={isImportingPageImages ? "이미지 연결이 끝난 뒤 다시 시도하세요." : finalReading ? "최종 읽기 중입니다. 편집으로 돌아가서 실행하세요." : inpaintingDisabledReason}
+                precisionEditingDisabled={workspaceAdaptation.precisionEditingDisabled || isImportingPageImages}
+                onImportImages={importPageImages}
+                onInpaintImage={inpaintCurrentPageImage}
+                onCancelInpainting={() => cancelActiveInpainting({ notify: true })}
+                onExtractSpeechBubbles={extractSpeechBubblesFromCurrentPage}
+                onRenderStateChange={handlePageImageRenderState}
+                isInpainting={isInpainting}
+                isExtractingSpeechBubbles={isExtractingSpeechBubbles}
+                activeOcrBbox={finalReading ? null : activeReviewItem?.bbox ?? currentIssue?.focusBbox ?? selectedLineForEditor?.typesetting?.bbox ?? null}
+                stageHint={activeReviewItem ? `OCR 후보 #${activeReviewItem.readingOrder}` : selectedLineForEditor ? `대사 #${selectedLineForEditor.order} · ${selectedLineForEditor.speaker || "화자 없음"}` : undefined}
+                semanticOverlays={finalReading ? [] : semanticOverlays}
+                dialogueTargets={finalReading || speechBubbleReview ? [] : currentPageLines.flatMap((line) => {
+                  const bbox = getDialogueTargetBbox(line);
+                  return bbox ? [{ id: line.id, order: line.order, bbox, selected: selectedLineId === line.id }] : [];
+                })}
+                onSelectLine={selectLine}
+                visibleOverlayKinds={visibleOverlayKinds}
+                onVisibleOverlayKindsChange={(kinds) => setVisibleOverlayKinds([...kinds])}
+                typesettingDraft={finalReading || !workspacePanels.inspectorOpen || editingTool !== "typesetting" || inpaintingEditorOpen ? null : currentTypesettingDraft}
+                typesettingSafeArea={typesettingSafeArea}
+                typesettingPreviewText={selectedLineForEditor?.userTranslation || selectedLineForEditor?.aiTranslation || selectedLineForEditor?.sourceText || undefined}
+                onTypesettingDraftChange={handleTypesettingDraftChange}
+                manualTypesetting={!finalReading && workspacePanels.inspectorOpen && editingTool === "typesetting" && !inpaintingEditorOpen &&
+                  !speechBubbleReview && manualTypesettingKey && selectedLineForEditor && resultLayer === "original" ? {
+                    key: manualTypesettingKey,
+                    draft: manualTypesettingDraft ? manualTypesettingDraft.bbox : selectedLineForEditor.typesetting?.bbox ?? null,
+                    initialFields: manualTypesettingDraft?.fields,
+                    controlsTarget: manualTypesettingControlsTarget,
+                    previewText: selectedLineForEditor.userTranslation,
+                    onDraftChange: (bbox) => updateManualTypesettingDraft({ bbox }),
+                    onFieldsChange: (fields) => updateManualTypesettingDraft({ fields }),
+                    onApply: applyManualTypesettingBox,
+                    disabled: sessionNeedsRecovery || workspaceAdaptation.precisionEditingDisabled || isImportingPageImages,
+                    disabledReason: isImportingPageImages ? "이미지 연결이 끝난 뒤 영역을 수정하세요." : sessionNeedsRecovery ? "세션 복구가 필요합니다." : "창을 넓혀 글자 배치 영역을 지정하세요."
+                  } : undefined}
+                onInpaintingMaskBoundsChange={handleInpaintingMaskBoundsChange}
+                initialMaskDraft={currentInpaintingMaskDraft}
+                onInpaintingMaskDraftChange={handleInpaintingMaskDraftChange}
+                inpaintingOpen={inpaintingEditorOpen}
+                onInpaintingOpenChange={(open) => {
+                  if (open) {
+                    setInpaintingEditorOpen(true);
+                    clearSpeechBubbleReview();
+                  } else {
+                    closeInpaintingEditor();
+                  }
+                  }}
+                />
+              </Suspense>
+            </section>
+          )}
+        </LunaWorkbench>
       </section>
       }
       editor={workspacePresentation.showInspector ?
@@ -5809,6 +5838,132 @@ function AppContent() {
             onTogglePin={() => dispatchIssueEditor({ type: "toggle-pin" })}
             onSwitchToRequired={() => dispatchIssueEditor({ type: "switch-to-required" })}
           />
+        ) : null}
+        {currentPageLines.length > 0 && !speechBubbleReview && !inpaintingEditorOpen ? (
+          <section className="panel-section inspector-dialogue-list-section" aria-label="현재 페이지 대사 목록">
+            <div className="inspector-dialogue-list-header">
+              <label className="batch-select-all-label" style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={currentPageLines.length > 0 && currentPageLines.every((l) => batchSelectedIds.has(l.id))}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setBatchSelectedIds(new Set(currentPageLines.map((l) => l.id)));
+                    } else {
+                      setBatchSelectedIds(new Set());
+                    }
+                  }}
+                  aria-label="현재 페이지 전체 대사 선택"
+                />
+                <strong>페이지 대사 ({currentPageLines.length})</strong>
+              </label>
+              <span className="inspector-dialogue-list-counts">
+                검토 {pageSummary.reviewCount} · 완료 {pageSummary.completeCount}
+              </span>
+            </div>
+
+            {batchSelectedIds.size > 0 && (
+              <div
+                className="inspector-batch-bar"
+                role="toolbar"
+                aria-label="선택 대사 일괄 작업"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "6px 10px",
+                  background: "var(--trio-accent-soft)",
+                  border: "1px solid var(--trio-accent)",
+                  borderRadius: "6px",
+                  margin: "6px 0",
+                  fontSize: "12px"
+                }}
+              >
+                <span style={{ fontWeight: 600, color: "var(--trio-text)" }}>
+                  {batchSelectedIds.size}개 선택됨
+                </span>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    style={{ fontSize: "11px", padding: "2px 8px", background: "var(--trio-accent)", color: "var(--trio-on-accent)", fontWeight: 600 }}
+                    onClick={batchConfirmSelectedLines}
+                    title="선택한 대사를 모두 일괄 확정합니다"
+                  >
+                    ✓ 일괄 확정
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    style={{ fontSize: "11px", padding: "2px 6px" }}
+                    onClick={() => setBatchSelectedIds(new Set())}
+                  >
+                    선택 해제
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <ul className="inspector-dialogue-list">
+              {currentPageLines.map((line) => {
+                const hasIssue = issueLineItems.some((item) => item.line.id === line.id) || (line.parseWarnings?.length ?? 0) > 0 || (line.parseConfidence ?? 1) < 0.7;
+                const isAiProposal = !line.userTranslation?.trim() && Boolean(line.aiTranslation?.trim());
+                const isOcrProposal = line.ocrEditStatus === "ai_proposed";
+                const badgeTone = hasIssue
+                  ? "warning"
+                  : line.lineStatus === "complete"
+                    ? "confirmed"
+                    : isAiProposal || isOcrProposal
+                      ? "ai"
+                      : line.userTranslation?.trim()
+                        ? "modified"
+                        : "neutral";
+                const badgeLabel = hasIssue
+                  ? "검토 필요"
+                  : line.lineStatus === "complete"
+                    ? "확정"
+                    : isAiProposal
+                      ? "AI 제안"
+                      : isOcrProposal
+                        ? "OCR 제안"
+                        : line.userTranslation?.trim()
+                          ? "수정됨"
+                          : "미번역";
+                const previewText = line.userTranslation?.trim() || line.aiTranslation?.trim() || line.sourceText || "내용 없음";
+                const isSelectedForBatch = batchSelectedIds.has(line.id);
+                return (
+                  <li key={line.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <input
+                      type="checkbox"
+                      checked={isSelectedForBatch}
+                      aria-label={`대사 ${line.order} 일괄 선택`}
+                      style={{ cursor: "pointer", flexShrink: 0 }}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setBatchSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(line.id)) next.delete(line.id);
+                          else next.add(line.id);
+                          return next;
+                        });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className={`inspector-dialogue-item${line.id === selectedLineId ? " active" : ""}`}
+                      aria-label={`페이지 대사 ${line.order} 선택`}
+                      aria-current={line.id === selectedLineId ? "true" : undefined}
+                      onClick={() => selectLine(line.id)}
+                      style={{ flex: 1 }}
+                    >
+                      <span className="inspector-dialogue-summary">{`대사 ${line.order}: ${previewText}`}</span>
+                      <span className="inspector-dialogue-badge" data-badge-tone={badgeTone}>{badgeLabel}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
         ) : null}
         <section className="panel-section inspector-image-actions" aria-label="현재 페이지 이미지 작업">
           <h2>이미지 작업</h2>
@@ -5915,7 +6070,7 @@ function AppContent() {
               onMoveLine={moveSelectedLine}
               canMovePrevious={Boolean(selectedLineId && project.dialogueLines.findIndex((line) => line.id === selectedLineId) > 0)}
               canMoveNext={Boolean(selectedLineId && project.dialogueLines.findIndex((line) => line.id === selectedLineId) >= 0 && project.dialogueLines.findIndex((line) => line.id === selectedLineId) < project.dialogueLines.length - 1)}
-              onApproveTranslation={confirmSelectedTranslation}
+              onApproveTranslation={(advance) => confirmSelectedTranslation(advance ? () => moveSelectedLine(1) : undefined)}
               onPostponeTranslation={currentIssue?.editor === "translation" ? postponeTranslation : undefined}
               hasActionableProjectLines={hasActionableProjectLines}
               hasProjectLines={project.dialogueLines.length > 0}
@@ -5932,7 +6087,6 @@ function AppContent() {
               issueContextId={currentIssue?.lineId ?? null}
               dialogueLines={project.dialogueLines}
               characters={project.characters}
-              dictionaryTerms={project.dictionaryTerms}
               onRequestAiTranslation={handleRequestAiTranslation}
               onCancelAiTranslation={() => cancelActiveAiTranslation({ notify: true })}
               isTranslating={isAiTranslating}
@@ -5956,10 +6110,10 @@ function AppContent() {
           onToggle={(event) => setContextOpen(event.currentTarget.open)}
         >
           <summary>
-            등장인물·용어
-            <span className="focus-deck-panel-badge">{project.characters.length + project.dictionaryTerms.length}</span>
+            등장인물
+            <span className="focus-deck-panel-badge">{project.characters.length}</span>
           </summary>
-          <CharacterDictionaryPanel project={project} onChangeProject={replaceProject} projectEditingDisabled={sessionNeedsRecovery} />
+          <CharacterDictionaryPanel project={project} onChangeProject={replaceProject} projectEditingDisabled={sessionNeedsRecovery || isImportingPageImages} />
         </details>
       </aside> : null
       }
@@ -6020,7 +6174,7 @@ function AppContent() {
                 projectSessionId={projectSessionId}
                 sessionGeneration={sessionGenerationRef.current}
                 disabled={sessionNeedsRecovery}
-                onOpenBatchAutomation={() => setBatchModalOpen(true)}
+                onOpenBatchAutomation={() => setBatchTargetPages("all")}
                 onResult={async (result, scope: ProcessingQueueRequestScope, isCurrent) => {
                   const adopted = await adoptBatchSessionDto(result.project, {
                     ...scope, projectId: projectRef.current.metadata.id
@@ -6067,10 +6221,11 @@ function AppContent() {
       projectSessionId={projectSessionId}
       sessionGeneration={sessionGenerationRef.current}
       pageCount={pageCount}
+      targetPages={batchTargetPages ?? "all"}
       isOpen={batchModalOpen}
-      onClose={() => setBatchModalOpen(false)}
+      onClose={() => setBatchTargetPages(null)}
       onOpenProcessingQueue={() => {
-        setBatchModalOpen(false);
+        setBatchTargetPages(null);
         setFinalReading(false);
         workspacePanelActionsRef.current?.openResults();
         setBottomPanel("dialogue");
@@ -6315,12 +6470,5 @@ function projectOpenErrorMessage(error: unknown) {
     return "프로젝트 파일을 찾을 수 없습니다. 파일이 이동되었거나 삭제되었는지 확인한 뒤 다시 선택하세요.";
   }
   return error instanceof Error ? error.message : "프로젝트를 열지 못했습니다.";
-}
-
-function isEditableShortcutTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) return false;
-  if (target.isContentEditable) return true;
-  const tagName = target.tagName.toLowerCase();
-  return tagName === "input" || tagName === "textarea" || tagName === "select";
 }
 

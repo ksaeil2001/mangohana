@@ -27,6 +27,10 @@ beforeEach(() => {
 });
 
 describe("preload project API", () => {
+  it("does not expose the removed glossary extraction API", () => {
+    expect(getExposedProjectApi()).not.toHaveProperty("extractGlossaryProposals");
+  });
+
   it("opens the fixed bundled example without forwarding paths or caller arguments", async () => {
     const projectApi = getExposedProjectApi();
     const result = { projectSessionId: "example-session", encrypted: false };

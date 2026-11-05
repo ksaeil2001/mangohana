@@ -140,12 +140,13 @@ export function isValidTypesettingBbox(value: unknown): value is NormalizedBbox 
 export type TextLayoutOptions = {
   shape?: BubbleShape;
   fontSizeRatio?: number; // relative to bbox height
+  boxAspectRatio?: number; // bbox width / height; defaults to 1
   lineHeight?: number;
   padding?: ShapePadding;
 };
 
 /**
- * Estimates text width in units relative to bbox height, assuming Korean/CJK character width ≈ fontSize
+ * Estimates text width in the same units as fontSize, assuming Korean/CJK character width ≈ fontSize
  * and latin/punctuation/spaces ≈ 0.55 * fontSize.
  */
 export function estimateTextWidth(text: string, fontSize: number): number {
@@ -178,6 +179,7 @@ export function layoutTextForBubbleShape(
 ): TypesettingLayoutResult {
   const shape = options.shape ?? "ellipse";
   const fontSizeRatio = Math.max(0.001, options.fontSizeRatio ?? 0.15);
+  const fontWidthRatio = fontSizeRatio / (options.boxAspectRatio ?? 1);
   const lineHeight = Math.max(0.1, options.lineHeight ?? 1.25);
   const padding = options.padding;
 
@@ -197,13 +199,13 @@ export function layoutTextForBubbleShape(
 
   for (const paragraph of rawParagraphs) {
     // Estimate total lines needed for this paragraph
-    const approxCharsPerLine = Math.max(2, Math.floor(0.8 / Math.max(0.01, fontSizeRatio)));
+    const approxCharsPerLine = Math.max(2, Math.floor(0.8 / Math.max(0.01, fontWidthRatio)));
     const estimatedLineCount = Math.max(1, Math.ceil(paragraph.length / approxCharsPerLine));
     const estimatedTotalHeight = estimatedLineCount * lineStep;
     const startY = Math.max(0.05, 0.5 - estimatedTotalHeight / 2 + lineStep / 2);
 
     const paraLines = evaluateAndBreakKoreanText(paragraph, {
-      estimateWidth: (t) => estimateTextWidth(t, fontSizeRatio),
+      estimateWidth: (t) => estimateTextWidth(t, fontWidthRatio),
       getAvailableWidth: (lineIdx) => {
         const y = startY + (brokenLines.length + lineIdx) * lineStep;
         const span = getAvailableSpanAtY(shape, y, padding);
@@ -252,6 +254,7 @@ export function autoFitFontSizeForBubbleShape(
   const minRatio = 0.04;
   const maxRatio = 0.35;
   const tolerance = 0.005;
+  const boxAspectRatio = options.boxAspectRatio ?? 1;
 
   let low = minRatio;
   let high = maxRatio;
@@ -264,7 +267,7 @@ export function autoFitFontSizeForBubbleShape(
     // Check if all text was laid out, total height fits, and all individual lines fit their chord widths
     const totalChars = result.lines.reduce((acc, l) => acc + l.text.replace(/\s/g, "").length, 0);
     const expectedChars = text.replace(/\s/g, "").length;
-    const allLinesFitWidth = result.lines.every((l) => estimateTextWidth(l.text, mid) <= l.width * 1.08);
+    const allLinesFitWidth = result.lines.every((l) => estimateTextWidth(l.text, mid / boxAspectRatio) <= l.width * 1.08);
     const fits = totalChars >= expectedChars && result.totalHeightRatio <= 0.92 && allLinesFitWidth;
 
     if (fits) {
@@ -295,8 +298,9 @@ export function hasTypesettingTextOverflow(
     : autoFitFontSizeForBubbleShape(normalizedText, options);
   const expectedChars = normalizedText.replace(/\s/g, "").length;
   const laidOutChars = result.lines.reduce((total, line) => total + line.text.replace(/\s/g, "").length, 0);
+  const boxAspectRatio = options.boxAspectRatio ?? 1;
   const allLinesFitWidth = result.lines.every(
-    (line) => estimateTextWidth(line.text, result.fontSizeRatio) <= line.width * 1.08
+    (line) => estimateTextWidth(line.text, result.fontSizeRatio / boxAspectRatio) <= line.width * 1.08
   );
   return result.lines.length === 0 ||
     laidOutChars < expectedChars ||

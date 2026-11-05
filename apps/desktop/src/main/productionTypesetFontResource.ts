@@ -127,10 +127,6 @@ export async function initializeProductionTypesetFontResource(
   }
 }
 
-/** Alias kept for Main callers that prefer factory terminology. */
-export const createProductionTypesetFontResource =
-  initializeProductionTypesetFontResource;
-
 function createEnabledResource(fontBytes: Buffer): ProductionTypesetFontResource {
   const immutableFontBytes = Uint8Array.from(fontBytes);
   return Object.freeze({
@@ -159,7 +155,9 @@ function createProtocolHandler(
     return new Response(Uint8Array.from(fontBytes), {
       headers: {
         "cache-control": "no-store",
-        "content-type": "font/ttf"
+        "content-type": "font/ttf",
+        // Only this immutable, signature-verified public font URL is served.
+        "access-control-allow-origin": "*"
       }
     });
   };

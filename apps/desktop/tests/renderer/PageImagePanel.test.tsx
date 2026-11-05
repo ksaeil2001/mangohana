@@ -1267,4 +1267,63 @@ describe("PageImagePanel OCR highlight", () => {
     fireEvent.keyDown(viewport, { key: "0" });
     expect(screen.getByTestId("page-image-viewport")).toHaveAttribute("data-view-mode", "fit");
   });
+
+  it("shows original while hovering or holding the quick compare button and restores result on release", () => {
+    render(
+      <PageImagePanel
+        {...baseProps}
+        resultLayer="inpainted"
+        resultLayers={comparisonResultLayers}
+      />
+    );
+
+    const compareButton = screen.getByRole("button", { name: "누르는 동안 원본 보기" });
+    expect(compareButton).toBeEnabled();
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/review-assets/inpainted.png");
+
+    fireEvent.mouseEnter(compareButton);
+    expect(compareButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/review-assets/page-001.png");
+
+    fireEvent.mouseLeave(compareButton);
+    expect(compareButton).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/review-assets/inpainted.png");
+
+    fireEvent.pointerDown(compareButton);
+    expect(compareButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/review-assets/page-001.png");
+
+    fireEvent.pointerUp(compareButton);
+    expect(compareButton).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/review-assets/inpainted.png");
+  });
+
+  it("enables quick compare on the original layer and hides overlays while held", () => {
+    render(
+      <PageImagePanel
+        {...baseProps}
+        resultLayer="original"
+        semanticOverlays={[
+          {
+            id: "ocr-hold-1",
+            kind: "ocr",
+            bbox: { x: 0.1, y: 0.2, width: 0.3, height: 0.12 },
+            selected: true
+          }
+        ]}
+      />
+    );
+
+    const compareButton = screen.getByRole("button", { name: "누르는 동안 원본 보기" });
+    expect(compareButton).toBeEnabled();
+    expect(screen.getByTestId("semantic-overlay-ocr-hold-1")).toBeInTheDocument();
+
+    fireEvent.mouseEnter(compareButton);
+    expect(compareButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByTestId("semantic-overlay-ocr-hold-1")).not.toBeInTheDocument();
+
+    fireEvent.mouseLeave(compareButton);
+    expect(compareButton).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByTestId("semantic-overlay-ocr-hold-1")).toBeInTheDocument();
+  });
 });

@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
+import { PRODUCTION_OCR_CONTRACT } from "../../../shared/productionOcr.js";
 import type {
   ProductionOcrDetection,
+  ProductionOcrDetectionModelIdentity,
   ProductionOcrGroup,
   ProductionOcrPixelBbox
 } from "../../../shared/productionOcr.js";
@@ -60,6 +62,8 @@ function canGroupInOrientation(
   const rightThickness = orientation === "horizontal" ? right.sourceBboxPx.height : right.sourceBboxPx.width;
   if (Math.min(leftThickness, rightThickness) < 0.5 * Math.max(leftThickness, rightThickness)) return false;
 
+  // Detector bounds already include space around the glyphs. A larger gap can
+  // bridge a caption and a separate bubble, especially across different sizes.
   if (orientation === "horizontal") {
     return overlapRatio(
       left.sourceBboxPx.x,
@@ -71,7 +75,7 @@ function canGroupInOrientation(
       left.sourceBboxPx.height,
       right.sourceBboxPx.y,
       right.sourceBboxPx.height
-    ) <= 1.25 * Math.max(left.sourceBboxPx.height, right.sourceBboxPx.height);
+    ) <= 0.5 * Math.min(leftThickness, rightThickness);
   }
   return overlapRatio(
     left.sourceBboxPx.y,
@@ -83,7 +87,7 @@ function canGroupInOrientation(
     left.sourceBboxPx.width,
     right.sourceBboxPx.x,
     right.sourceBboxPx.width
-  ) <= 1.25 * Math.max(left.sourceBboxPx.width, right.sourceBboxPx.width);
+  ) <= 0.5 * Math.min(leftThickness, rightThickness);
 }
 
 function resolveUnknownOrientations(
@@ -168,6 +172,13 @@ function buildGroup(
     sourceDetectionIds: orderedMembers.map((member) => member.detectionId),
     memberQuadsPx: orderedMembers.map((member) => member.sourceQuadPx),
     memberScores: orderedMembers.map((member) => member.score),
+    memberModels: orderedMembers.map((member): ProductionOcrDetectionModelIdentity => member.sourceModel === undefined
+      ? { modelId: PRODUCTION_OCR_CONTRACT.detector.modelId, revision: PRODUCTION_OCR_CONTRACT.detector.revision }
+      : { ...member.sourceModel }),
+    ...(orderedMembers.some((member) => member.supportedBy !== undefined) ? {
+      memberSupportModels: orderedMembers.map((member): ProductionOcrDetectionModelIdentity | null =>
+        member.supportedBy === undefined ? null : { ...member.supportedBy })
+    } : {}),
     groupBboxPx,
     bbox,
     polygon,

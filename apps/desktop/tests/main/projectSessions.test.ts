@@ -8,7 +8,7 @@ import {
   importJournalPath
 } from "../../src/main/pendingPageImageImports";
 import { createProjectSessionManager } from "../../src/main/projectSessions";
-import { loadProjectFile } from "../../src/main/projectStorage";
+import { loadProjectFile, saveProjectFile } from "../../src/main/projectStorage";
 import {
   createProcessingQueue,
   processingQueueConcurrencyToken,
@@ -22,6 +22,37 @@ import { createEmptyProject } from "../../src/shared/projectValidation";
 import type { TranslationProjectV2 } from "../../src/shared/projectTypes";
 
 describe("project sessions", () => {
+  it("preserves legacy glossary fields while opening, editing a character, saving and reopening", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "trio-legacy-terms-roundtrip-"));
+    const manager = createProjectSessionManager();
+    try {
+      const filePath = join(directory, "legacy.ctp");
+      const legacy = createEmptyProject("기존 프로젝트", false);
+      legacy.characters = [{ id: "character-a", name: "나미", aliases: ["ナミ", "항해사"], relationshipNotes: "동료" }];
+      legacy.dictionaryTerms = [{
+        id: "legacy-term", source: "先輩", target: "선배님", note: "기존 메모", category: "tone", priority: 7,
+        condition: { speaker: "나미", dialogueType: "speech", targetContext: "인사" }
+      }];
+      await saveProjectFile({ filePath, project: legacy });
+      const opened = await loadProjectFile({ filePath });
+      const session = manager.createProjectSession({ project: opened.project, filePath });
+      const updated = await manager.applyProjectMutation({
+        projectSessionId: session.projectSessionId,
+        baseRevision: session.project.revision,
+        mutation: { type: "upsert_character", character: { ...legacy.characters[0]!, speechStyle: "차분한 존댓말" } }
+      });
+      expect(updated.status).toBe("applied");
+      await manager.saveProject({ projectSessionId: session.projectSessionId });
+
+      const reopened = await loadProjectFile({ filePath });
+      expect(reopened.project.dictionaryTerms).toEqual(legacy.dictionaryTerms);
+      expect(reopened.project.characters).toEqual([{ ...legacy.characters[0]!, speechStyle: "차분한 존댓말" }]);
+    } finally {
+      await manager.disposeAll();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("persists a pipeline-owned translation proposal and restores it without promoting user ownership", async () => {
     const directory = await mkdtemp(join(tmpdir(), "trio-single-proposal-"));
     try {
@@ -38,7 +69,6 @@ describe("project sessions", () => {
         dialogueLines: project.dialogueLines,
         targetLineId: "single-proposal-line",
         characters: project.characters,
-        dictionaryTerms: project.dictionaryTerms
       });
 
       await manager.commitMainProjectPatch({
@@ -2489,7 +2519,6 @@ describe("project sessions", () => {
       dialogueLines: initialProject.dialogueLines,
       targetLineId: "line-stale",
       characters: initialProject.characters,
-      dictionaryTerms: initialProject.dictionaryTerms,
       stylePreset: "informal"
     });
 
@@ -2546,7 +2575,6 @@ describe("project sessions", () => {
       dialogueLines: initialProject.dialogueLines,
       targetLineId: initialLine.id,
       characters: initialProject.characters,
-      dictionaryTerms: initialProject.dictionaryTerms,
       stylePreset: "informal"
     });
     const expectedTypesettingFingerprint = computeTypesettingContextFingerprint(initialLine);

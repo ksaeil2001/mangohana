@@ -19,7 +19,6 @@ describe("translationQa", () => {
     const report = inspectTranslationQuality({
       sourceText: "海賊王に私はなります。",
       translatedText: "해적왕이 저는 되겠습니다.",
-      matchedTerms: glossary,
       speakerProfile: honorificProfile,
       dialogueType: "speech"
     });
@@ -54,16 +53,25 @@ describe("translationQa", () => {
     expect(report.issues.some((i) => i.type === "UNTRANSLATED_ARTIFACT")).toBe(true);
   });
 
-  it("flags missing glossary terms", () => {
-    const report = inspectTranslationQuality({
+  it("이전 matchedTerms가 달라도 QA 결과는 같고 화자 말투 검사는 유지한다", () => {
+    const args = {
       sourceText: "ゴムゴムの実を食べたの？",
-      translatedText: "이상한 열매를 먹은 거야?",
-      matchedTerms: glossary
-    });
+      translatedText: "내가 할 거다.",
+      speakerProfile: honorificProfile,
+      dialogueType: "speech" as const
+    };
+    const report = inspectTranslationQuality(args);
 
-    const glossaryIssue = report.issues.find((i) => i.type === "GLOSSARY_MISMATCH");
-    expect(glossaryIssue).toBeDefined();
-    expect(glossaryIssue?.message).toContain("고무고무 열매");
+    for (const matchedTerms of [glossary, glossary.map((term) => ({
+      ...term,
+      target: "이전 용어 강제 번역"
+    }))]) {
+      const legacyArgs = { ...args, matchedTerms };
+      expect(inspectTranslationQuality(legacyArgs)).toEqual(report);
+    }
+
+    expect(report.issues.map((issue) => issue.type)).toEqual(["SPEECH_STYLE_MISMATCH"]);
+    expect(report.score).toBe(95);
   });
 
   it("warns about speech style inconsistency (honorific expected but banmal used)", () => {
@@ -86,5 +94,13 @@ describe("translationQa", () => {
     });
 
     expect(report.issues.some((i) => i.type === "BRACKET_MISMATCH")).toBe(true);
+  });
+
+  it("추론 태그와 코드블록 잔재 검사를 유지한다", () => {
+    for (const translatedText of ["<think>추론</think>안녕하세요", "```한국어``` "]) {
+      const report = inspectTranslationQuality({ sourceText: "こんにちは", translatedText });
+      expect(report.passed).toBe(false);
+      expect(report.issues.some((issue) => issue.type === "UNTRANSLATED_ARTIFACT")).toBe(true);
+    }
   });
 });

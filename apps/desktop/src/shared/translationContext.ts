@@ -1,14 +1,10 @@
 import type {
   CharacterProfile,
   DialogueLine,
-  DialogueType,
-  DictionaryTerm
+  DialogueType
 } from "./projectTypes.js";
-import { type ScoredTurnContext, selectRelevantDialogueContext } from "./translation/contextSelector.js";
 import { type FuzzyTmCandidate, createTranslationMemory } from "./translation/translationMemory.js";
-import { type ConditionalDictionaryTerm, createTrieMatcher } from "./translation/trieMatcher.js";
 
-export * from "./translation/trieMatcher.js";
 export * from "./translation/fuzzyMatcher.js";
 export * from "./translation/translationMemory.js";
 export * from "./translation/contextSelector.js";
@@ -47,7 +43,6 @@ export type ContextWindowOptions = {
   includePreviousPageContext?: boolean;
   includeNextPageContext?: boolean;
   includeCharacterNotes?: boolean;
-  includeGlossary?: boolean;
   includeFuzzyTm?: boolean;
   recentHistory?: readonly DialogueTurnContext[];
   stylePreset?: string;
@@ -69,7 +64,6 @@ export type DialogueTranslationContext = {
   previousTurns: DialogueTurnContext[];
   nextTurns: DialogueTurnContext[];
   recentHistory?: DialogueTurnContext[];
-  matchedTerms: DictionaryTerm[];
   fuzzyTmMatches?: FuzzyTmCandidate[];
   formattedSystemPrompt: string;
   formattedUserPrompt: string;
@@ -79,7 +73,6 @@ export type BuildTranslationContextArgs = {
   dialogueLines: readonly DialogueLine[];
   targetLineId: string;
   characters?: readonly CharacterProfile[];
-  dictionaryTerms?: readonly (DictionaryTerm | ConditionalDictionaryTerm)[];
   options?: ContextWindowOptions;
   customSystemPrompt?: string;
 };
@@ -93,7 +86,6 @@ export function buildDialogueTranslationContext(
     dialogueLines,
     targetLineId,
     characters = [],
-    dictionaryTerms = [],
     options = {},
     customSystemPrompt
   } = args;
@@ -114,7 +106,6 @@ export function buildDialogueTranslationContext(
   const includePrevPage = options.includePreviousPageContext ?? true;
   const includeNextPage = options.includeNextPageContext ?? false;
   const includeCharNotes = options.includeCharacterNotes ?? true;
-  const includeGlossary = options.includeGlossary ?? true;
   const includeFuzzyTm = options.includeFuzzyTm ?? true;
 
   // 1. Sliding window & Relevance: Select previous N lines
@@ -189,48 +180,7 @@ export function buildDialogueTranslationContext(
     });
   }
 
-  // 4. Dynamic & Conditional glossary matching (Trie-based)
-  const matchedTerms: DictionaryTerm[] = [];
-  if (includeGlossary && dictionaryTerms.length > 0) {
-    const trie = createTrieMatcher(dictionaryTerms);
-    const textPool = [
-      targetLine.sourceText,
-      ...previousTurns.map((t) => t.sourceText),
-      ...nextTurns.map((t) => t.sourceText)
-    ].join(" ");
-
-    // First check with Trie matcher (condition-aware)
-    const trieMatches = trie.findMatches(textPool, {
-      speaker: targetLine.speaker,
-      dialogueType: targetLine.dialogueType
-    });
-
-    const seenSources = new Set<string>();
-    for (const match of trieMatches) {
-      matchedTerms.push(match);
-      seenSources.add(match.source.trim().normalize("NFKC").toLowerCase());
-    }
-
-    // Secondary fallback token matching for complex patterns (e.g. bracketed readings)
-    const normalizedPool = textPool.normalize("NFKC").toLowerCase();
-    for (const term of dictionaryTerms) {
-      if (term.condition) continue;
-      const termSource = term.source.trim().normalize("NFKC").toLowerCase();
-      if (!termSource || seenSources.has(termSource)) continue;
-
-      const candidateTokens = extractSearchTokens(termSource);
-      const isMatched =
-        normalizedPool.includes(termSource) ||
-        candidateTokens.some((token) => token.length >= 2 && normalizedPool.includes(token));
-
-      if (isMatched) {
-        matchedTerms.push(term);
-        seenSources.add(termSource);
-      }
-    }
-  }
-
-  // 5. Supervertaler: Fuzzy Translation Memory Search
+  // 4. Supervertaler: Fuzzy Translation Memory Search
   let fuzzyTmMatches: FuzzyTmCandidate[] | undefined;
   if (includeFuzzyTm) {
     const tm = createTranslationMemory(dialogueLines);
@@ -242,7 +192,7 @@ export function buildDialogueTranslationContext(
     });
   }
 
-  // 6. Prompt formatting
+  // 5. Prompt formatting
   const formattedSystemPrompt =
     customSystemPrompt?.trim() ||
     formatMangaTranslationSystemPrompt(speakerProfile, targetLine.dialogueType, options.stylePreset);
@@ -251,7 +201,6 @@ export function buildDialogueTranslationContext(
     sourceText: targetLine.sourceText,
     previousTurns,
     nextTurns,
-    matchedTerms,
     fuzzyTmMatches,
     speakerProfile,
     dialogueType: targetLine.dialogueType
@@ -263,7 +212,6 @@ export function buildDialogueTranslationContext(
     previousTurns,
     nextTurns,
     recentHistory: options.recentHistory ? [...options.recentHistory] : undefined,
-    matchedTerms,
     fuzzyTmMatches,
     formattedSystemPrompt,
     formattedUserPrompt
@@ -318,7 +266,6 @@ export function formatMangaTranslationUserPrompt(args: {
   sourceText: string;
   previousTurns: DialogueTurnContext[];
   nextTurns?: DialogueTurnContext[];
-  matchedTerms: DictionaryTerm[];
   fuzzyTmMatches?: FuzzyTmCandidate[];
   speakerProfile?: CharacterProfile;
   dialogueType: DialogueType;
@@ -341,14 +288,6 @@ export function formatMangaTranslationUserPrompt(args: {
       profileLines.push(`관계: ${args.speakerProfile.relationshipNotes.trim()}`);
     }
     sections.push(`[현재 화자 정보]\n${profileLines.join("\n")}`);
-  }
-
-  // Glossary Section
-  if (args.matchedTerms.length > 0) {
-    const termLines = args.matchedTerms.map(
-      (term) => `- ${term.source} -> ${term.target}${term.note ? ` (${term.note})` : ""}`
-    );
-    sections.push(`[용어집 및 고유명사 규칙]\n${termLines.join("\n")}`);
   }
 
   // Translation Memory (Few-shot fuzzy TM references)

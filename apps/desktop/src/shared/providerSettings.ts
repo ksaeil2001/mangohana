@@ -3,6 +3,52 @@ import { ocrEngines, type OcrEngine } from "./speechBubbleExtraction.js";
 export type LocalAiRuntime = "ollama" | "lmstudio" | "vllm" | "custom";
 export type LocalInpaintingProvider = "local-lama" | "sd-webui" | "comfyui";
 
+export type LocalAiModelPreset = {
+  id: string;
+  name: string;
+  recommendedVram: string;
+  description: string;
+  command: string;
+  tag: string;
+};
+
+export const MANGA_LOCAL_MODEL_PRESETS: readonly LocalAiModelPreset[] = [
+  {
+    id: "qwen2.5:7b-instruct",
+    name: "Qwen 2.5 7B Instruct",
+    recommendedVram: "6~8GB VRAM (CUDA 권장)",
+    description: "일본어·영어 만화 대사 번역 정확도 및 뉘앙스 최상위 모델",
+    command: "ollama run qwen2.5:7b-instruct",
+    tag: "만화 번역 1위"
+  },
+  {
+    id: "gemma2:9b",
+    name: "Gemma 2 9B",
+    recommendedVram: "8~12GB VRAM",
+    description: "당근망가번역기에서 널리 검증된 자연스럽고 생생한 한국어 구어체",
+    command: "ollama run gemma2:9b",
+    tag: "당근망가 권장"
+  },
+  {
+    id: "llama3.2:3b",
+    name: "Llama 3.2 3B",
+    recommendedVram: "4GB VRAM (초경량)",
+    description: "노트북이나 저사양 환경에서도 가볍고 빠른 속도로 초안 생성",
+    command: "ollama run llama3.2:3b",
+    tag: "초경량·초고속"
+  },
+  {
+    id: "deepseek-r1:7b",
+    name: "DeepSeek R1 7B",
+    recommendedVram: "8GB VRAM",
+    description: "복잡한 복선과 문맥 추론 기반의 고품질 만화/소설 번역",
+    command: "ollama run deepseek-r1:7b",
+    tag: "문맥 추론 특화"
+  }
+] as const;
+
+
+
 export type ProviderSettings = {
   theme: "system" | "light" | "dark";
   geminiModel: string;

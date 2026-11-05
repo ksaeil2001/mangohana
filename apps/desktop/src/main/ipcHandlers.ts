@@ -1,5 +1,6 @@
 import { dialog, ipcMain, protocol } from "electron";
 import { createHash, randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
 import { readFile, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, isAbsolute, relative, resolve, sep, win32 } from "node:path";
 import { parseDialogueText } from "./dialogueParser.js";
@@ -31,7 +32,6 @@ import {
   type TestLocalAiConnectionArgs
 } from "./localAiClient.js";
 import { validateSpeechBubblesWithOpenAI } from "./openAiSpeechBubbleValidation.js";
-import { extractGlossaryFromCorpus } from "./glossaryExtraction.js";
 import { inspectInpaintingQa } from "./inpaintingQaInspector.js";
 import { copyPageImageAsset } from "./pageImageAssets.js";
 import {
@@ -57,23 +57,9 @@ import { createBatchExecutionCoordinator, type BatchExecutionCoordinator } from 
 import { type BatchPipelineConfig, validateBatchPipelineConfig } from "../shared/batchAutomation.js";
 import { validateProviderSettingsPatch } from "../shared/providerSettings.js";
 import { evaluateProviderReadiness } from "./providerHealthCheck.js";
-import {
-  buildTranslationContextPayload,
-  computeTranslationPayloadFingerprint,
-  inspectTranslationQuality,
-  createTranslationMemory,
-  type InspectTranslationQaArgs,
-  type TranslationContextPayload,
-  type TranslationQaReport,
-  type FuzzyTmCandidate
-} from "../shared/translationContext.js";
+import { buildTranslationContextPayload, computeTranslationPayloadFingerprint, inspectTranslationQuality, createTranslationMemory, type InspectTranslationQaArgs, type TranslationContextPayload } from "../shared/translationContext.js";
 import { formatTranslationTxt } from "../shared/exportTranslations.js";
-import {
-  buildInpaintingPrompt,
-  createApprovedInpaintingPageRecord,
-  isInpaintingMode,
-  isInpaintingProvider
-} from "../shared/inpainting.js";
+import { createApprovedInpaintingPageRecord, isInpaintingMode, isInpaintingProvider } from "../shared/inpainting.js";
 import type { InpaintPageImageRequest } from "../shared/inpainting.js";
 import type {
   PageImage,
@@ -127,7 +113,7 @@ import {
   buildProductionOcrReviewMergePatch,
   type ProductionOcrReviewedCandidate
 } from "./ocr/pipeline/productionOcrReviewMerge.js";
-import { PRODUCTION_OCR_CONTRACT } from "../shared/productionOcr.js";
+import { isProductionOcrProvenance as isSharedProductionOcrProvenance } from "../shared/productionOcrValidation.js";
 
 const pageImageProtocol = "translation-image";
 const pageImageProtocolHost = "asset";
@@ -697,7 +683,13 @@ export function registerIpcHandlers({
     const requestedFilePath = isRecord(args) && typeof args.filePath === "string" && args.filePath.trim()
       ? args.filePath
       : null;
-    const filePath = requestedFilePath ?? await chooseSaveProjectFile(
+    const silentDefault = isRecord(args) && Boolean(args.silentDefault);
+    const defaultResolvedPath = resolveProjectSaveDefaultPath(
+      `${project.project.metadata.title || "새 프로젝트"}.ctp`,
+      getProjectSaveDirectory()
+    );
+    const filePath = requestedFilePath ?? (silentDefault ? defaultResolvedPath : await chooseSaveProjectFile(defaultResolvedPath));
+    if (false) await chooseSaveProjectFile(
       resolveProjectSaveDefaultPath(
         `${project.project.metadata.title || "새 프로젝트"}.ctp`,
         getProjectSaveDirectory()
@@ -1535,7 +1527,6 @@ export function registerIpcHandlers({
         dialogueLines: projectWrapper.project.dialogueLines,
         targetLineId,
         characters: projectWrapper.project.characters,
-        dictionaryTerms: projectWrapper.project.dictionaryTerms,
         stylePreset: typeof args.stylePreset === "string" ? args.stylePreset : undefined
       });
     }
@@ -1718,7 +1709,6 @@ export function registerIpcHandlers({
     const projectSessionId = typeof args.projectSessionId === "string" ? args.projectSessionId : undefined;
     let dialogueLines = Array.isArray(args.dialogueLines) ? args.dialogueLines : [];
     let characters = Array.isArray(args.characters) ? args.characters : [];
-    let dictionaryTerms = Array.isArray(args.dictionaryTerms) ? args.dictionaryTerms : [];
 
     if (projectSessionId) {
       assertOwnedSession(event, projectSessionId);
@@ -1726,7 +1716,6 @@ export function registerIpcHandlers({
       if (projectWrapper?.project) {
         dialogueLines = projectWrapper.project.dialogueLines;
         characters = projectWrapper.project.characters;
-        dictionaryTerms = projectWrapper.project.dictionaryTerms;
       }
     }
 
@@ -1734,34 +1723,7 @@ export function registerIpcHandlers({
       dialogueLines,
       targetLineId: args.targetLineId,
       characters,
-      dictionaryTerms,
       stylePreset: typeof args.stylePreset === "string" ? args.stylePreset : undefined
-    });
-  });
-
-  ipcMain.handle("project:extractGlossaryProposals", async (event, args: unknown) => {
-    if (!isRecord(args)) {
-      throw new Error("Invalid glossary extraction request");
-    }
-    const sessionId = typeof args.projectSessionId === "string" ? args.projectSessionId : undefined;
-    let dialogueLines = Array.isArray(args.dialogueLines) ? args.dialogueLines : [];
-    let existingCharacters = Array.isArray(args.existingCharacters) ? args.existingCharacters : [];
-    let existingTerms = Array.isArray(args.existingTerms) ? args.existingTerms : [];
-
-    if (sessionId) {
-      assertOwnedSession(event, sessionId);
-      const projectWrapper = projectSessionManager.getProject(sessionId);
-      if (projectWrapper?.project) {
-        dialogueLines = projectWrapper.project.dialogueLines;
-        existingCharacters = projectWrapper.project.characters;
-        existingTerms = projectWrapper.project.dictionaryTerms;
-      }
-    }
-
-    return extractGlossaryFromCorpus({
-      dialogueLines,
-      existingCharacters,
-      existingTerms
     });
   });
 
@@ -2487,14 +2449,8 @@ function validateProductionOcrReviewCandidate(value: unknown): ApplyProductionOc
     typeof value.selectedSpeaker !== "string" ||
     (value.orientation !== "horizontal" && value.orientation !== "vertical" && value.orientation !== "unknown") ||
     !isRecord(provenance) ||
-    provenance.contractVersion !== 1 ||
-    provenance.detectorModelId !== PRODUCTION_OCR_CONTRACT.detector.modelId ||
-    provenance.detectorRevision !== PRODUCTION_OCR_CONTRACT.detector.revision ||
-    provenance.recognizerModelId !== PRODUCTION_OCR_CONTRACT.recognizer.modelId ||
-    provenance.recognizerRevision !== PRODUCTION_OCR_CONTRACT.recognizer.revision ||
     provenance.groupId !== value.id ||
     provenance.orientation !== value.orientation ||
-    provenance.confidenceSource !== "detector_min" ||
     !isProductionOcrProvenance(provenance) ||
     (value.typesetting !== undefined && !isProductionReviewTypesetting(value.typesetting))
   ) {
@@ -2504,25 +2460,8 @@ function validateProductionOcrReviewCandidate(value: unknown): ApplyProductionOc
 }
 
 function isProductionOcrProvenance(value: Record<string, unknown>): boolean {
-  const expectedKeys = [
-    "contractVersion", "detectorModelId", "detectorRevision", "recognizerModelId", "recognizerRevision",
-    "groupId", "sourceDetectionIds", "sourceQuadsPx", "sourceDetectionScores", "orientation", "cropTransform", "confidenceSource"
-  ];
-  if (Object.keys(value).length !== expectedKeys.length || Object.keys(value).some((key) => !expectedKeys.includes(key))) {
-    return false;
-  }
-  if (
-    !Array.isArray(value.sourceDetectionIds) || value.sourceDetectionIds.length === 0 ||
-    !value.sourceDetectionIds.every((id) => typeof id === "string" && id.length > 0) ||
-    new Set(value.sourceDetectionIds).size !== value.sourceDetectionIds.length ||
-    !Array.isArray(value.sourceQuadsPx) || value.sourceQuadsPx.length !== value.sourceDetectionIds.length ||
-    !Array.isArray(value.sourceDetectionScores) || value.sourceDetectionScores.length !== value.sourceDetectionIds.length ||
-    !value.sourceDetectionScores.every((score) =>
-      typeof score === "number" && Number.isFinite(score) && score >= 0 && score <= 1) ||
-    !isProductionCropTransform(value.cropTransform)
-  ) return false;
+  if (!isSharedProductionOcrProvenance(value) || !isProductionCropTransform(value.cropTransform)) return false;
   const crop = value.cropTransform;
-  if (!isRecord(crop)) return false;
   return value.sourceQuadsPx.every((quad) =>
     Array.isArray(quad) && quad.length === 4 && quad.every((point) =>
       isProductionPixelPoint(point, crop.imageWidth, crop.imageHeight)));
@@ -2530,10 +2469,11 @@ function isProductionOcrProvenance(value: Record<string, unknown>): boolean {
 
 function isProductionCropTransform(value: unknown): boolean {
   if (!isRecord(value)) return false;
-  const expectedKeys = [
+  const requiredKeys = [
     "sourceBboxPx", "cropBboxPx", "paddingRatio", "rotationDegrees", "imageWidth", "imageHeight"
   ];
-  if (Object.keys(value).length !== expectedKeys.length || Object.keys(value).some((key) => !expectedKeys.includes(key))) {
+  const allowedKeys = new Set([...requiredKeys, "additionalPaddingPx"]);
+  if (requiredKeys.some((key) => !Object.hasOwn(value, key)) || Object.keys(value).some((key) => !allowedKeys.has(key))) {
     return false;
   }
   if (
@@ -3004,7 +2944,6 @@ export function validateGenerateLocalAiTranslationArgs(args: unknown): GenerateL
     sourceLanguage: args.sourceLanguage === "ja" || args.sourceLanguage === "en" || args.sourceLanguage === "auto" ? args.sourceLanguage : undefined,
     previousContext: Array.isArray(args.previousContext) ? args.previousContext.filter((c): c is string => typeof c === "string") : undefined,
     characterNotes: typeof args.characterNotes === "string" ? args.characterNotes.trim() : undefined,
-    glossaryNotes: typeof args.glossaryNotes === "string" ? args.glossaryNotes.trim() : undefined,
     systemPrompt: typeof args.systemPrompt === "string" ? args.systemPrompt.trim() : undefined,
     temperature: typeof args.temperature === "number" && !isNaN(args.temperature) ? args.temperature : undefined
   };

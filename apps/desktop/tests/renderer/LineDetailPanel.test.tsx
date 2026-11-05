@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { LineDetailPanel } from "../../src/renderer/components/LineDetailPanel";
-import type { CharacterProfile, DialogueLine, DictionaryTerm } from "../../src/shared/projectTypes";
+import type { CharacterProfile, DialogueLine } from "../../src/shared/projectTypes";
 
 const sampleLine: DialogueLine = {
   id: "line-1",
@@ -41,15 +41,6 @@ const characters: CharacterProfile[] = [
     name: "용사",
     aliases: ["주인공"],
     speechStyle: "침착하고 단호한 반말"
-  }
-];
-
-const dictionaryTerms: DictionaryTerm[] = [
-  {
-    id: "dict-1",
-    source: "城",
-    target: "성",
-    note: "마왕성"
   }
 ];
 
@@ -98,11 +89,13 @@ describe("LineDetailPanel UI/UX", () => {
     const props = { onUpdateLine: vi.fn(), onDeleteLine: vi.fn(), onMoveLine: vi.fn(), canMovePrevious: false, canMoveNext: false };
     const { rerender } = render(<LineDetailPanel line={line} {...props} />);
     expect(screen.getByText(/식자 영역 미지정/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "가로쓰기" })).toBeDisabled();
 
     rerender(<LineDetailPanel line={{ ...line, position: undefined, typesetting: {
       bbox: { x: 0.1, y: 0.1, width: 0.2, height: 0.2 }, writingMode: "horizontal-tb"
     } }} {...props} />);
     expect(screen.queryByText(/식자 영역 미지정/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "가로쓰기" })).toBeEnabled();
   });
 
   it("renders translation context preview when dialogue lines and characters are passed", () => {
@@ -111,7 +104,6 @@ describe("LineDetailPanel UI/UX", () => {
         line={sampleLine}
         dialogueLines={dialogueLines}
         characters={characters}
-        dictionaryTerms={dictionaryTerms}
         onUpdateLine={vi.fn()}
         onDeleteLine={vi.fn()}
         onMoveLine={vi.fn()}
@@ -259,7 +251,6 @@ describe("LineDetailPanel UI/UX", () => {
         line={sampleLine}
         dialogueLines={dialogueLines}
         characters={characters}
-        dictionaryTerms={dictionaryTerms}
         onUpdateLine={vi.fn()}
         onDeleteLine={vi.fn()}
         onMoveLine={vi.fn()}
@@ -433,7 +424,6 @@ describe("LineDetailPanel UI/UX", () => {
         line={lineWithIssues}
         dialogueLines={[lineWithIssues]}
         characters={characters}
-        dictionaryTerms={dictionaryTerms}
         onUpdateLine={vi.fn()}
         onDeleteLine={vi.fn()}
         onMoveLine={vi.fn()}
@@ -481,7 +471,6 @@ describe("LineDetailPanel UI/UX", () => {
         line={currentLine}
         dialogueLines={[previousCompleteLine, currentLine]}
         characters={characters}
-        dictionaryTerms={dictionaryTerms}
         onUpdateLine={onUpdate}
         onDeleteLine={vi.fn()}
         onMoveLine={vi.fn()}
@@ -500,7 +489,7 @@ describe("LineDetailPanel UI/UX", () => {
     );
   });
 
-  it("renders QA suggestedFix term tag and copy button when terminology issue occurs", () => {
+  it("does not show glossary suggestions for translations", () => {
     const lineWithTermIssue: DialogueLine = {
       ...sampleLine,
       sourceText: "城へ行こう",
@@ -512,7 +501,6 @@ describe("LineDetailPanel UI/UX", () => {
         line={lineWithTermIssue}
         dialogueLines={[lineWithTermIssue]}
         characters={characters}
-        dictionaryTerms={dictionaryTerms}
         onUpdateLine={vi.fn()}
         onDeleteLine={vi.fn()}
         onMoveLine={vi.fn()}
@@ -521,8 +509,7 @@ describe("LineDetailPanel UI/UX", () => {
       />
     );
 
-    expect(screen.getByTestId("translation-qa-alert")).toBeInTheDocument();
-    expect(screen.getByText("권장 용어: 성")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "권장 용어 성 복사" })).toBeInTheDocument();
+    expect(screen.queryByTestId("translation-qa-alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /권장 용어/ })).not.toBeInTheDocument();
   });
 });

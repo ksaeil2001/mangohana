@@ -8,6 +8,7 @@
   --trio-panel-raised: #303033;
   --trio-border: #777780;
   --trio-border-soft: #38383c;
+  --trio-border-strong: #38383f;
   --trio-text: #f5f5f7;
   --trio-muted: #b9b9c0;
   --trio-subtle: #aaaab3;
@@ -21,21 +22,21 @@
   --trio-warning-soft: #3f3322;
   --trio-error: #ffaaa4;
   --trio-error-soft: #432c2d;
-  --trio-canvas: #171719;
-  --trio-canvas-raised: #242426;
-  --trio-on-canvas: #f5f5f7;
-  --trio-backdrop: rgb(0 0 0 / 40%);
-  --trio-shadow-control: 0 1px 2px rgb(0 0 0 / 8%);
-  --trio-shadow-popover: 0 8px 32px rgb(0 0 0 / 20%);
-  --trio-shadow-modal: 0 24px 64px rgb(0 0 0 / 24%);
-  --trio-font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Pretendard", "Noto Sans KR", "Malgun Gothic", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+  --trio-canvas: #141416;
+  --trio-canvas-raised: #1c1c1f;
+  --trio-on-canvas: #e4e4e7;
+  --trio-backdrop: rgb(10 10 12 / 65%);
+  --trio-shadow-control: 0 1px 2px rgb(0 0 0 / 25%);
+  --trio-shadow-popover: 0 8px 24px rgb(0 0 0 / 45%);
+  --trio-shadow-modal: 0 16px 48px rgb(0 0 0 / 60%);
+  --trio-font-body: "Pretendard", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Noto Sans KR", "Malgun Gothic", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
   --trio-font-mono: "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
   --trio-text-page: 22px;
-  --trio-text-section: 16px;
-  --trio-text-title: 16px;
-  --trio-text-body: 14px;
-  --trio-text-secondary: 13px;
-  --trio-text-caption: 12px;
+  --trio-text-section: 15px;
+  --trio-text-title: 15px;
+  --trio-text-body: 13.5px;
+  --trio-text-secondary: 12.5px;
+  --trio-text-caption: 11.5px;
   --trio-leading: 1.5;
   --trio-weight-regular: 400;
   --trio-weight-medium: 500;
@@ -49,20 +50,21 @@
   --trio-space-8: 32px;
   --trio-space-10: 40px;
   --trio-space-12: 48px;
-  --trio-radius-sm: 6px;
-  --trio-radius-control: 4px;
+  --trio-radius-sm: 4px;
+  --trio-radius-control: 6px;
   --trio-radius: 6px;
-  --trio-radius-panel: 6px;
+  --trio-radius-md: 8px;
+  --trio-radius-panel: 8px;
   --trio-radius-modal: 10px;
   --trio-radius-pill: 999px;
-  --trio-control-height: 36px;
-  --trio-control-compact: 32px;
+  --trio-control-height: 34px;
+  --trio-control-compact: 28px;
   --trio-control-touch: 44px;
-  --trio-transition-fast: 150ms ease;
-  --trio-transition-panel: 200ms ease;
+  --trio-transition-fast: 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  --trio-transition-panel: 180ms cubic-bezier(0.16, 1, 0.3, 1);
   --trio-page-padding: var(--trio-space-8);
   --trio-dialog-width: 480px;
-  --trio-dialog-wide: 840px;
+  --trio-dialog-wide: 860px;
 
   /* Semantic review states retain their separate meanings. */
   --trio-state-ai: var(--trio-accent);
@@ -130,71 +132,144 @@
   --stage-translation-tint: var(--trio-accent-soft);
   --stage-complete: var(--trio-success);
   --stage-complete-tint: var(--trio-success-soft);
+
+  --mangohana-rail: var(--trio-panel);
+  --mangohana-entry-new: var(--trio-accent-soft);
+
+  /* Luna Workbench dark reference palette - calm, matte, understated */
+  --luna-bg: #141416;
+  --luna-card: #1c1c1f;
+  --luna-card-inner: #151517;
+  --luna-card-raised: #232327;
+  --luna-card-hover: #2a2a2f;
+  --luna-border: #28282c;
+  --luna-border-soft: #1f1f23;
+  --luna-border-strong: #38383f;
+  --luna-text: #e4e4e7;
+  --luna-text-muted: #8e8e96;
+  --luna-text-dim: #5c5c64;
+  --luna-teal: #1e5a73;
+  --luna-teal-bright: #3583a3;
+  --luna-teal-soft: #142833;
+  --luna-teal-border: #23546b;
+  --luna-teal-text: #96d0e7;
+  --luna-blue-cta: #29539b;
+  --luna-blue-cta-hover: #3262b5;
+  --luna-blue-box: #3b7ac9;
+  --luna-orange-box: #bd6e3c;
+  --luna-green-status: #4a8a56;
+  --luna-green-icon: #52a360;
+  --luna-yellow-icon: #b8923a;
+  --luna-red-icon: #b54c4c;
+  --luna-purple-link: #745799;
+  --luna-purple-link-bg: #211929;
+  --luna-swatch-black: #000000;
+  --luna-swatch-white: #ffffff;
+  --luna-floating-bar: #18181b;
+  --luna-overlay-pill: rgb(22 22 25 / 90%);
+  --luna-shadow-floating: 0 4px 16px rgb(0 0 0 / 45%);
+  --luna-text-halo: -1.5px -1.5px 0 #ffffff, 1.5px -1.5px 0 #ffffff, -1.5px 1.5px 0 #ffffff, 1.5px 1.5px 0 #ffffff, 0 0 4px #ffffff;
 }
 
 :root[data-theme="light"] {
-  --trio-stitch-canvas: #f7f5f1;
+  --trio-stitch-canvas: #f6f7f9;
   color-scheme: light;
-  --trio-bg: #f5f5f7;
+  --trio-bg: #f6f7f9;
   --trio-panel: #ffffff;
-  --trio-panel-raised: #ededf0;
-  --trio-border: #8b8b94;
-  --trio-border-soft: #dedee3;
-  --trio-text: #202024;
-  --trio-muted: #606068;
-  --trio-subtle: #686872;
-  --trio-accent: #245dc1;
-  --trio-accent-hover: #1b489a;
+  --trio-panel-raised: #eceef3;
+  --trio-border: #7c8494;
+  --trio-border-soft: #dfe3ec;
+  --trio-text: #14171f;
+  --trio-muted: #525866;
+  --trio-subtle: #5c6370;
+  --trio-accent: #3b5bdb;
+  --trio-accent-hover: #2b44a8;
   --trio-on-accent: #ffffff;
-  --trio-accent-soft: #e8effb;
-  --trio-success: #256a48;
-  --trio-success-soft: #e8f3ed;
-  --trio-warning: #825614;
-  --trio-warning-soft: #fbf1df;
-  --trio-error: #b63330;
-  --trio-error-soft: #fbeceb;
+  --trio-accent-soft: #edf2ff;
+  --trio-success: #196946;
+  --trio-success-soft: #e6f7ef;
+  --trio-warning: #7c4d09;
+  --trio-warning-soft: #fef5e7;
+  --trio-error: #b4232c;
+  --trio-error-soft: #fdecee;
+  --trio-canvas: #e9ecf2;
+  --trio-canvas-raised: #ffffff;
+  --trio-on-canvas: #14171f;
+  --mangohana-rail: var(--trio-panel);
+  --mangohana-entry-new: var(--trio-accent-soft);
+
+  /* Luna Workbench dark reference palette - calm, matte, understated */
+  --luna-bg: #141416;
+  --luna-card: #1c1c1f;
+  --luna-card-inner: #151517;
+  --luna-card-raised: #232327;
+  --luna-card-hover: #2a2a2f;
+  --luna-border: #28282c;
+  --luna-border-soft: #1f1f23;
+  --luna-border-strong: #38383f;
+  --luna-text: #e4e4e7;
+  --luna-text-muted: #8e8e96;
+  --luna-text-dim: #5c5c64;
+  --luna-teal: #1e5a73;
+  --luna-teal-bright: #3583a3;
+  --luna-teal-soft: #142833;
+  --luna-teal-border: #23546b;
+  --luna-teal-text: #96d0e7;
+  --luna-blue-cta: #29539b;
+  --luna-blue-cta-hover: #3262b5;
+  --luna-blue-box: #3b7ac9;
+  --luna-orange-box: #bd6e3c;
+  --luna-green-status: #4a8a56;
+  --luna-green-icon: #52a360;
+  --luna-yellow-icon: #b8923a;
+  --luna-red-icon: #b54c4c;
+  --luna-purple-link: #745799;
+  --luna-purple-link-bg: #211929;
+  --luna-swatch-black: #000000;
+  --luna-swatch-white: #ffffff;
+  --luna-floating-bar: #18181b;
+  --luna-overlay-pill: rgb(22 22 25 / 90%);
+  --luna-shadow-floating: 0 4px 16px rgb(0 0 0 / 45%);
+  --luna-text-halo: -1.5px -1.5px 0 #ffffff, 1.5px -1.5px 0 #ffffff, -1.5px 1.5px 0 #ffffff, 1.5px 1.5px 0 #ffffff, 0 0 4px #ffffff;
 }
 
-/* 망고하나 화면의 명시적 테마 팔레트. */
+/* Unified Linear/Figma workbench palette across shell, setup, and workspace. */
 .mangohana-shell.stitch-suite,
 .mangohana-setup.project-setup-screen {
-  --trio-bg: #202224;
-  --trio-panel: #27292c;
-  --trio-panel-raised: #303336;
-  --trio-border: #62676b;
-  --trio-border-soft: #3b3e42;
-  --trio-text: #f1f0ec;
-  --trio-muted: #b9babc;
-  --trio-subtle: #a4a6a9;
-  --trio-accent: #ffbd45;
-  --trio-accent-hover: #ffd078;
-  --trio-on-accent: #252016;
-  --trio-accent-soft: #3b3325;
-  --mangohana-rail: #232527;
-  --mangohana-entry-new: #2e2c26;
-}
+  --mangohana-rail: var(--trio-panel);
+  --mangohana-entry-new: var(--trio-accent-soft);
 
-[data-theme="light"] .mangohana-shell.stitch-suite,
-[data-theme="light"] .mangohana-setup.project-setup-screen {
-  --trio-bg: #f5f3ee;
-  --trio-panel: #fffefa;
-  --trio-panel-raised: #ebe9e2;
-  --trio-border: #8a8880;
-  --trio-border-soft: #d9d6cd;
-  --trio-text: #292b2d;
-  --trio-muted: #5d6062;
-  --trio-subtle: #66696b;
-  --trio-accent: #9a6000;
-  --trio-accent-hover: #754900;
-  --trio-on-accent: #fffefa;
-  --trio-accent-soft: #f5e6c8;
-  --mangohana-rail: #eeece6;
-  --mangohana-entry-new: #fbf3e3;
-}
-
-html[data-theme="dark"] .focus-deck-shell.has-workspace-navigation {
-  --trio-accent: #ffca5c;
-  --trio-accent-hover: #ffdb8b;
-  --trio-accent-soft: #453821;
-  --trio-on-accent: #241900;
+  /* Luna Workbench dark reference palette - calm, matte, understated */
+  --luna-bg: #141416;
+  --luna-card: #1c1c1f;
+  --luna-card-inner: #151517;
+  --luna-card-raised: #232327;
+  --luna-card-hover: #2a2a2f;
+  --luna-border: #28282c;
+  --luna-border-soft: #1f1f23;
+  --luna-border-strong: #38383f;
+  --luna-text: #e4e4e7;
+  --luna-text-muted: #8e8e96;
+  --luna-text-dim: #5c5c64;
+  --luna-teal: #1e5a73;
+  --luna-teal-bright: #3583a3;
+  --luna-teal-soft: #142833;
+  --luna-teal-border: #23546b;
+  --luna-teal-text: #96d0e7;
+  --luna-blue-cta: #29539b;
+  --luna-blue-cta-hover: #3262b5;
+  --luna-blue-box: #3b7ac9;
+  --luna-orange-box: #bd6e3c;
+  --luna-green-status: #4a8a56;
+  --luna-green-icon: #52a360;
+  --luna-yellow-icon: #b8923a;
+  --luna-red-icon: #b54c4c;
+  --luna-purple-link: #745799;
+  --luna-purple-link-bg: #211929;
+  --luna-swatch-black: #000000;
+  --luna-swatch-white: #ffffff;
+  --luna-floating-bar: #18181b;
+  --luna-overlay-pill: rgb(22 22 25 / 90%);
+  --luna-shadow-floating: 0 4px 16px rgb(0 0 0 / 45%);
+  --luna-text-halo: -1.5px -1.5px 0 #ffffff, 1.5px -1.5px 0 #ffffff, -1.5px 1.5px 0 #ffffff, 1.5px 1.5px 0 #ffffff, 0 0 4px #ffffff;
 }

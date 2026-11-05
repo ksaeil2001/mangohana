@@ -1,10 +1,9 @@
 import { Button } from "./Ui.js";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import type { RecentProject } from "../recentProjects.js";
 import { AppShell, useAppShell } from "./AppShell.js";
 import type { NavId } from "./AppShell.js";
-import mangohanaIcons from "../brand/mangohana-icons.svg?no-inline";
 import "../mangohana-home.css";
 
 export type ProjectHomeScreenProps = {
@@ -26,6 +25,7 @@ export type ProjectHomeScreenProps = {
   onOpenSettings: () => void;
   onOpenPreparation: () => void;
   onNavigate?: (nav: NavId) => void;
+  onDropImages?: (files: File[]) => void;
 };
 
 export function ProjectHomeScreen(props: ProjectHomeScreenProps) {
@@ -39,112 +39,280 @@ export function ProjectHomeScreen(props: ProjectHomeScreenProps) {
       case "dictionary": case "settings": props.onOpenSettings(); break;
     }
   };
-  return <AppShell activeNav="home" recentProjects={props.recentProjects} onNavigate={handleNavigate}
-    onOpenProject={props.onOpenProject} onOpenRecent={props.onOpenRecent} onOpenSettings={props.onOpenSettings} onResumeWorkspace={props.onResumeWorkspace}
-    onOpenPreparation={props.onOpenPreparation} onNewProject={props.onNewProject}
-    projectOpeningDisabledReason={props.apiReady ? undefined : "앱 파일 기능을 준비하고 있습니다."} unavailableRecentProjectId={props.unavailableRecentPath}>
-    <ProjectHomeContent {...props} />
-  </AppShell>;
+  return (
+    <AppShell
+      activeNav="home"
+      recentProjects={props.recentProjects}
+      onNavigate={handleNavigate}
+      onOpenProject={props.onOpenProject}
+      onOpenRecent={props.onOpenRecent}
+      onOpenSettings={props.onOpenSettings}
+      onResumeWorkspace={props.onResumeWorkspace}
+      onOpenPreparation={props.onOpenPreparation}
+      onNewProject={props.onNewProject}
+      projectOpeningDisabledReason={props.apiReady ? undefined : "앱 파일 기능을 준비하고 있습니다."}
+      unavailableRecentProjectId={props.unavailableRecentPath}
+    >
+      <ProjectHomeContent {...props} />
+    </AppShell>
+  );
 }
 
 function ProjectHomeContent(props: ProjectHomeScreenProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const { openGuide } = useAppShell();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
+  const dragCounter = useRef(0);
+
   useEffect(() => { headingRef.current?.focus(); }, []);
   const preventDrop = (event: DragEvent) => { event.preventDefault(); event.stopPropagation(); };
+
+  const handleDragEnter = (event: DragEvent) => {
+    preventDrop(event);
+    dragCounter.current += 1;
+    if (event.dataTransfer?.items && event.dataTransfer.items.length > 0) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (event: DragEvent) => {
+    preventDrop(event);
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (event: DragEvent) => {
+    preventDrop(event);
+    dragCounter.current = 0;
+    setIsDragOver(false);
+    setDropError(null);
+    if (!props.apiReady) return;
+    const items = Array.from(event.dataTransfer?.items ?? []);
+    if (items.some((item) => item.webkitGetAsEntry?.()?.isDirectory)) {
+      setDropError("폴더 안의 JPG, PNG, WebP 이미지 파일을 직접 끌어다 놓으세요.");
+      return;
+    }
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (files.length === 0) return;
+    const isAllImages = files.every((file) => /\.(png|jpe?g|webp)$/i.test(file.name));
+    if (isAllImages && props.onDropImages) {
+      if (!props.projectSessionReady) {
+        setDropError("프로젝트 세션이 준비되면 이미지 파일을 추가할 수 있습니다.");
+        return;
+      }
+      props.onDropImages(files);
+    } else if (files.length === 1 && /\.ctp$/i.test(files[0]!.name)) {
+      props.onOpenProject();
+    } else {
+      setDropError("JPG, PNG, WebP 이미지 파일만 추가할 수 있습니다. ZIP은 먼저 압축을 푸세요.");
+    }
+  };
+
   const fileReasonId = props.apiReady ? undefined : "home-file-readiness";
   const sessionReasonId = props.projectSessionReady ? undefined : "home-session-readiness";
-  return <div className="trio-page-container mangohana-home" onDragOver={preventDrop} onDrop={(event) => {
-    preventDrop(event);
-    if (props.apiReady) props.onOpenProject();
-  }}>
-    <header className="mangohana-home-intro">
-      <h1 ref={headingRef} tabIndex={-1} aria-label="번역 프로젝트">만화 번역 작업실</h1>
-    </header>
-    <div className="mangohana-entry-grid">
-        <section className="mangohana-entry mangohana-entry--new" aria-labelledby="home-start-heading">
-          <svg className="mangohana-entry-icon" aria-hidden="true"><use href={`${mangohanaIcons}#image`} /></svg>
-          <h2 id="home-start-heading">이미지로 프로젝트 시작</h2>
-          <p>이미지 선택 · 페이지 순서 정리</p>
-          <Button variant="primary" className="project-home-new mangohana-start-button" aria-label="새 번역 프로젝트" aria-describedby={sessionReasonId}
-            disabled={!props.projectSessionReady} onClick={props.onNewProject}>
-            <svg className="mangohana-icon" aria-hidden="true"><use href={`${mangohanaIcons}#plus`} /></svg>
-            새 번역 프로젝트
-          </Button>
-          {!props.projectSessionReady && <p id={sessionReasonId} className="mangohana-note">프로젝트 세션이 준비되면 새 작업을 시작할 수 있습니다.</p>}
-            <details className="mangohana-txt-disclosure">
-              <summary>다른 시작 방법</summary>
-              <p className="mangohana-note">대사 TXT 파일을 가져와 프로젝트를 시작합니다.</p>
-              <Button disabled={!props.projectSessionReady || props.isImportingTxt} onClick={props.onImportTxt} aria-describedby={props.isImportingTxt ? "home-txt-progress" : sessionReasonId}
-                aria-label={props.isImportingTxt ? "TXT 불러오는 중" : "TXT로 시작"}>
-                {props.isImportingTxt ? "TXT 불러오는 중" : "TXT 불러오기"}
-              </Button>
-              {props.isImportingTxt && <p id="home-txt-progress" className="mangohana-note" role="status">TXT 파일을 불러오고 있습니다. 잠시 기다려 주세요.</p>}
-            </details>
-        </section>
-        <section className="mangohana-entry mangohana-entry--open" aria-labelledby="home-open-heading">
-          <svg className="mangohana-entry-icon" aria-hidden="true"><use href={`${mangohanaIcons}#folder`} /></svg>
-          <h2 id="home-open-heading">작업하던 곳에서 다시</h2>
-          <p>.ctp 프로젝트 불러오기</p>
-          <Button className="project-home-open mangohana-start-button" disabled={!props.apiReady} aria-describedby={fileReasonId} onClick={props.onOpenProject}>
-            기존 프로젝트 열기<svg className="mangohana-icon" aria-hidden="true"><use href={`${mangohanaIcons}#arrow-right`} /></svg>
-          </Button>
-          <div className="mangohana-example-start">
-            <Button size="compact" disabled={!props.apiReady || !props.onOpenExample} onClick={props.onOpenExample} aria-describedby="home-example-description">예시 프로젝트 열기</Button>
-            <p id="home-example-description" className="mangohana-note">합성 예시 · 임시 복사본 · AI 결과 아님</p>
+
+  return (
+    <div
+      className="trio-page-container mangohana-home"
+      onDragEnter={handleDragEnter}
+      onDragOver={preventDrop}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <header className="mangohana-home-intro">
+        <h1 ref={headingRef} tabIndex={-1} aria-label="번역 프로젝트">만화 번역 작업실</h1>
+        <div className="sr-only">
+          {!props.apiReady && (
+            <p id="home-file-readiness">앱 파일 기능을 준비하고 있습니다.</p>
+          )}
+          {!props.projectSessionReady && (
+            <p id="home-session-readiness">프로젝트 세션이 준비되면 새 작업을 시작할 수 있습니다.</p>
+          )}
+        </div>
+      </header>
+
+      {/* Readiness / Alert banner (Shown only if there is an issue) */}
+      {dropError && (
+        <div className="project-home-status mangohana-feedback" role="alert">
+          <p>{dropError}</p>
+        </div>
+      )}
+      {(!props.projectSessionReady || props.sessionRetryAvailable || props.statusMessage) && (
+        <div
+          className="project-home-status mangohana-feedback"
+          role={props.unavailableRecentPath || props.sessionRetryAvailable ? "alert" : "status"}
+        >
+          <p>{props.statusMessage || (props.sessionRetryAvailable ? "프로젝트 세션을 준비하지 못했습니다." : "프로젝트 세션을 준비 중입니다.")}</p>
+          {props.sessionRetryAvailable && (
+            <Button size="compact" onClick={props.onRetryProjectSession}>프로젝트 세션 다시 시도</Button>
+          )}
+          {props.unavailableRecentPath && (
+            <Button
+              size="compact"
+              aria-label={`${props.recentProjects.find((p) => p.recentProjectId === props.unavailableRecentPath)?.title ?? "최근 프로젝트"} 최근 목록에서 제거`}
+              onClick={() => props.onRemoveRecent(props.unavailableRecentPath!)}
+            >
+              목록에서 제거
+            </Button>
+          )}
+        </div>
+      )}
+
+      <section className="mangohana-action-hub" aria-labelledby="home-start-heading">
+        <h2 id="home-start-heading">이미지로 프로젝트 시작</h2>
+        <div className="mangohana-action-cards">
+          <div className={`mangohana-action-card${isDragOver && props.projectSessionReady ? " is-drag-over" : ""}`}>
+            <p>{isDragOver && props.projectSessionReady ? "이미지 파일을 놓으세요." : "JPG, PNG, WebP 파일을 끌어다 놓거나 새 프로젝트를 만드세요."}</p>
+            <Button
+              variant="primary"
+              className="project-home-new mangohana-start-button"
+              aria-describedby={sessionReasonId}
+              disabled={!props.projectSessionReady}
+              onClick={props.onNewProject}
+            >
+              새 번역 프로젝트
+            </Button>
           </div>
-          {!props.apiReady && <p id={fileReasonId} className="mangohana-note">앱 파일 기능을 준비하고 있습니다.</p>}
-        </section>
-    </div>
-    <div className="mangohana-home-lower">
-      <section className="mangohana-recents" aria-labelledby="home-recent-heading">
-        <div className="mangohana-section-heading"><div><span className="mangohana-eyebrow">계속하기</span><h2 id="home-recent-heading">최근 프로젝트</h2></div>
-          <span className="mangohana-count">{props.recentProjects.length}개</span></div>
-        {props.recentProjects.length ? <ul className="mangohana-recent-list">
-          {props.recentProjects.map((project, index) => {
-            const unavailable = project.recentProjectId === props.unavailableRecentPath;
-            const reasonId = unavailable ? `home-recent-${index}-reason` : fileReasonId;
-            return <li key={project.recentProjectId}>
-            <span className="mangohana-project-mark" aria-hidden="true"><svg className="mangohana-icon"><use href={`${mangohanaIcons}#book`} /></svg></span>
-            <div><button type="button" className="mangohana-recent-title project-home-recent-open" aria-label={`최근 프로젝트 ${project.title} 열기`} aria-describedby={reasonId}
-              disabled={!props.apiReady || unavailable} onClick={() => props.onOpenRecent(project.recentProjectId)}>{project.title}</button>
-              <span className="mangohana-note">마지막 열기: {formatOpenedAt(project.openedAt)}</span>
-              {unavailable && <span id={reasonId} className="mangohana-recent-unavailable">열 수 없음 · 파일 위치를 확인하거나 최근 목록에서 제거하세요.</span>}</div>
-            <Button size="compact" disabled={!props.apiReady || unavailable} aria-describedby={reasonId} onClick={() => props.onOpenRecent(project.recentProjectId)}
-              aria-label={index === 0 ? `최근 프로젝트 ${project.title} 이어하기` : `${project.title} 프로젝트 열기`}>이어하기<svg className="mangohana-icon" aria-hidden="true"><use href={`${mangohanaIcons}#arrow-right`} /></svg></Button>
-          </li>; })}
-        </ul> : <div className="mangohana-empty-state">
-          <svg className="mangohana-entry-icon" aria-hidden="true"><use href={`${mangohanaIcons}#book`} /></svg>
-          <h3>최근 프로젝트 없음</h3>
-          <Button disabled={!props.apiReady} aria-describedby={fileReasonId} aria-label="빈 상태에서 기존 .ctp 프로젝트 선택" onClick={props.onOpenProject}>기존 .ctp 열기</Button>
-        </div>}
-      </section>
-        <section className="mangohana-readiness" aria-label="현재 준비 상태">
-          <div className="mangohana-section-heading"><h2>현재 준비 상태</h2><span className="mangohana-status" data-status-tone={props.projectSessionReady && props.apiReady ? "neutral" : "warning"}>
-            {props.projectSessionReady && props.apiReady ? "프로젝트 시작 가능" : "준비 확인 필요"}
-          </span></div>
-          <dl className="mangohana-readiness-list">
-            <div><dt>앱 파일 기능</dt><dd>{props.apiReady ? "사용 가능" : "준비 중"}</dd></div>
-            <div><dt>프로젝트 세션</dt><dd>{props.projectSessionReady ? "준비됨" : props.sessionRetryAvailable ? "준비 실패" : "준비 중"}</dd></div>
-          </dl>
-          {props.statusMessage && <div className="project-home-status mangohana-feedback" role={props.unavailableRecentPath || props.sessionRetryAvailable ? "alert" : "status"}>
-            <p>{props.statusMessage}</p>
-            {props.unavailableRecentPath && <Button size="compact" aria-label={`${props.recentProjects.find((project) => project.recentProjectId === props.unavailableRecentPath)?.title ?? "최근 프로젝트"} 최근 목록에서 제거`}
-              onClick={() => props.onRemoveRecent(props.unavailableRecentPath!)}>목록에서 제거</Button>}
-          </div>}
-          {props.sessionRetryAvailable && <Button onClick={props.onRetryProjectSession}>프로젝트 세션 다시 시도</Button>}
-          <p className="mangohana-note">AI 준비 상태는 환경 준비에서 확인</p>
+          <div className="mangohana-action-card">
+            <p>저장한 .ctp 파일을 엽니다.</p>
+            <Button
+              variant="secondary"
+              className="project-home-open mangohana-start-button"
+              disabled={!props.apiReady}
+              aria-describedby={fileReasonId}
+              onClick={props.onOpenProject}
+            >
+              기존 프로젝트 열기
+            </Button>
+          </div>
+        </div>
+        <details className="mangohana-home-alternatives" open>
+          <summary>다른 시작 방법</summary>
           <div className="mangohana-action-row">
-            <Button onClick={props.onOpenPreparation}>환경 준비</Button>
-            <Button onClick={props.onOpenSettings}>설정</Button>
-            <Button variant="tertiary" onClick={() => openGuide("망고하나 사용 시작하기")}>사용 안내</Button>
+            <Button
+              size="compact"
+              disabled={!props.projectSessionReady || props.isImportingTxt}
+              aria-describedby={sessionReasonId}
+              onClick={props.onImportTxt}
+            >
+              {props.isImportingTxt ? "TXT 불러오는 중" : "TXT로 시작"}
+            </Button>
+            {props.onOpenExample && (
+              <Button
+                size="compact"
+                disabled={!props.apiReady}
+                aria-describedby={fileReasonId}
+                onClick={props.onOpenExample}
+              >
+                예시 프로젝트 열기
+              </Button>
+            )}
           </div>
-        </section>
+        </details>
+      </section>
+
+      <section className="mangohana-recents" aria-labelledby="home-recent-heading">
+        <div className="mangohana-section-heading">
+          <h2 id="home-recent-heading">최근 프로젝트</h2>
+          <span className="mangohana-count">{props.recentProjects.length}개</span>
+        </div>
+
+        {props.recentProjects.length > 0 ? (
+          <ul className="mangohana-home-project-list">
+            {props.recentProjects.map((project, index) => {
+              const unavailable = project.recentProjectId === props.unavailableRecentPath;
+              const reasonId = unavailable ? `home-recent-${index}-reason` : fileReasonId;
+              return (
+                <li key={project.recentProjectId}>
+                  <div className="mangohana-home-project-name">
+                    <button
+                      type="button"
+                      className="mangohana-recent-title project-home-recent-open"
+                      aria-label={`최근 프로젝트 ${project.title} 열기`}
+                      aria-describedby={reasonId}
+                      disabled={!props.apiReady || unavailable}
+                      onClick={() => props.onOpenRecent(project.recentProjectId)}
+                    >
+                      {project.title}
+                    </button>
+                    {unavailable && (
+                      <span id={reasonId} className="mangohana-recent-unavailable">파일을 찾을 수 없음</span>
+                    )}
+                  </div>
+                  <time dateTime={project.openedAt}>{formatOpenedAt(project.openedAt)}</time>
+                  {unavailable && (
+                    <Button size="compact" onClick={() => props.onRemoveRecent(project.recentProjectId)}>
+                      삭제
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="mangohana-home-empty">
+            <h3>최근 프로젝트 없음</h3>
+            <Button
+              size="compact"
+              disabled={!props.apiReady}
+              aria-describedby={fileReasonId}
+              aria-label="빈 상태에서 기존 .ctp 프로젝트 선택"
+              onClick={props.onOpenProject}
+            >
+              기존 .ctp 열기
+            </Button>
+          </div>
+        )}
+      </section>
+
+      {/* Readiness & System Status Footer */}
+      <footer
+        className="mangohana-home-footer"
+        role="region"
+        aria-label="현재 준비 상태"
+      >
+        <div className="mangohana-home-footer-status">
+          <span
+            className="mangohana-status-dot"
+            data-ready={props.apiReady && props.projectSessionReady}
+          />
+          <span>{!props.apiReady ? "파일 기능 준비 중" : props.projectSessionReady ? "프로젝트 시작 가능" : "세션 준비 중"}</span>
+        </div>
+        <div className="mangohana-home-footer-actions">
+          <Button size="compact" onClick={props.onOpenPreparation}>환경 준비</Button>
+          <Button size="compact" onClick={props.onOpenSettings}>설정</Button>
+          <Button size="compact" variant="tertiary" onClick={() => openGuide("망고하나 사용 시작하기")}>사용 안내</Button>
+        </div>
+      </footer>
     </div>
-  </div>;
+  );
 }
 
 function formatOpenedAt(value: string): string {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "날짜 정보 없음" : date.toLocaleDateString("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  if (Number.isNaN(date.getTime())) return "날짜 정보 없음";
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  if (diffMs >= 0) {
+    if (diffMinutes < 1) return "방금 전";
+    if (diffMinutes < 60) return `${diffMinutes}분 전`;
+    if (diffHours < 24 && now.toDateString() === date.toDateString()) {
+      return `오늘 ${date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`;
+    }
+  }
+
+  return date.toLocaleDateString("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 }

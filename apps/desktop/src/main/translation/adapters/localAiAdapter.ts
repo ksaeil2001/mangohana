@@ -1,4 +1,3 @@
-import type { DictionaryTerm } from "../../../shared/projectTypes.js";
 import {
   formatMangaTranslationSystemPrompt,
   formatMangaTranslationUserPrompt,
@@ -47,20 +46,10 @@ export function createLocalAiTranslationAdapter(): TranslationEngineAdapter {
         isExactMatch: m.similarity >= 0.999
       }));
 
-      const matchedDictionaryTerms: DictionaryTerm[] = payload.entities.matchedGlossary.map(
-        (g, idx) => ({
-          id: `glossary-${idx}`,
-          source: g.source,
-          target: g.target,
-          note: g.note
-        })
-      );
-
       const userPrompt = formatMangaTranslationUserPrompt({
         sourceText: payload.source.sourceText,
         previousTurns: payload.contextWindow.previousTurns,
         nextTurns: payload.contextWindow.nextTurns,
-        matchedTerms: matchedDictionaryTerms,
         fuzzyTmMatches: fuzzyTmCandidates,
         speakerProfile: payload.entities.speakerProfile,
         dialogueType: payload.source.dialogueType

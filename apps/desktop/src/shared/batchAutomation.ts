@@ -9,7 +9,6 @@ import {
 export type BatchPipelineStage =
   | "idle"
   | "ocr"
-  | "glossary"
   | "translate"
   | "inpaint"
   | "typeset"
@@ -22,7 +21,6 @@ export type BatchPipelineStage =
 export type BatchPipelineConfig = {
   targetPages: number[] | "all";
   runOcr: boolean;
-  runGlossary: boolean;
   runTranslate: boolean;
   runInpaint: boolean;
   runTypeset: boolean;
@@ -54,7 +52,6 @@ export function getDefaultBatchConfig(): BatchPipelineConfig {
   return {
     targetPages: "all",
     runOcr: false,
-    runGlossary: false,
     runTranslate: true,
     runInpaint: false,
     runTypeset: true,
@@ -109,7 +106,7 @@ export function validateBatchPipelineConfig(input: unknown): BatchPipelineConfig
     throw new Error("지원하지 않는 일괄 처리 단계입니다: 말풍선 OCR 일괄 처리는 아직 지원되지 않습니다 (작업대 개별 실행).");
   }
   if (record.runGlossary === true) {
-    throw new Error("지원하지 않는 일괄 처리 단계입니다: 용어집 일괄 처리는 아직 지원되지 않습니다.");
+    throw new Error("삭제된 일괄 처리 단계입니다: 용어집 기능은 더 이상 제공하지 않습니다.");
   }
   if (record.runInpaint === true) {
     throw new Error("지원하지 않는 일괄 처리 단계입니다: 배경 인페인팅 일괄 처리는 아직 지원되지 않습니다 (작업대 개별 실행).");
@@ -131,7 +128,6 @@ export function validateBatchPipelineConfig(input: unknown): BatchPipelineConfig
   return {
     targetPages,
     runOcr: false,
-    runGlossary: false,
     runTranslate,
     runInpaint: false,
     runTypeset,
@@ -184,7 +180,6 @@ export function calculateBatchPercent(
   const stageWeights: Record<BatchPipelineStage, { base: number; weight: number }> = {
     idle: { base: 0, weight: 0 },
     ocr: { base: 0, weight: 25 },
-    glossary: { base: 25, weight: 10 },
     translate: { base: 35, weight: 30 },
     inpaint: { base: 65, weight: 25 },
     typeset: { base: 90, weight: 10 },

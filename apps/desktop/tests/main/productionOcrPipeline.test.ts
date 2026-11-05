@@ -2,8 +2,129 @@ import { describe, expect, it } from "vitest";
 import { parseProductionOcrDetections } from "../../src/main/ocr/detection/productionDetectorParser.js";
 import { ProductionOcrPipeline } from "../../src/main/ocr/pipeline/productionOcrPipeline.js";
 import { ProductionOcrSidecarClient } from "../../src/main/ocr/runtime/productionOcrSidecarClient.js";
+import {
+  MANGA_OCR_MODELS, PRODUCTION_OCR_CONTRACT,
+  type ProductionOcrDetectionModelIdentity, type ProductionOcrRecognizerIdentity
+} from "../../src/shared/productionOcr.js";
 
 describe("Production OCR pipeline", () => {
+  it("keeps a newly recovered weak line as a proposal and requests text/order review", async () => {
+    const detections=parseProductionOcrDetections({detections:[{detectionId:"weak",quad:[[10,10],[40,10],[40,100],[10,100]],score:.48}]},800,800)
+      .map(detection=>({...detection,supportedBy:MANGA_OCR_MODELS.detector}));
+    const pipeline=new ProductionOcrPipeline({detector:{detect:async()=>detections},cropGroup,recognizerIdentity:MANGA_OCR_MODELS.recognizer,recognizer:{recognizeGroup:async()=>({text:"SYNTHETIC"})}});
+    const result=await pipeline.execute({imageBytes:Buffer.from("synthetic"),pageNumber:1});
+    expect(result.speechBubbles[0]!.text).toBe("SYNTHETIC");
+    expect(result.warnings).toEqual([expect.stringMatching(/^OCR_TEXT_REVIEW_REQUIRED:/)]);
+  });
+
+  it("passes every detected group to crop selection before any recognition result is available", async () => {
+    const detections=parseProductionOcrDetections({detections:[
+      {detectionId:"first",quad:[[100,100],[140,100],[140,200],[100,200]],score:.9},
+      {detectionId:"neighbor",quad:[[500,300],[540,300],[540,400],[500,400]],score:.9}
+    ]},800,800);
+    const seen:number[]=[];
+    const pipeline=new ProductionOcrPipeline({detector:{detect:async()=>detections},cropGroup:input=>{seen.push(input.groups!.length);return cropGroup(input);},recognizer:{recognizeGroup:async()=>({text:"SYNTHETIC"})}});
+    await pipeline.execute({imageBytes:Buffer.from("synthetic"),pageNumber:1});
+    expect(seen).toEqual([2,2]);
+  });
+  it("records confirmed PP quads as PP sources and derives composite identity from support alone", async () => {
+    const detections = parseProductionOcrDetections({ detections: [
+      { detectionId: "line-2", quad: [[20, 34], [120, 34], [120, 54], [20, 54]], score: 0.8 },
+      { detectionId: "line-1", quad: [[20, 10], [120, 10], [120, 30], [20, 30]], score: 0.6 }
+    ] }, 800, 800).map((detection) => ({
+      ...detection, ...(detection.detectionId === "line-1" ? { supportedBy: MANGA_OCR_MODELS.detector } : {})
+    }));
+    const pipeline = new ProductionOcrPipeline({
+      detector: { detect: async () => detections }, cropGroup,
+      recognizerIdentity: MANGA_OCR_MODELS.recognizer,
+      recognizer: { recognizeGroup: async () => ({ text: "SYNTHETIC" }) }
+    });
+
+    const result = await pipeline.execute({ imageBytes: Buffer.from("synthetic-source"), pageNumber: 1 });
+
+    expect(result.speechBubbles[0]!.productionOcrProvenance).toMatchObject({
+      detectorModelId: MANGA_OCR_MODELS.compositeDetector.modelId,
+      detectorRevision: MANGA_OCR_MODELS.compositeDetector.revision,
+      sourceDetectionIds: ["line-1", "line-2"],
+      sourceQuadsPx: [detections[1]!.sourceQuadPx, detections[0]!.sourceQuadPx],
+      sourceDetectionScores: [0.6, 0.8], sourceDetectionModels: [ppIdentity(), ppIdentity()],
+      sourceDetectionSupportModels: [MANGA_OCR_MODELS.detector, null],
+      cropTransform: { paddingRatio: 0.08, rotationDegrees: 0 }
+    });
+  });
+
+  it.each([
+    null,
+    { modelId: "unknown", revision: "1" },
+    ppIdentity(),
+    { ...MANGA_OCR_MODELS.detector, revision: "latest" },
+    { ...MANGA_OCR_MODELS.detector, score: 0.9 }
+  ])("rejects invalid support instead of dropping or relabeling it: %j", async (supportedBy) => {
+    const pipeline = new ProductionOcrPipeline({
+      detector: { detect: async () => parseProductionOcrDetections({ detections: detectorRegions().slice(0, 1) }, 800, 800)
+        .map((detection) => ({ ...detection, supportedBy: supportedBy as unknown as ProductionOcrDetectionModelIdentity })) },
+      cropGroup, recognizer: { recognizeGroup: async () => ({ text: "SYNTHETIC" }) }
+    });
+    await expect(pipeline.execute({ imageBytes: Buffer.from("source"), pageNumber: 1 })).rejects.toThrow(/support identity/);
+  });
+
+  it.each([
+    ["legacy PP/Baberu", [undefined, undefined], undefined, PRODUCTION_OCR_CONTRACT.detector],
+    ["PP/Hayai", [undefined, undefined], MANGA_OCR_MODELS.recognizer, PRODUCTION_OCR_CONTRACT.detector],
+    ["Manga/Baberu", [MANGA_OCR_MODELS.detector, MANGA_OCR_MODELS.detector], undefined, MANGA_OCR_MODELS.detector],
+    ["mixed/Hayai", [undefined, MANGA_OCR_MODELS.detector], MANGA_OCR_MODELS.recognizer, MANGA_OCR_MODELS.compositeDetector]
+  ] as const)("derives pinned provenance for %s from ordered group members", async (_label, models, recognizerIdentity, detectorIdentity) => {
+    const detections = parseProductionOcrDetections({ detections: [
+      { detectionId: "line-2", quad: [[20, 34], [120, 34], [120, 54], [20, 54]], score: 0.8 },
+      { detectionId: "line-1", quad: [[20, 10], [120, 10], [120, 30], [20, 30]], score: 0.9 }
+    ] }, 800, 800).map((detection, index) => ({ ...detection, sourceModel: models[index] }));
+    const pipeline = new ProductionOcrPipeline({
+      detector: { detect: async () => detections },
+      cropGroup,
+      recognizer: { recognizeGroup: async () => ({ text: "ＳＹＮＴＨＥＴＩＣ" }) },
+      recognizerIdentity
+    });
+
+    const result = await pipeline.execute({ imageBytes: Buffer.from("synthetic-source"), pageNumber: 1 });
+
+    const provenance = result.speechBubbles[0]!.productionOcrProvenance!;
+    expect(provenance).toMatchObject({
+      detectorModelId: detectorIdentity.modelId, detectorRevision: detectorIdentity.revision,
+      recognizerModelId: (recognizerIdentity ?? PRODUCTION_OCR_CONTRACT.recognizer).modelId,
+      recognizerRevision: (recognizerIdentity ?? PRODUCTION_OCR_CONTRACT.recognizer).revision,
+      sourceDetectionIds: ["line-1", "line-2"], sourceDetectionScores: [0.9, 0.8],
+      sourceQuadsPx: [detections[1]!.sourceQuadPx, detections[0]!.sourceQuadPx],
+      sourceDetectionModels: [models[1] ?? ppIdentity(), models[0] ?? ppIdentity()],
+      cropTransform: { paddingRatio: 0.08, rotationDegrees: 0 },
+      recognition: { rawOcrText: "ＳＹＮＴＨＥＴＩＣ", normalizedOcrText: "SYNTHETIC" }
+    });
+    expect(provenance.sourceDetectionSupportModels).toBeUndefined();
+  });
+
+  it.each([
+    null,
+    { modelId: "unknown", revision: MANGA_OCR_MODELS.recognizer.revision },
+    { modelId: MANGA_OCR_MODELS.recognizer.modelId, revision: PRODUCTION_OCR_CONTRACT.recognizer.revision }
+  ])("rejects an unpinned recognizer identity before detection: %j", (identity) => {
+    expect(() => new ProductionOcrPipeline({
+      detector: { detect: async () => [] }, cropGroup,
+      recognizer: { recognizeGroup: async () => ({ text: "SYNTHETIC" }) },
+      recognizerIdentity: identity as unknown as ProductionOcrRecognizerIdentity
+    })).toThrow(/recognizer identity/);
+  });
+
+  it("rejects an unsupported detection source instead of labeling it as legacy PP", async () => {
+    const pipeline = new ProductionOcrPipeline({
+      detector: { detect: async () => parseProductionOcrDetections({ detections: detectorRegions().slice(0, 1) }, 800, 800)
+        .map((detection) => ({ ...detection, sourceModel: {
+          modelId: MANGA_OCR_MODELS.detector.modelId, revision: "latest"
+        } as unknown as ProductionOcrDetectionModelIdentity })) },
+      cropGroup, recognizer: { recognizeGroup: async () => ({ text: "SYNTHETIC" }) }
+    });
+    await expect(pipeline.execute({ imageBytes: Buffer.from("source"), pageNumber: 1 }))
+      .rejects.toThrow(/detector identity/);
+  });
+
   it("runs detection, mandatory grouping, one group crop, and Baberu recognition in order", async () => {
     const events: string[] = [];
     const pipeline = new ProductionOcrPipeline({
@@ -183,6 +304,10 @@ function detectorRegions() {
     { detectionId: "B", quad: [[400, 350], [500, 350], [500, 370], [400, 370]], score: 0.9 },
     { detectionId: "C", quad: [[10, 710], [110, 710], [110, 730], [10, 730]], score: 0.9 }
   ];
+}
+
+function ppIdentity() {
+  return { modelId: PRODUCTION_OCR_CONTRACT.detector.modelId, revision: PRODUCTION_OCR_CONTRACT.detector.revision };
 }
 
 const cropGroup: ConstructorParameters<typeof ProductionOcrPipeline>[0]["cropGroup"] = ({ group }) => ({

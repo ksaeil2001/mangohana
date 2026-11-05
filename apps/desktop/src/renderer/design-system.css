@@ -93,7 +93,7 @@ button.icon-button[data-size="compact"] {
 button.icon-button[data-size="compact"] { width: var(--trio-control-compact); padding: var(--trio-space-1); }
 
 /* Controls share metrics without touching image masks, resize handles or ranges. */
-:is(.trio-home-root-container, .trio-modal-card, .project-setup-screen, .environment-preparation-screen, .top-settings-panel, .trio-toolbar-settings-panel)
+:is(.trio-home-root-container, .trio-modal-card, .project-setup-screen, .environment-preparation-screen, .top-settings-panel)
   :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) {
   min-height: var(--trio-control-height);
   max-width: 100%;
@@ -108,7 +108,7 @@ button.icon-button[data-size="compact"] { width: var(--trio-control-compact); pa
   box-shadow: none;
 }
 textarea { resize: vertical; }
-:is(.trio-home-root-container, .trio-modal-card, .project-setup-screen, .environment-preparation-screen, .top-settings-panel, .trio-toolbar-settings-panel)
+:is(.trio-home-root-container, .trio-modal-card, .project-setup-screen, .environment-preparation-screen, .top-settings-panel)
   :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select) {
   padding: var(--trio-space-1) var(--trio-space-3);
   line-height: calc(20 / 13);
@@ -244,26 +244,14 @@ textarea { resize: vertical; }
 /* Modal metrics are shared; wide review dialogs explicitly opt in. */
 .trio-modal-backdrop { padding: var(--trio-space-6); background: var(--trio-backdrop); backdrop-filter: blur(4px); overflow-y: auto; }
 .trio-modal-card { width: min(100%, var(--trio-dialog-width)); max-width: var(--trio-dialog-width); max-height: calc(100dvh - 48px); overflow-y: auto; padding: var(--trio-space-6); gap: var(--trio-space-5); border: 1px solid var(--trio-border-soft); border-radius: var(--trio-radius-modal); background: var(--trio-panel); color: var(--trio-text); box-shadow: var(--trio-shadow-modal); }
-.trio-modal-card.trio-modal-wide { width: min(100%, var(--trio-dialog-wide)); max-width: var(--trio-dialog-wide); }
 .trio-modal-header { flex-shrink: 0; gap: var(--trio-space-4); }
 .trio-modal-header > div { min-width: 0; }
-.trio-review-modal-title { display: flex; flex-wrap: wrap; align-items: center; gap: var(--trio-space-2); }
-.trio-review-modal-title .trio-card-badge { font-size: var(--trio-text-caption); }
-.trio-review-filters { display: flex; flex-wrap: wrap; gap: var(--trio-space-3); padding: var(--trio-space-3); align-items: center; background: var(--trio-panel-raised); border-radius: var(--trio-radius); }
-.trio-review-filters > .trio-search-box-inline { min-width: 120px; }
 .trio-modal-header :is(h2, h3) { margin: 0; font-size: var(--trio-text-section); font-weight: var(--trio-weight-semibold); line-height: 1.35; }
 .trio-modal-close { min-width: var(--trio-control-height); min-height: var(--trio-control-height); border-radius: var(--trio-radius-control); color: var(--trio-muted); }
 .trio-modal-close:hover { background: var(--trio-panel-raised); color: var(--trio-text); }
 .trio-modal-footer { display: flex; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; gap: var(--trio-space-2); padding-top: var(--trio-space-4); border-top: 1px solid var(--trio-border-soft); }
 .trio-modal-footer > div { min-width: 0; flex-wrap: wrap; }
-.trio-review-scroll-body { display: flex; flex-direction: column; gap: var(--trio-space-5); min-height: 0; overflow: auto; }
-.trio-review-scroll-body > div { flex-shrink: 0; }
-.trio-review-scroll-body .trio-segmented-control { flex-wrap: wrap; }
-.trio-review-scroll-body .context-card > div { flex-wrap: wrap; }
-:is(.top-settings-panel, .trio-toolbar-settings-panel, .trio-notifications-popover, .trio-utility-menu, .tool-drawer) { background: var(--trio-panel); color: var(--trio-text); border-color: var(--trio-border-soft); border-radius: var(--trio-radius); box-shadow: var(--trio-shadow-popover); }
-.tool-drawer-overlay { position: absolute; inset: 0; z-index: 10; }
-.tool-drawer-backdrop { position: absolute; inset: 0; background: var(--trio-backdrop); }
-.tool-drawer { position: absolute; inset: 0 auto 0 0; width: 280px; max-width: calc(100% - 24px); overflow: auto; }
+:is(.top-settings-panel, .trio-notifications-popover, .trio-utility-menu) { background: var(--trio-panel); color: var(--trio-text); border-color: var(--trio-border-soft); border-radius: var(--trio-radius); box-shadow: var(--trio-shadow-popover); }
 .speech-review-backdrop { background: var(--trio-backdrop); backdrop-filter: blur(4px); }
 /* Optional warning/selection rows keep their content height; the modal owns scrolling. */
 .speech-review-dialog:not(.speech-review-panel) { width: min(var(--trio-dialog-wide), 100%); max-height: calc(100dvh - 48px); grid-template-rows: none; grid-auto-rows: max-content; overflow: auto; padding: var(--trio-space-6); gap: var(--trio-space-5); border-color: var(--trio-border-soft); }
@@ -512,7 +500,6 @@ button.danger-button:hover:not(:disabled) { background: var(--trio-error-soft); 
   .trio-modal-card { max-height: calc(100dvh - 24px); padding: var(--trio-space-5); }
   .trio-modal-footer > button { flex: 1 1 auto; }
   .trio-modal-footer > button { min-width: 80px; }
-  .trio-modal-wide .trio-modal-header { align-items: flex-start; }
   .ai-engine-mode-cards { grid-template-columns: minmax(0, 1fr); }
 }
 @media (pointer: coarse) {
@@ -549,8 +536,7 @@ button.danger-button:hover:not(:disabled) { background: var(--trio-error-soft); 
   font-size: var(--trio-text-caption);
   font-variant-numeric: tabular-nums;
 }
-:is(.trio-management-projects, .trio-management-dictionary) .trio-table-title-cell strong,
-.trio-management-dictionary .trio-term-value {
+:is(.trio-management-projects, .trio-management-dictionary) .trio-table-title-cell strong {
   color: var(--trio-text);
   font-size: var(--trio-text-secondary);
   font-weight: var(--trio-weight-medium);
@@ -701,12 +687,8 @@ button.danger-button:hover:not(:disabled) { background: var(--trio-error-soft); 
   padding: var(--trio-space-1) var(--trio-space-2);
   border-radius: var(--trio-radius-control);
 }
-.trio-management-dictionary .trio-term-value-column { width: 26%; }
-.trio-management-dictionary .trio-term-category-column { width: 12%; }
-.trio-management-dictionary .trio-term-count-column { width: 10%; }
 .trio-management-dictionary .trio-toolbar-right { min-width: 0; max-width: 100%; }
 .trio-management-dictionary .trio-segmented-control { flex-wrap: wrap; }
-.trio-management-dictionary .trio-glossary-table { min-width: 560px; }
 .trio-management-dictionary .trio-projects-table-wrap:focus-visible { outline-offset: -2px; }
 
 /* Keep narrow management rows legible without changing the panel breakpoints.

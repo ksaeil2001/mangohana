@@ -299,10 +299,10 @@ function getLineStatus(line: DialogueLine): LineStatus {
 }
 
 function getDialogueTypeLabel(type: DialogueType): string {
-  if (type === "thought") return "💭 독백";
-  if (type === "narration") return "📜 내레이션";
-  if (type === "unknown") return "❓ 유형 없음";
-  return "💬 대사";
+  if (type === "thought") return "독백";
+  if (type === "narration") return "내레이션";
+  if (type === "unknown") return "유형 없음";
+  return "대사";
 }
 
 
